@@ -39,7 +39,7 @@ setup(
     package_dir={'p4_tools':
                  'p4_tools'},
     include_package_data=True,
-    install_requires=requirements,
+    install_requires='pandas',
     license="ISC license",
     zip_safe=False,
     keywords='p4_tools',
