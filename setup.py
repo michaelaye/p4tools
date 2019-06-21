@@ -24,7 +24,7 @@ with open('requirements/test.txt', 'r') as fd:
 
 setup(
     name='p4tools',
-    version='0.1.0',
+    version='0.1.1',
     description="Tools for Planet Four data reduction and analysis.",
     long_description=readme + '\n\n' + history,
     author="K.-Michael Aye",
