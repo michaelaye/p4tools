@@ -35,7 +35,7 @@ setup(
         'matplotlib',
         'shapely',
         'intake'
-    ]
+    ],
     license="ISC license",
     zip_safe=False,
     keywords='p4tools',
