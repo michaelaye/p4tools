@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for `p4_tools` package."""
+"""Tests for `p4tools` package."""
 
 import pytest
 
 from click.testing import CliRunner
 
-from p4_tools import p4_tools
-from p4_tools import cli
+from p4tools import p4tools
+from p4tools import cli
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def test_command_line_interface():
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
-    assert 'p4_tools.cli.main' in result.output
+    assert 'p4tools.cli.main' in result.output
     help_result = runner.invoke(cli.main, ['--help'])
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output

@@ -6,4 +6,4 @@ __author__ = """K.-Michael Aye"""
 __email__ = 'kmichael.aye@gmail.com'
 __version__ = '0.1.0'
 
-from .p4_tools import *
+from .p4tools import *

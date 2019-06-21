@@ -23,26 +23,26 @@ with open('requirements/test.txt', 'r') as fd:
         test_requirements.append(req.name)
 
 setup(
-    name='p4_tools',
+    name='p4tools',
     version='0.1.0',
     description="Tools for Planet Four data reduction and analysis.",
     long_description=readme + '\n\n' + history,
     author="K.-Michael Aye",
     author_email='kmichael.aye@gmail.com',
-    url='https://github.com/michaelaye/p4_tools',
-    packages=find_packages(include=['p4_tools']),
+    url='https://github.com/michaelaye/p4tools',
+    packages=find_packages(include=['p4tools']),
     entry_points={
         'console_scripts': [
-            'p4_tools=p4_tools.cli:main'
+            'p4tools=p4tools.cli:main'
         ]
     },
-    package_dir={'p4_tools':
-                 'p4_tools'},
+    package_dir={'p4tools':
+                 'p4tools'},
     include_package_data=True,
     install_requires='pandas',
     license="ISC license",
     zip_safe=False,
-    keywords='p4_tools',
+    keywords='p4tools',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

@@ -3,18 +3,18 @@ Planet Four Tools
 =================
 
 
-.. image:: https://img.shields.io/pypi/v/p4_tools.svg
-        :target: https://pypi.python.org/pypi/p4_tools
+.. image:: https://img.shields.io/pypi/v/p4tools.svg
+        :target: https://pypi.python.org/pypi/p4tools
 
-.. image:: https://img.shields.io/travis/michaelaye/p4_tools.svg
-        :target: https://travis-ci.org/michaelaye/p4_tools
+.. image:: https://img.shields.io/travis/michaelaye/p4tools.svg
+        :target: https://travis-ci.org/michaelaye/p4tools
 
 .. image:: https://readthedocs.org/projects/p4-tools/badge/?version=latest
         :target: https://p4-tools.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/michaelaye/p4_tools/shield.svg
-     :target: https://pyup.io/repos/github/michaelaye/p4_tools/
+.. image:: https://pyup.io/repos/github/michaelaye/p4tools/shield.svg
+     :target: https://pyup.io/repos/github/michaelaye/p4tools/
      :alt: Updates
 
 

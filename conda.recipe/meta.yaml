@@ -2,8 +2,8 @@
 {% set data = load_setup_py_data() %}
 
 package:
-  name: p4_tools
-  
+  name: p4tools
+
   version: {{ data['version'] }}
 
 source:
@@ -38,6 +38,5 @@ test:
     - pytest tests
 
 about:
-  home: https://github.com/michaelaye/p4_tools
+  home: https://github.com/michaelaye/p4tools
   summary: Tools for Planet Four data reduction and analysis.
-  
