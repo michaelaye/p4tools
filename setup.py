@@ -14,7 +14,7 @@ with open('HISTORY.rst') as history_file:
 
 setup(
     name='p4tools',
-    version='0.2.0',
+    version='0.2.1',
     description="Tools for Planet Four data analysis.",
     long_description=readme + '\n\n' + history,
     author="K.-Michael Aye",
