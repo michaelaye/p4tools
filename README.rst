@@ -9,8 +9,8 @@ Planet Four Tools
 .. image:: https://img.shields.io/travis/michaelaye/p4tools.svg
         :target: https://travis-ci.org/michaelaye/p4tools
 
-.. image:: https://readthedocs.org/projects/p4-tools/badge/?version=latest
-        :target: https://p4-tools.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/p4tools/badge/?version=latest
+        :target: https://p4tools.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
 .. image:: https://pyup.io/repos/github/michaelaye/p4tools/shield.svg
@@ -22,7 +22,7 @@ Tools for Planet Four data reduction and analysis.
 
 
 * Free software: ISC license
-* Documentation: https://p4-tools.readthedocs.io.
+* Documentation: https://p4tools.readthedocs.io.
 
 
 Features
