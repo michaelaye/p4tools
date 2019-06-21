@@ -1,0 +1,7 @@
+[report]
+omit =
+    setup.py
+    p4tools/__main__.py
+    p4tools/_version.py
+    versioneer.py
+    tests/*
