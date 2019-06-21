@@ -2,6 +2,7 @@ import math
 from math import cos, degrees, pi, radians, sin, tau
 from pathlib import Path
 
+import intake
 import matplotlib.lines as lines
 import numpy as np
 import pandas as pd
@@ -85,7 +86,7 @@ class Blotch(Ellipse):
 
     @property
     def subframe(self):
-        urls = pd.read_csv(self.url_db).set_index('tile_id').squeeze()
+        urls = intake.cat.planet4.tile_urls.read().set_index('tile_id').squeeze()
         url = urls.at[self.data.tile_id]
         return io.get_subframe(url)
 
