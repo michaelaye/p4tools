@@ -12,20 +12,10 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-setup_requirements = []
-with open('requirements/prod.txt', 'r') as fd:
-    for req in requirements.parse(fd):
-        setup_requirements.append(req.name)
-
-test_requirements = []
-with open('requirements/test.txt', 'r') as fd:
-    for req in requirements.parse(fd):
-        test_requirements.append(req.name)
-
 setup(
     name='p4tools',
     version='0.1.1',
-    description="Tools for Planet Four data reduction and analysis.",
+    description="Tools for Planet Four data analysis.",
     long_description=readme + '\n\n' + history,
     author="K.-Michael Aye",
     author_email='kmichael.aye@gmail.com',
@@ -39,7 +29,13 @@ setup(
     package_dir={'p4tools':
                  'p4tools'},
     include_package_data=True,
-    install_requires='pandas',
+    install_requires=[
+        'pandas',
+        'numpy',
+        'matplotlib',
+        'shapely',
+        'intake'
+    ]
     license="ISC license",
     zip_safe=False,
     keywords='p4tools',
@@ -52,6 +48,6 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     test_suite='tests',
-    tests_require=test_requirements,
-    setup_requires=setup_requirements,
+    tests_require='pytest',
+    setup_requires='pytest_runner',
 )
