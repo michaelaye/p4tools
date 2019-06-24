@@ -5,7 +5,9 @@ import shutil
 from pathlib import Path
 from urllib.error import URLError
 
+import intake
 import matplotlib.image as mplimg
+import pandas as pd
 
 try:
     from urllib import urlretrieve
@@ -95,3 +97,26 @@ def get_subframe(url):
         LOGGER.debug("Found image in cache.")
     im = mplimg.imread(targetpath)
     return im
+
+def get_url_for_tile_id(tile_id):
+    storagepath = data_root / "catalogs/tile_urls.csv"
+    storagepath.parent.mkdir(exist_ok=True)
+    if not storagepath.exists():
+        urls = intake.cat.planet4.tile_urls.read()
+        urls.to_csv(storagepath, index=False)
+        urls = urls.set_index('tile_id').squeeze()
+    else:
+        urls = pd.read_csv(storagepath).set_index('tile_id').squeeze()
+
+    return urls.at[tile_id]
+
+
+def get_blotch_catalog():
+    storagepath = data_root / "catalogs/blotches.csv"
+    storagepath.parent.mkdir(exist_ok=True)
+    if not storagepath.exists():
+        blotches = intake.cat.planet4.blotches.read()
+        blotches.to_csv(storagepath, index=False)
+    else:
+        blotches = pd.read_csv(storagepath)
+    return blotches

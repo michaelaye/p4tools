@@ -86,8 +86,7 @@ class Blotch(Ellipse):
 
     @property
     def subframe(self):
-        urls = intake.cat.planet4.tile_urls.read().set_index('tile_id').squeeze()
-        url = urls.at[self.data.tile_id]
+        url = io.get_url_for_tile_id(self.data.tile_id)
         return io.get_subframe(url)
 
     def show_subframe(self, ax=None, aspect='auto'):
