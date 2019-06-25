@@ -44,6 +44,7 @@ def get_data_root():
     data_root.mkdir(exist_ok=True, parents=True)
     return data_root
 
+
 def set_database_path(dbfolder):
     """Use to write the database path into the config.
 
@@ -98,25 +99,55 @@ def get_subframe(url):
     im = mplimg.imread(targetpath)
     return im
 
+
 def get_url_for_tile_id(tile_id):
     storagepath = data_root / "catalogs/tile_urls.csv"
     storagepath.parent.mkdir(exist_ok=True)
     if not storagepath.exists():
         urls = intake.cat.planet4.tile_urls.read()
         urls.to_csv(storagepath, index=False)
-        urls = urls.set_index('tile_id').squeeze()
+        urls = urls.set_index("tile_id").squeeze()
     else:
-        urls = pd.read_csv(storagepath).set_index('tile_id').squeeze()
+        urls = pd.read_csv(storagepath).set_index("tile_id").squeeze()
 
     return urls.at[tile_id]
 
 
-def get_blotch_catalog():
-    storagepath = data_root / "catalogs/blotches.csv"
-    storagepath.parent.mkdir(exist_ok=True)
-    if not storagepath.exists():
-        blotches = intake.cat.planet4.blotches.read()
-        blotches.to_csv(storagepath, index=False)
+def get_intake_p4_item(item_name, update=False):
+    fname = item_name + ".csv"
+    storagepath = data_root / f"catalogs/{fname}"
+    if not storagepath.exists() or update is True:
+        s = "Downloading catalog"
+        if update:
+            s + " for update"
+        print(s)
+        df = getattr(intake.cat.planet4, item_name).read()
+        df.to_csv(storagepath, index=False)
     else:
-        blotches = pd.read_csv(storagepath)
-    return blotches
+        df = pd.read_csv(storagepath)
+    return df
+
+
+def get_blotch_catalog(update=False):
+    return get_intake_p4_item("blotches", update)
+
+
+def get_fan_catalog(update=False):
+    return get_intake_p4_item("fans", update)
+
+
+def get_tile_coordinates(update=False):
+    return get_intake_p4_item("tile_coordinates", update)
+
+
+def get_metadata(update=False):
+    return get_intake_p4_item("metadata", update)
+
+
+def get_region_names(update=False):
+    return get_intake_p4_item("region_names", update)
+
+
+def get_tile_urls(update=False):
+    return get_intake_p4_item("tile_urls", update)
+
