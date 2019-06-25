@@ -67,10 +67,9 @@ def set_database_path(dbfolder):
 # module global data_root !
 if not configpath.exists():
     print("No configuration file {} found.\n".format(configpath))
-    savepath = input("Please provide the path where you want to store planet4 results:")
+    savepath = input("Please provide the path where you want to store planet4 meta-data:")
     set_database_path(savepath)
-else:
-    data_root = get_data_root()
+data_root = get_data_root()
 
 
 def get_subframe(url):
@@ -116,6 +115,7 @@ def get_url_for_tile_id(tile_id):
 def get_intake_p4_item(item_name, update=False):
     fname = item_name + ".csv"
     storagepath = data_root / f"catalogs/{fname}"
+    storagepath.parent.mkdir(exist_ok=True, parents=True)
     if not storagepath.exists() or update is True:
         s = "Downloading catalog"
         if update:
