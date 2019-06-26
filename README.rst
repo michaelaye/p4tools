@@ -57,7 +57,13 @@ To update `p4tools` do
 
     pip install -U p4tools
     
-To update the catalog, first you need to get new download links by doing `conda update -c planetfour-catalog`, and after that, because `p4tools` caches the catalog items, you need to provide the parameter `update=True` when using the access functions, like so:
+To update the catalog, first you need to get new download links by doing 
+
+.. code-block:: bash
+
+    conda update -c planetfour-catalog
+    
+and after that, because `p4tools` caches the catalog items, you need to provide the parameter `update=True` when using the access functions, like so:
 
 .. code-block:: python
     
