@@ -13,11 +13,6 @@ Planet Four Tools
         :target: https://p4tools.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/michaelaye/p4tools/shield.svg
-     :target: https://pyup.io/repos/github/michaelaye/p4tools/
-     :alt: Updates
-
-
 Tools for Planet Four data reduction and analysis.
 
 
