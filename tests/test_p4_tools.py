@@ -7,7 +7,7 @@ import pytest
 
 from click.testing import CliRunner
 
-from p4tools import p4tools
+from p4tools import io
 from p4tools import cli
 
 
