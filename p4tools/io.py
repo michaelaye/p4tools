@@ -140,8 +140,8 @@ def get_tile_coordinates(update=False):
     return get_intake_p4_item("tile_coordinates", update)
 
 
-def get_metadata(update=False):
-    return get_intake_p4_item("metadata", update)
+def get_meta_data(update=False):
+    return get_intake_p4_item("meta_data", update)
 
 
 def get_region_names(update=False):
@@ -151,3 +151,7 @@ def get_region_names(update=False):
 def get_tile_urls(update=False):
     return get_intake_p4_item("tile_urls", update)
 
+def update_local_catalog_files():
+    for item in "blotches fans tile_coordinates meta_data region_names tile_urls".split():
+        print("Updating", item)
+        get_intake_p4_item(item, update=True)
