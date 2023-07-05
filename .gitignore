@@ -63,3 +63,6 @@ target/
 
 # VSCode editor settings
 .vscode
+
+_docs/
+_proc/
