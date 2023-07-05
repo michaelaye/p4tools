@@ -66,3 +66,5 @@ target/
 
 _docs/
 _proc/
+.ipynb_checkpoints
+.mypy_cache
