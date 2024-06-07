@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "p4tools"
+  site-url: "https://michaelaye.github.io/p4tools/"
+  description: "Tools for working with data from the Planet Four Zooniverse project."
+  repo-branch: master
+  repo-url: "https://github.com/michaelaye/p4tools"
