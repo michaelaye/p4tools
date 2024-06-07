@@ -23,6 +23,7 @@ from .projection import XY2LATLON, P4Mosaic, TileCalculator, create_RED45_mosaic
 
 #typing imports
 from collections.abc import Iterable,Callable
+from typing import Any, Generator
 from logging import Logger
 from pandas import DataFrame
 
@@ -30,7 +31,7 @@ from pandas import DataFrame
 #starting the logger
 LOGGER: Logger = logging.getLogger()
 
-# %% ../../notebooks/05_production.catalog.ipynb 5
+# %% ../../notebooks/05_production.catalog.ipynb 4
 def execute_in_parallel(func : Callable, iterable : Iterable):
     """This function is used to execute a function in paralle over a list-like or iterable using the power of Dask's lazy compute.
 
@@ -43,21 +44,38 @@ def execute_in_parallel(func : Callable, iterable : Iterable):
 
     Returns
     -------
-    _type_
-        _description_
+    List
+        The results of the function reduced over the Iterable
     """
     lazys = []
     for item in iterable:
         lazys.append(delayed(func)(item))
     return compute(*lazys)
 
-# %% ../../notebooks/05_production.catalog.ipynb 6
-def fan_id_generator():
+# %% ../../notebooks/05_production.catalog.ipynb 5
+from typing import Any, Generator
+
+
+def fan_id_generator() -> Generator[str, Any, None]:
+    """Generatir for the IDs to number the fans
+
+    Yields
+    ------
+    Generator[str, Any, None]
+        ID generator
+    """
     for newid in itertools.product(string.digits + "abcdef", repeat=6):
         yield "F" + "".join(newid)
 
 
-def blotch_id_generator():
+def blotch_id_generator() -> Generator[str, Any, None]:
+    """Generator to yield the IDs to number the blotches
+
+    Yields
+    ------
+    Generator[str, Any, None]
+        ID generator
+    """
     for newid in itertools.product(string.digits + "abcdef", repeat=6):
         yield "B" + "".join(newid)
 
@@ -67,7 +85,7 @@ def get_L1A_paths(obsid, savefolder):
     paths = pm.get_obsid_paths("L1A")
     return paths
 
-# %% ../../notebooks/05_production.catalog.ipynb 7
+# %% ../../notebooks/05_production.catalog.ipynb 6
 def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
     """Cluster all image_ids for given obsid (=image_name).
 
@@ -96,7 +114,7 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
     dbscanner.cluster_image_name(obsid)
     return obsid
 
-# %% ../../notebooks/05_production.catalog.ipynb 8
+# %% ../../notebooks/05_production.catalog.ipynb 7
 def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     """
     fnotch_via_obsid: bool, optional
@@ -117,14 +135,34 @@ def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     return obsid
 
 
-def fnotch_obsid_parallel(obsids, savedir):
+def fnotch_obsid_parallel(obsids : list[str], savedir : str):
+    """Applies the fnotching for multiple obsid's in parallel
+
+    Parameters
+    ----------
+    obsids : list[str]
+        List of the Obsids to fnotch
+    savedir : str
+        the directory path where to save
+    """
     lazys = []
     for obsid in obsids:
         lazys.append(delayed(fnotch_obsid)(obsid, savedir))
     return compute(*lazys)
 
 
-def cluster_obsid_parallel(obsids, savedir, dbname):
+def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
+    """Apply the Clustering Algorithm for multiple obsids in parallel.
+
+    Parameters
+    ----------
+    obsids : list[str]
+        List of the obsids to cluster
+    savedir : str
+        path to the save directory whihc will save the clustering results
+    dbname : str
+        The databasename 
+    """
     lazys = []
     for obsid in obsids:
         lazys.append(delayed(cluster_obsid)(obsid, savedir, dbname=dbname))
@@ -132,7 +170,7 @@ def cluster_obsid_parallel(obsids, savedir, dbname):
 
 
 
-# %% ../../notebooks/05_production.catalog.ipynb 9
+# %% ../../notebooks/05_production.catalog.ipynb 8
 def add_marking_ids(path, fan_id, blotch_id):
     """Add marking_ids for catalog to cluster results.
 
@@ -157,7 +195,7 @@ def add_marking_ids(path, fan_id, blotch_id):
             df["marking_id"] = marking_ids
             df.to_csv(fname, index=False)
 
-# %% ../../notebooks/05_production.catalog.ipynb 10
+# %% ../../notebooks/05_production.catalog.ipynb 9
 def create_roi_file(obsids, roi_name, datapath):
     """Create a Region of Interest file, based on list of obsids.
 
@@ -211,7 +249,7 @@ def create_roi_file(obsids, roi_name, datapath):
             print(f"Created {savepath}.")
 
 
-# %% ../../notebooks/05_production.catalog.ipynb 11
+# %% ../../notebooks/05_production.catalog.ipynb 10
 class ReleaseManager:
     """Class to manage releases and find relevant files.
     TODO better description
@@ -510,7 +548,7 @@ class ReleaseManager:
         fans, blotches = self.merge_campt_results(fans, blotches)
 
         # write out fans catalog
-        fans.vote_ratio.fillna(1, inplace=True)
+        fans["vote_ratio"] = fans["vote_ratio"].fillna(1)
         fans.version = fans.version.astype("int")
         fans.rename(
             {
@@ -525,7 +563,7 @@ class ReleaseManager:
         LOGGER.info("Wrote %s", str(self.fan_merged))
 
         # write out blotches catalog
-        blotches.vote_ratio.fillna(1, inplace=True)
+        blotches["vote_ratio"] = blotches["vote_ratio"].fillna(1)
         blotches.rename(
             {
                 "image_id": "tile_id",
@@ -618,8 +656,9 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
-# %% ../../notebooks/05_production.catalog.ipynb 12
+# %% ../../notebooks/05_production.catalog.ipynb 11
 def read_csvfiles_into_lists_of_frames(folders):
+    
     bucket = dict(fan=[], blotch=[])
     for folder in folders:
         for markingfile in folder.glob("*.csv"):
