@@ -20,7 +20,7 @@ from configparser import ConfigParser
 
 # %% auto 0
 __all__ = ['LOGGER', 'pkg_name', 'configpath', 'get_config', 'set_database_path', 'get_data_root', 'get_ground_projection_root',
-           'dropbox', 'p4data', 'analysis_folder', 'check_and_pad_id', 'PathManager', 'DBManager']
+           'check_and_pad_id', 'PathManager', 'DBManager']
 
 # %% ../../notebooks/05a_production.io.ipynb 3
 LOGGER = logging.getLogger(__name__)
@@ -98,22 +98,6 @@ if not configpath.exists():
 else:
     data_root = get_data_root()
 
-def dropbox() -> Path:
-    return Path.home() / "Dropbox"
-
-
-def p4data() -> Path:
-    return dropbox() / "data" / "planet4"
-
-#TODO Check if the p4data and dropbox are even needed
-
-def analysis_folder() -> Path:
-    name = "p4_analysis"
-    if p4data().exists():
-        path = p4data() / name
-    else:
-        path = dropbox() / name
-    return path
 
 # %% ../../notebooks/05a_production.io.ipynb 6
 def check_and_pad_id(imgid)-> str | None:
@@ -238,8 +222,12 @@ class PathManager:
 
     @property
     def obsid_results_savefolder(self):
-        subfolder = "p4_catalog" if self.datapath is None else self.datapath
-        savefolder = analysis_folder() / subfolder #TODO this realy does not need the analysis_folder
+
+        if self.datapath == None:
+            raise ValueError("No Datapath Suplied")
+        else:
+            savefolder = self.datapath
+        
         savefolder.mkdir(exist_ok=True, parents=True)
         return savefolder
 
