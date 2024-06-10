@@ -99,7 +99,7 @@ else:
     data_root = get_data_root()
 
 
-# %% ../../notebooks/05a_production.io.ipynb 6
+# %% ../../notebooks/05a_production.io.ipynb 5
 def check_and_pad_id(imgid)-> str | None:
     """Checks the Image ID and pads it if necessary.
 
@@ -120,7 +120,7 @@ def check_and_pad_id(imgid)-> str | None:
         imgid = imgid_template[: -len(imgid)] + imgid
     return imgid
 
-# %% ../../notebooks/05a_production.io.ipynb 7
+# %% ../../notebooks/05a_production.io.ipynb 6
 class PathManager:
 
     """Manage file paths and folders related to the analysis pipeline.
@@ -367,7 +367,7 @@ class PathManager:
 
 
 
-# %% ../../notebooks/05a_production.io.ipynb 8
+# %% ../../notebooks/05a_production.io.ipynb 7
 class DBManager:
 
     """Access class for database activities.
