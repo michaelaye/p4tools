@@ -29,7 +29,7 @@ from pandas import DataFrame
 
 # %% ../../notebooks/05_production.catalog.ipynb 3
 #starting the logger
-LOGGER: Logger = logging.getLogger()
+LOGGER: Logger = logging.getLogger(__name__)
 
 # %% ../../notebooks/05_production.catalog.ipynb 4
 def execute_in_parallel(func : Callable, iterable : Iterable):
@@ -101,8 +101,8 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
         be used to receive the respective `obsid` from the TileID class.
     """
     # import here to support parallel execution
-    from planet4 import dbscan, markings
-
+    from p4tools.catalog import markings, dbscan
+    
     # parameter checks
     if obsid is None and imgid is not None:
         obsid = markings.TileID(imgid).image_name
@@ -463,7 +463,7 @@ class ReleaseManager:
                 todo.append(cubepath)
 
         def get_tile_coords(cubepath):
-            from planet4.projection import TileCalculator##TODO is that import necessary
+            from p4tools.production.projection import TileCalculator##TODO is that import necessary
 
             tilecalc = TileCalculator(cubepath, dbname=self.dbname)
             tilecalc.calc_tile_coords()
