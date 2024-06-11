@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['LOGGER', 'IMG_X_SIZE', 'IMG_Y_SIZE', 'IMG_SHAPE', 'GOLD_MEMBERS', 'GOLD_PLOT_COLORS', 'set_subframe_size',
-           'calc_fig_size', 'TileID']
+           'calc_fig_size', 'TileID', 'Fnotch']
 
 # %% ../../notebooks/05b_production.markings.ipynb 2
 from . import io
@@ -216,4 +216,71 @@ class TileID:
             savepath = savedir / f"{self.imgid}.png"
             fig.savefig(savepath, dpi=150)
 
+
+
+# %% ../../notebooks/05b_production.markings.ipynb 6
+class Fnotch(object):
+
+    """Manage Fnotch by providing a cut during output.
+
+    Parameters
+    ----------
+    value : float
+        Fnotch value (= 1 - blotchiness), as calculated in clustering.ClusterManager()
+    fandata : pandas.Series
+        data set containing all required for Fan object (see `Fan`)
+    blotchdata : pandas.Series
+        data set containing all required for Blotch object (see `Blotch`)
+    """
+
+    @classmethod
+    def from_series(cls, series, scope):
+        "Create Fnotch instance from series with fan_ and blotch_ indices."
+        fan = Fan(series.filter(regex='fan_').rename(lambda x: x[4:]),
+                  scope=scope)
+        blotch = Blotch(series.filter(regex='blotch_').rename(lambda x: x[7:]),
+                        scope=scope)
+        return cls(series.fnotch_value, fan, blotch, scope)
+
+    def __init__(self, fan, blotch, scope='planet4'):
+        self.fan = fan
+        self.blotch = blotch
+        self.scope = scope
+
+        self.data = pd.concat([fan, blotch], ignore_index=True)
+        self.data.index = ['fan', 'blotch']
+        blotchiness = calc_blotchiness(fan.iloc[0]['n_votes'],
+                                       blotch.iloc[0]['n_votes'])
+        self.data.loc['fan', 'vote_ratio'] = (1 - blotchiness) + 0.01
+        self.data.loc['blotch', 'vote_ratio'] = blotchiness - 0.01
+
+    def apply_cut(self, cut):
+        """Return the right marking, depending on cut value.
+
+        If the cut is at 0.8, the fnotch value has to be equal or better before
+        we assign the fan to the Fnotch object. Otherwise we return a blotch.
+
+        Parameters
+        ----------
+        cut : float
+            Level where we separate fan from blotch
+
+        Returns
+        -------
+        `Fan` or `Blotch` object, depending on `cut`
+        """
+        row = self.data[self.data.vote_ratio > cut]
+        return row
+#         Marking = getattr(markings, row.index[0].title())
+#         return Marking(row)
+
+    def __repr__(self):
+        return self.data.__repr__()
+
+    def store(self, fpath=None):
+        out = pd.concat([self.fanstore, self.blotchstore])
+        out['fnotch_value'] = self.value
+        if fpath is not None:
+            out.to_hdf(str(fpath.with_suffix('.hdf')), 'df')
+        return out
 
