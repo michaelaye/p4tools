@@ -101,7 +101,7 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
         be used to receive the respective `obsid` from the TileID class.
     """
     # import here to support parallel execution
-    from p4tools.catalog import markings, dbscan
+    from p4tools.production import markings, dbscan
     
     # parameter checks
     if obsid is None and imgid is not None:
@@ -120,7 +120,7 @@ def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     fnotch_via_obsid: bool, optional
         Switch to control if fnotching happens per image_id or per obsid
     """
-    from planet4 import fnotching
+    from p4tools.production import fnotching
 
     # fnotching / combining ambiguous cluster results
     # fnotch across all the HiRISE image
