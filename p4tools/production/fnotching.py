@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['logger', 'data_to_centers', 'get_id_from_path', 'get_clusters_in_path', 'remove_opposing_fans',
-           'calc_indices_from_index', 'write_l1c', 'apply_cut_obsid']
+           'calc_indices_from_index', 'write_l1c', 'apply_cut_obsid', 'apply_cut']
 
 # %% ../../notebooks/05f_production.fnotching.ipynb 1
 from . import io
@@ -188,4 +188,40 @@ def apply_cut_obsid(obsid, cut=0.5, savedir=None):
         slashed = fnotches[fnotches.vote_ratio > pm.cut]
         for kind in ["fan", "blotch"]:
             write_l1c(kind, slashed, pm)
+
+
+# %% ../../notebooks/05f_production.fnotching.ipynb 7
+def apply_cut(obsid, cut=0.5, savedir=None):
+    """Loop over all image_id paths for an obsid and apply cut to fnotches.
+
+    Parameters
+    ----------
+    obsid : str
+        HiRISE obsid, i.e. P4 `image_name`
+    cut : float, 0..1
+        Value where to cut the vote_ratio of the fnotches.
+    """
+    pm = io.PathManager(obsid=obsid, cut=cut, datapath=savedir)
+    paths = pm.get_obsid_paths("L1B")
+    for path in paths:
+        id_ = get_id_from_path(path)
+        logger.debug("Slashing %s", id_)
+        pm.id = id_
+        try:
+            fnotches = pm.fnotchdf
+        except FileNotFoundError:
+            # no fnotch df was found. Now need to copy over
+            # standard files to L1C folder
+            pm.final_blotchfile.parent.mkdir(exist_ok=True)
+            if pm.reduced_blotchfile.exists():
+                logger.debug("Writing final_blotchfile for %s", id_)
+                pm.reduced_blotchdf.to_csv(pm.final_blotchfile, index=False)
+            if pm.reduced_fanfile.exists():
+                logger.debug("Writing final_fanfile for %s", id_)
+                pm.reduced_fandf.to_csv(pm.final_fanfile, index=False)
+        else:
+            # apply cut
+            slashed = fnotches[fnotches.vote_ratio > pm.cut]
+            for kind in ["fan", "blotch"]:
+                write_l1c(kind, slashed, pm)
 
