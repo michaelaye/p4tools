@@ -115,6 +115,9 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
     return obsid
 
 # %% ../../notebooks/05_production.catalog.ipynb 7
+import multiprocessing
+import multiprocessing.pool
+
 def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     """
     fnotch_via_obsid: bool, optional
@@ -163,10 +166,18 @@ def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
     dbname : str
         The databasename 
     """
-    lazys = []
-    for obsid in obsids:
-        lazys.append(delayed(cluster_obsid)(obsid, savedir, dbname=dbname))
-    return compute(*lazys)
+
+    helpfunc = lambda x: cluster_obsid(x,savedir,dbname=dbname)
+
+    with multiprocessing.Pool(4) as pool:
+
+        test = pool.map(helpfunc,obsids)
+    
+    # lazys = []
+    # for obsid in obsids:
+    #     lazys.append(delayed(cluster_obsid)(obsid, savedir, dbname=dbname))
+    # return compute(*lazys)
+    return test
 
 
 
