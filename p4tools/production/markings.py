@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['LOGGER', 'IMG_X_SIZE', 'IMG_Y_SIZE', 'IMG_SHAPE', 'GOLD_MEMBERS', 'GOLD_PLOT_COLORS', 'set_subframe_size',
-           'calc_fig_size', 'TileID', 'Fnotch']
+           'calc_fig_size', 'TileID', 'calc_blotchiness', 'Fnotch']
 
 # %% ../../notebooks/05b_production.markings.ipynb 2
 from . import io
@@ -217,6 +217,9 @@ class TileID:
             fig.savefig(savepath, dpi=150)
 
 
+def calc_blotchiness(nfans, nblotches):
+    """Calculate the fnotch value (or fan-ness)."""
+    return (nblotches) / (nfans + nblotches)
 
 # %% ../../notebooks/05b_production.markings.ipynb 6
 class Fnotch(object):

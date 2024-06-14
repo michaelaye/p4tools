@@ -11,7 +11,7 @@ from sklearn.cluster import DBSCAN
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-#from scipy.stats import circmean, circstds
+from scipy.stats import circmean, circstd
 import pyaml
 from pathlib import Path
 import logging
