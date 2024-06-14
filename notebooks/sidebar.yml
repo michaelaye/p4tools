@@ -1,0 +1,15 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 00_io.ipynb
+      - 01_markings.ipynb
+      - 02_plotting.ipynb
+      - 05_production.catalog.ipynb
+      - 05a_production.io.ipynb
+      - 05b_production.markings.ipynb
+      - 05c_production.metadata.ipynb
+      - 05d_production.projection.ipynb
+      - examples.ipynb
+      - plotting_examples.ipynb
+      - regions.ipynb
