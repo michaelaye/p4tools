@@ -14,6 +14,7 @@ import itertools
 from planetarypy.pds.apps import get_index
 import string
 from dask import delayed, compute
+import numpy as np
 
 # p4tools package imports
 import p4tools.production.io as io
@@ -115,8 +116,8 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
     return obsid
 
 # %% ../../notebooks/05_production.catalog.ipynb 7
-import multiprocessing
 import multiprocessing.pool
+from functools import partial
 
 def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     """
@@ -167,17 +168,19 @@ def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
         The databasename 
     """
 
-    helpfunc = lambda x: cluster_obsid(x,savedir,dbname=dbname)
-
-    with multiprocessing.Pool(4) as pool:
-
-        test = pool.map(helpfunc,obsids)
     
-    # lazys = []
-    # for obsid in obsids:
-    #     lazys.append(delayed(cluster_obsid)(obsid, savedir, dbname=dbname))
-    # return compute(*lazys)
-    return test
+    # cluster_obsid_partial = partial(cluster_obsid,imgid = None, savedir=savedir,dbname=dbname)
+
+    # with multiprocessing.Pool(4) as pool:
+
+    #     test = pool.map(cluster_obsid_partial,obsids)
+
+    # return test
+    lazys = []
+    for obsid in obsids:
+        lazys.append(delayed(cluster_obsid)(obsid, savedir, dbname=dbname))
+    return compute(*lazys)
+
 
 
 
@@ -626,16 +629,27 @@ class ReleaseManager:
     def perform_clustering(self):
         lazy_results = []
 
-    def launch_catalog_production(self):
+    def launch_catalog_production(self, n_workers : int = 3):
         # check for data that is unprocessed
         self.check_for_todo()
 
         # perform the clustering
         if len(self.todo) > 0:
             LOGGER.info("Performing the clustering.")
-            print("Should Log before")
-            results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
-
+            #results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
+            
+            #Simple trick to avoid loading to many parallely into the thread
+            total = len(self.obsids)
+            #adding 1 to the loop amount is important to finish up the leftovers that dont fit in total/n_workers
+            # Example total = 10; n_workers = 3 => 10/3 = 3 meaning 3 loops until 0:3, 3:6, 6:9 , missing the last one 10
+            loop_full = int(np.floor(total/n_workers)) + 1 
+            for i in tqdm(range(loop_full)):
+                try: 
+                    temp_obsids = self.obsids[3*i:3*i+3]
+                except:
+                    temp_obsids = self.obsids[3*i:]
+                _ = cluster_obsid_parallel(temp_obsids, self.catalog, self.dbname)
+    
             # create marking_ids
             fan_id = fan_id_generator()
             blotch_id = blotch_id_generator()
@@ -646,14 +660,24 @@ class ReleaseManager:
 
             # fnotch and apply cuts
             LOGGER.info("Start fnotching")
-            results = fnotch_obsid_parallel(self.todo, self.catalog)
+            for i in tqdm(range(loop_full)):
+                try: 
+                    temp_obsids = self.obsids[3*i:3*i+3]
+                except:
+                    temp_obsids = self.obsids[3*i:]
+                _ = fnotch_obsid_parallel(temp_obsids, self.catalog)
 
         # create summary CSV files of the clustering output
         LOGGER.info("Creating L1C fan and blotch database files.")
         create_roi_file(self.obsids, self.catalog, self.catalog)
 
         LOGGER.info("Creating the required RED45 mosaics for ground projections.")
-        results = execute_in_parallel(create_RED45_mosaic, self.obsids)
+        for i in tqdm(range(loop_full)):
+            try: 
+                temp_obsids = self.obsids[3*i:3*i+3]
+            except:
+                temp_obsids = self.obsids[3*i:]
+            _ = execute_in_parallel(create_RED45_mosaic, temp_obsids)
 
         LOGGER.info("Calculating the center ground coordinates for all P4 tiles.")
         self.calc_tile_coordinates()
@@ -667,7 +691,7 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
-# %% ../../notebooks/05_production.catalog.ipynb 11
+# %% ../../notebooks/05_production.catalog.ipynb 12
 def read_csvfiles_into_lists_of_frames(folders):
     
     bucket = dict(fan=[], blotch=[])

@@ -404,7 +404,7 @@ class DBManager:
             self.dbname = Path(get_latest_cleaned_db())
         else:
             self.dbname = Path(dbname)
-        self.df = dd.read_parquet(self.dbname)
+        self.df = pd.read_parquet(self.dbname)
 
     def __repr__(self):
         s = "Database root: {}\n".format(Path(self.dbname).parent)
@@ -434,7 +434,7 @@ class DBManager:
 
     def get_obsid_for_tile_id(self, tile_id):
         tile_id = check_and_pad_id(tile_id)
-        obsid = self.df[self.df.image_id == tile_id].image_name.compute().iloc[0]
+        obsid = self.df[self.df.image_id == tile_id].image_name.iloc[0]
         return obsid
 
     def set_latest_with_dupes_db(self, datadir=None):
@@ -452,12 +452,12 @@ class DBManager:
         --------
         get_image_names_from_db
         """
-        return self.df.image_name.unique().compute()
+        return self.df.image_name.unique()
 
     @property
     def image_ids(self):
         "Return list of unique image_ids in database."
-        return self.df.image_id.unique().compute()
+        return self.df.image_id.unique()
 
     @property
     def n_image_ids(self):
@@ -474,7 +474,7 @@ class DBManager:
 
     def get_obsid_markings(self, obsid):
         "Return marking data for given HiRISE obsid."
-        return self.df[self.df.image_name == obsid].compute()
+        return self.df[self.df.image_name == obsid]
 
     def get_image_name_markings(self, image_name):
         "Alias for get_obsid_markings."
