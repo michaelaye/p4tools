@@ -16,7 +16,7 @@ import pyaml
 from pathlib import Path
 import logging
 import pandas as pd
-from tqdm.auto import tqdm
+from tqdm.autonotebook import tqdm
 
 logger = logging.getLogger(__name__)
 
