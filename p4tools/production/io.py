@@ -476,16 +476,12 @@ class DBManager:
         "Return marking data for given HiRISE obsid."
         return self.df[self.df.image_name == obsid]
 
-    def get_image_name_markings(self, image_name):
-        "Alias for get_obsid_markings."
-        return self.get_obsid_markings(image_name)
-
     def get_image_id_markings(self, image_id, obsid=None):
         "Return marking data for one Planet4 image_id"
         image_id = check_and_pad_id(image_id)
         if obsid is None:
             obsid = self.get_obsid_for_tile_id(image_id)
-        data = self.get_image_name_markings(obsid)
+        data = self.get_obsid_markings(obsid)
         return data.query("image_id==@image_id")
 
     def get_data_for_obsids(self, obsids):
