@@ -7,7 +7,7 @@ __all__ = ['LOGGER', 'execute_in_parallel', 'fan_id_generator', 'blotch_id_gener
 
 # %% ../../notebooks/05_production.catalog.ipynb 2
 # other imports
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 import pandas as pd
 import logging
 import itertools
@@ -629,18 +629,18 @@ class ReleaseManager:
     def perform_clustering(self):
         lazy_results = []
 
-    def launch_catalog_production(self, n_workers : int = 3):
+    def launch_catalog_production(self, max_tasks : int = 3):
         # check for data that is unprocessed
         self.check_for_todo()
 
-        #Simple trick to avoid loading to many parallely into the thread
+        #Simple trick to start too many tasks at the same time which all load a large DB.
         total = len(self.obsids)
         #adding 1 to the loop amount is important to finish up the leftovers that dont fit in total/n_workers
         # Example total = 10; n_workers = 3 => 10/3 = 3 meaning 3 loops until 0:3, 3:6, 6:9 , missing the last one 10
-        if total%n_workers == 0:
-            loop_full = int(total/n_workers)
+        if total%max_tasks == 0:
+            loop_full = int(total/max_tasks)
         else:
-            loop_full = int(np.floor(total/n_workers)) + 1 
+            loop_full = int(np.floor(total/max_tasks)) + 1 
 
         # perform the clustering
         if len(self.todo) > 0:
@@ -648,9 +648,9 @@ class ReleaseManager:
             #results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
             for i in tqdm(range(loop_full)):
                 try: 
-                    temp_obsids = self.obsids[n_workers*i:n_workers*i+n_workers]
+                    temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
                 except:
-                    temp_obsids = self.obsids[n_workers*i:]
+                    temp_obsids = self.obsids[max_tasks*i:]
                 _ = cluster_obsid_parallel(temp_obsids, self.catalog, self.dbname)
     
             # create marking_ids
@@ -665,9 +665,9 @@ class ReleaseManager:
             LOGGER.info("Start fnotching")
             for i in tqdm(range(loop_full)):
                 try: 
-                    temp_obsids = self.obsids[n_workers*i:n_workers*i+n_workers]
+                    temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
                 except:
-                    temp_obsids = self.obsids[n_workers*i:]
+                    temp_obsids = self.obsids[max_tasks*i:]
 
                 _ = fnotch_obsid_parallel(temp_obsids, self.catalog)
 
@@ -678,9 +678,9 @@ class ReleaseManager:
         LOGGER.info("Creating the required RED45 mosaics for ground projections.")
         for i in tqdm(range(loop_full)):
             try: 
-                temp_obsids = self.obsids[n_workers*i:n_workers*i+n_workers]
+                temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
             except:
-                temp_obsids = self.obsids[n_workers*i:]
+                temp_obsids = self.obsids[max_tasks*i:]
             _ = execute_in_parallel(create_RED45_mosaic, temp_obsids)
 
         LOGGER.info("Calculating the center ground coordinates for all P4 tiles.")
