@@ -646,7 +646,7 @@ class ReleaseManager:
         if len(self.todo) > 0:
             LOGGER.info("Performing the clustering.")
             #results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
-            for i in tqdm(range(loop_full)):
+            for i in range(loop_full):
                 try: 
                     temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
                 except:
@@ -663,7 +663,7 @@ class ReleaseManager:
 
             # fnotch and apply cuts
             LOGGER.info("Start fnotching")
-            for i in tqdm(range(loop_full)):
+            for i in range(loop_full):
                 try: 
                     temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
                 except:
@@ -676,7 +676,7 @@ class ReleaseManager:
         create_roi_file(self.obsids, self.catalog, self.catalog)
 
         LOGGER.info("Creating the required RED45 mosaics for ground projections.")
-        for i in tqdm(range(loop_full)):
+        for i in range(loop_full):
             try: 
                 temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
             except:
@@ -695,7 +695,7 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
-# %% ../../notebooks/05_production.catalog.ipynb 12
+# %% ../../notebooks/05_production.catalog.ipynb 11
 def read_csvfiles_into_lists_of_frames(folders):
     
     bucket = dict(fan=[], blotch=[])

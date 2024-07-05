@@ -324,7 +324,7 @@ class DBScanner:
         data = db.get_obsid_markings(image_name)
         image_ids = data.image_id.unique()
         logger.debug("Number of image_ids found: %i", len(image_ids))
-        for image_id in tqdm(image_ids):
+        for image_id in tqdm(image_ids,desc=image_name):
             self.pm.id = image_id
             self.cluster_image_id(image_id, msf, eps_values, image_name)
 
