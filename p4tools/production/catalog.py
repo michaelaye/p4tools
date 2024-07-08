@@ -713,7 +713,7 @@ class ReleaseManager:
                     add_marking_ids(path, fan_id, blotch_id)
 
                 LOGGER.info(f"Start fnotching for {obsid}")
-                fnotch_obsid(obsid,savedir=self.catalog,dbname=self.dbname)
+                fnotch_obsid(obsid,savedir=self.catalog)
 
                 create_RED45_mosaic(obsid)
 
