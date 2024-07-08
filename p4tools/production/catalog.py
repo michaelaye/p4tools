@@ -573,7 +573,8 @@ class ReleaseManager:
             axis=1,
             inplace=True,
         )
-        fans[self.FAN_COLUMNS_AS_PUBLISHED].to_csv(self.fan_merged, index=False)
+        fans[self.FAN_COLUMNS_AS_PUBLISHED].to_csv(self.fan_merged, index=False, mode = "a")
+
         LOGGER.info("Wrote %s", str(self.fan_merged))
 
         # write out blotches catalog
@@ -588,7 +589,7 @@ class ReleaseManager:
             inplace=True,
         )
         blotches[self.BLOTCH_COLUMNS_AS_PUBLISHED].to_csv(
-            self.blotch_merged, index=False
+            self.blotch_merged, index=False, mode = "a"
         )
         LOGGER.info("Wrote %s", str(self.blotch_merged))
 
@@ -629,7 +630,7 @@ class ReleaseManager:
     def perform_clustering(self):
         lazy_results = []
 
-    def launch_catalog_production(self, max_tasks : int = 3):
+    def launch_catalog_production(self, max_tasks : int = 10):
         # check for data that is unprocessed
         self.check_for_todo()
 
@@ -683,6 +684,44 @@ class ReleaseManager:
                 temp_obsids = self.obsids[max_tasks*i:]
             _ = execute_in_parallel(create_RED45_mosaic, temp_obsids)
 
+        LOGGER.info("Calculating the center ground coordinates for all P4 tiles.")
+        self.calc_tile_coordinates()
+
+        LOGGER.info("Calculating ground coordinates for catalog.")
+        self.calc_marking_coordinates()
+
+        # calculate all metadata required for P4 analysis
+        LOGGER.info("Writing summary metadata file.")
+        self.calc_metadata()
+        # merging metadata
+        self.merge_all()
+
+    def launch_serial_production(self):
+        self.check_for_todo()
+
+        fan_id = fan_id_generator()
+        blotch_id = blotch_id_generator()
+
+        for obsid in self.obsids:
+
+            LOGGER.info(f"Performing the Clustering for {obsid}")
+            if len(self.todo) > 0:
+                cluster_obsid(obsid,self.catalog,dbname=self.dbname)
+
+                paths = get_L1A_paths(obsid, self.catalog)
+                for path in paths:
+                    add_marking_ids(path, fan_id, blotch_id)
+
+                LOGGER.info(f"Start fnotching for {obsid}")
+                fnotch_obsid(obsid,savedir=self.catalog,dbname=self.dbname)
+
+                create_RED45_mosaic(obsid)
+
+        LOGGER.info("Creating L1C fan and blotch database files.")
+        create_roi_file(self.obsids, self.catalog, self.catalog)
+
+
+        
         LOGGER.info("Calculating the center ground coordinates for all P4 tiles.")
         self.calc_tile_coordinates()
 
