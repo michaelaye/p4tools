@@ -612,9 +612,6 @@ class ReleaseManager:
         blotches = blotches.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         return fans, blotches
 
-    def perform_clustering(self):
-        lazy_results = []
-
     def launch_catalog_production(self):
         # check for data that is unprocessed
         self.check_for_todo()
