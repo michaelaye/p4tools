@@ -702,7 +702,7 @@ class ReleaseManager:
         fan_id = fan_id_generator()
         blotch_id = blotch_id_generator()
 
-        for obsid in self.obsids:
+        for obsid in self.todo:
 
             LOGGER.info(f"Performing the Clustering for {obsid}")
             if len(self.todo) > 0:
