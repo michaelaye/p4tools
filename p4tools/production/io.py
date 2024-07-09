@@ -391,7 +391,7 @@ class DBManager:
 
     """
 
-    def __init__(self, dbname=None):
+    def __init__(self, dbname=None, obsid = None):
         """Initialize DBManager class.
 
         Parameters
@@ -402,6 +402,9 @@ class DBManager:
         """
         if dbname is None:
             self.dbname = Path(get_latest_cleaned_db())
+        elif obsid != None:
+            sel = [("image_name","=",obsid)]
+            self.df = pd.read_parquet(self.dbname,filters = sel)
         else:
             self.dbname = Path(dbname)
         self.df = pd.read_parquet(self.dbname)
