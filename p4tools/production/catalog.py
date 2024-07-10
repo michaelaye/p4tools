@@ -263,7 +263,7 @@ def create_roi_file(obsids, roi_name, datapath):
             print(f"Created {savepath}.")
 
 
-# %% ../../notebooks/05_production.catalog.ipynb 10
+# %% ../../notebooks/05_production.catalog.ipynb 11
 class ReleaseManager:
     """Class to manage releases and find relevant files.
     TODO better description
@@ -410,13 +410,27 @@ class ReleaseManager:
     def read_blotch_file(self):
         return pd.read_csv(self.blotch_merged)
 
+    def mark_done(self,obsid):
+        """Create a simple file in each obsid folder, that is simply meant to show that this obsid was finished for the todo method.
+
+        Parameters
+        ----------
+        obsid : str
+            Corresponding obsid
+        """
+        pm = io.PathManager(obsid=obsid, datapath=self.savefolder)
+        path = pm.obsid_results_savefolder / obsid / "Done.txt"
+        with open(path, "w") as file:
+            file.write("Done")
+    
+
     def check_for_todo(self, overwrite=None):
         if overwrite is None:
             overwrite = self.overwrite
         bucket = []
         for obsid in self.obsids:
             pm = io.PathManager(obsid=obsid, datapath=self.savefolder)
-            path = pm.obsid_results_savefolder / obsid
+            path = pm.obsid_results_savefolder / obsid / "Done.txt"
             if path.exists() and overwrite is False:
                 continue
             else:
@@ -630,6 +644,7 @@ class ReleaseManager:
     def perform_clustering(self):
         lazy_results = []
 
+
     def launch_catalog_production(self, max_tasks : int = 10):
         # check for data that is unprocessed
         self.check_for_todo()
@@ -696,6 +711,7 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
+    
     def launch_serial_production(self):
         self.check_for_todo()
 
@@ -717,6 +733,8 @@ class ReleaseManager:
 
                 create_RED45_mosaic(obsid)
 
+                self.mark_done(obsid)
+
         LOGGER.info("Creating L1C fan and blotch database files.")
         create_roi_file(self.obsids, self.catalog, self.catalog)
 
@@ -734,7 +752,7 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
-# %% ../../notebooks/05_production.catalog.ipynb 11
+# %% ../../notebooks/05_production.catalog.ipynb 12
 def read_csvfiles_into_lists_of_frames(folders):
     
     bucket = dict(fan=[], blotch=[])
