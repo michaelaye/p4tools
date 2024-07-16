@@ -116,9 +116,6 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
     return obsid
 
 # %% ../../notebooks/05_production.catalog.ipynb 7
-import multiprocessing.pool
-from functools import partial
-
 def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     """
     fnotch_via_obsid: bool, optional
@@ -167,20 +164,10 @@ def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
     dbname : str
         The databasename 
     """
-
-    
-    # cluster_obsid_partial = partial(cluster_obsid,imgid = None, savedir=savedir,dbname=dbname)
-
-    # with multiprocessing.Pool(4) as pool:
-
-    #     test = pool.map(cluster_obsid_partial,obsids)
-
-    # return test
     lazys = []
     for obsid in obsids:
         lazys.append(delayed(cluster_obsid)(obsid, savedir, dbname=dbname))
     return compute(*lazys)
-
 
 
 
@@ -263,7 +250,7 @@ def create_roi_file(obsids, roi_name, datapath):
             print(f"Created {savepath}.")
 
 
-# %% ../../notebooks/05_production.catalog.ipynb 11
+# %% ../../notebooks/05_production.catalog.ipynb 10
 class ReleaseManager:
     """Class to manage releases and find relevant files.
     TODO better description
@@ -641,38 +628,16 @@ class ReleaseManager:
         blotches = blotches.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         return fans, blotches
 
-<<<<<<< HEAD
     def launch_catalog_production(self):
-=======
-    def perform_clustering(self):
-        lazy_results = []
-
-
-    def launch_catalog_production(self, max_tasks : int = 10):
->>>>>>> serial
         # check for data that is unprocessed
         self.check_for_todo()
-
-        #Simple trick to start too many tasks at the same time which all load a large DB.
-        total = len(self.obsids)
-        #adding 1 to the loop amount is important to finish up the leftovers that dont fit in total/n_workers
-        # Example total = 10; n_workers = 3 => 10/3 = 3 meaning 3 loops until 0:3, 3:6, 6:9 , missing the last one 10
-        if total%max_tasks == 0:
-            loop_full = int(total/max_tasks)
-        else:
-            loop_full = int(np.floor(total/max_tasks)) + 1 
 
         # perform the clustering
         if len(self.todo) > 0:
             LOGGER.info("Performing the clustering.")
-            #results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
-            for i in range(loop_full):
-                try: 
-                    temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
-                except:
-                    temp_obsids = self.obsids[max_tasks*i:]
-                _ = cluster_obsid_parallel(temp_obsids, self.catalog, self.dbname)
-    
+            print("Should Log before")
+            results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
+
             # create marking_ids
             fan_id = fan_id_generator()
             blotch_id = blotch_id_generator()
@@ -683,13 +648,7 @@ class ReleaseManager:
 
             # fnotch and apply cuts
             LOGGER.info("Start fnotching")
-            for i in range(loop_full):
-                try: 
-                    temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
-                except:
-                    temp_obsids = self.obsids[max_tasks*i:]
-
-                _ = fnotch_obsid_parallel(temp_obsids, self.catalog)
+            results = fnotch_obsid_parallel(self.todo, self.catalog)
 
         # create summary CSV files of the clustering output
         LOGGER.info("Creating L1C fan and blotch database files.")
@@ -756,7 +715,7 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
-# %% ../../notebooks/05_production.catalog.ipynb 12
+# %% ../../notebooks/05_production.catalog.ipynb 11
 def read_csvfiles_into_lists_of_frames(folders):
     
     bucket = dict(fan=[], blotch=[])
