@@ -391,7 +391,7 @@ class DBManager:
 
     """
 
-    def __init__(self, dbname=None):
+    def __init__(self, dbname=None, obsid = None):
         """Initialize DBManager class.
 
         Parameters
@@ -404,7 +404,12 @@ class DBManager:
             self.dbname = Path(get_latest_cleaned_db())
         else:
             self.dbname = Path(dbname)
-        self.df = dd.read_parquet(self.dbname)
+        
+        if obsid != None:
+            sel = [("image_name","=",obsid)]
+            self.df = pd.read_parquet(self.dbname,filters = sel)
+        else:
+            self.df = pd.read_parquet(self.dbname)
 
     def __repr__(self):
         s = "Database root: {}\n".format(Path(self.dbname).parent)
@@ -434,7 +439,7 @@ class DBManager:
 
     def get_obsid_for_tile_id(self, tile_id):
         tile_id = check_and_pad_id(tile_id)
-        obsid = self.df[self.df.image_id == tile_id].image_name.compute().iloc[0]
+        obsid = self.df[self.df.image_id == tile_id].image_name.iloc[0]
         return obsid
 
     def set_latest_with_dupes_db(self, datadir=None):
@@ -452,12 +457,12 @@ class DBManager:
         --------
         get_image_names_from_db
         """
-        return self.df.image_name.unique().compute()
+        return self.df.image_name.unique()
 
     @property
     def image_ids(self):
         "Return list of unique image_ids in database."
-        return self.df.image_id.unique().compute()
+        return self.df.image_id.unique()
 
     @property
     def n_image_ids(self):
@@ -474,18 +479,14 @@ class DBManager:
 
     def get_obsid_markings(self, obsid):
         "Return marking data for given HiRISE obsid."
-        return self.df[self.df.image_name == obsid].compute()
-
-    def get_image_name_markings(self, image_name):
-        "Alias for get_obsid_markings."
-        return self.get_obsid_markings(image_name)
+        return self.df[self.df.image_name == obsid]
 
     def get_image_id_markings(self, image_id, obsid=None):
         "Return marking data for one Planet4 image_id"
         image_id = check_and_pad_id(image_id)
         if obsid is None:
             obsid = self.get_obsid_for_tile_id(image_id)
-        data = self.get_image_name_markings(obsid)
+        data = self.get_obsid_markings(obsid)
         return data.query("image_id==@image_id")
 
     def get_data_for_obsids(self, obsids):

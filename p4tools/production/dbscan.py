@@ -320,11 +320,11 @@ class DBScanner:
         self.setup_logfiles()
 
         logger.info("Clustering image_name %s with msf of %f.", image_name, self.msf)
-        db = io.DBManager(self.dbname)
-        data = db.get_image_name_markings(image_name)
+        db = io.DBManager(self.dbname, obsid = image_name)
+        data = db.get_obsid_markings(image_name)
         image_ids = data.image_id.unique()
         logger.debug("Number of image_ids found: %i", len(image_ids))
-        for image_id in tqdm(image_ids):
+        for image_id in tqdm(image_ids,desc=image_name):
             self.pm.id = image_id
             self.cluster_image_id(image_id, msf, eps_values, image_name)
 
