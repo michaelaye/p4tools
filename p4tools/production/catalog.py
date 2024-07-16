@@ -628,39 +628,56 @@ class ReleaseManager:
         blotches = blotches.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         return fans, blotches
 
-    def launch_catalog_production(self):
-        # check for data that is unprocessed
+    def launch_catalog_production(self,kind : str = "serial", parallel_tasks : int = 10):
+
+        if kind == "serial":
+            self.launch_serial_production()
+        
+        if kind == "parallel":
+            self.launch_parallel_production(parallel_tasks=parallel_tasks)
+
+
+    def launch_parallel_production(self,parallel_tasks : int = 10):
+        
         self.check_for_todo()
+        
+        fan_id = fan_id_generator()
+        blotch_id = blotch_id_generator()
 
-        # perform the clustering
-        if len(self.todo) > 0:
-            LOGGER.info("Performing the clustering.")
-            print("Should Log before")
-            results = cluster_obsid_parallel(self.todo, self.catalog, self.dbname)
+        #Simple trick to start too many tasks at the same time which all load a large DB.
+        total = len(self.todo)
+        #adding 1 to the loop amount is important to finish up the leftovers that dont fit in total/n_workers
+        # Example total = 10; n_workers = 3 => 10/3 = 3 meaning 3 loops until 0:3, 3:6, 6:9 , missing the last one 10
+        if total%parallel_tasks == 0:
+            loop_full = int(total/parallel_tasks)
+        else:
+            loop_full = int(np.floor(total/parallel_tasks)) + 1 
+        
+        for i in range(loop_full):
+            try: 
+                temp_obsids = self.obsids[parallel_tasks*i:parallel_tasks*i+parallel_tasks]
+            except:
+                temp_obsids = self.obsids[parallel_tasks*i:]
 
-            # create marking_ids
-            fan_id = fan_id_generator()
-            blotch_id = blotch_id_generator()
-            for obsid in self.todo:
+            LOGGER.info(f"Performing the Clustering for batch {i}")
+            _ = cluster_obsid_parallel(temp_obsids, self.catalog, self.dbname)
+
+            for obsid in temp_obsids:
                 paths = get_L1A_paths(obsid, self.catalog)
                 for path in paths:
                     add_marking_ids(path, fan_id, blotch_id)
-
+            
             # fnotch and apply cuts
             LOGGER.info("Start fnotching")
-            results = fnotch_obsid_parallel(self.todo, self.catalog)
+            _ = fnotch_obsid_parallel(temp_obsids, self.catalog)
+
+            LOGGER.info("Creating the required RED45 mosaics for ground projections.")
+            _ = execute_in_parallel(create_RED45_mosaic, temp_obsids)
+
 
         # create summary CSV files of the clustering output
         LOGGER.info("Creating L1C fan and blotch database files.")
         create_roi_file(self.obsids, self.catalog, self.catalog)
-
-        LOGGER.info("Creating the required RED45 mosaics for ground projections.")
-        for i in range(loop_full):
-            try: 
-                temp_obsids = self.obsids[max_tasks*i:max_tasks*i+max_tasks]
-            except:
-                temp_obsids = self.obsids[max_tasks*i:]
-            _ = execute_in_parallel(create_RED45_mosaic, temp_obsids)
 
         LOGGER.info("Calculating the center ground coordinates for all P4 tiles.")
         self.calc_tile_coordinates()
@@ -676,7 +693,11 @@ class ReleaseManager:
 
     
     def launch_serial_production(self):
+        """The Method for starting the production of the catalogue in a serial manner. Doing one OBSID at a time.
+        """
         self.check_for_todo()
+
+        
 
         fan_id = fan_id_generator()
         blotch_id = blotch_id_generator()
