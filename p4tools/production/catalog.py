@@ -697,8 +697,6 @@ class ReleaseManager:
         """
         self.check_for_todo()
 
-        
-
         fan_id = fan_id_generator()
         blotch_id = blotch_id_generator()
 
@@ -735,6 +733,34 @@ class ReleaseManager:
         self.calc_metadata()
         # merging metadata
         self.merge_all()
+
+    def produce_single_obsid(self, obsid:str):
+        """Clusters and creates all obsid data without merging 
+           as this should only be done on the full catalog. This
+           is meant for repairing single obsids
+
+        Parameters
+        ----------
+        obsid : str
+            One Singular obsid
+        """
+
+        fan_id = fan_id_generator()
+        blotch_id = blotch_id_generator()
+
+        cluster_obsid(obsid,self.catalog,dbname=self.dbname)
+
+        paths = get_L1A_paths(obsid, self.catalog)
+        for path in paths:
+            add_marking_ids(path, fan_id, blotch_id)
+
+        LOGGER.info(f"Start fnotching for {obsid}")
+        fnotch_obsid(obsid,savedir=self.catalog)
+
+        create_RED45_mosaic(obsid)
+        self.mark_done(obsid)
+
+
 
 # %% ../../notebooks/05_production.catalog.ipynb 11
 def read_csvfiles_into_lists_of_frames(folders):
