@@ -560,5 +560,5 @@ class Fan(lines.Line2D):
                                   self.data.angle,
                                   origin=tuple(self.semi_circle_center))
 
-        df = pd.DataFrame(np.vstack([self.coords[::-1][:2], np.array(rotated)]))
+        df = pd.DataFrame(np.vstack([self.coords[::-1][:2], np.array(rotated.xy).T]))
         return geom.Polygon(df.round(2).drop_duplicates().values)
