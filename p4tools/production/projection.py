@@ -141,7 +141,7 @@ def create_RED45_mosaic(obsid, overwrite=False):
         return obsid, True
 
     for prod in products:
-        prod.download()  # the RED_PRODUCT knows how to download
+        prod.download(overwrite = overwrite)  # the RED_PRODUCT knows how to download
         ret = nocal_hi(prod)  # here the spiceinit happens
         if not ret:
             return obsid, False
