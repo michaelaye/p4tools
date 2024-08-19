@@ -472,7 +472,7 @@ class ReleaseManager:
         cubepaths = [P4Mosaic(obsid).mosaic_path for obsid in self.obsids]
 
         todo = []
-        for cubepath in cubepaths:
+        for cubepath in tqdm(cubepaths,desc="Appending Cubepaths"):
             tc = TileCalculator(cubepath, read_data=False, dbname=self.dbname)
             if not tc.campt_results_path.exists():
                 todo.append(cubepath)
