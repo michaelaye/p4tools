@@ -277,8 +277,8 @@ class XY2LATLON:
 class TileCalculator:
     def __init__(self, cubepath, read_data=True, dbname=None):
         self.cubepath = Path(cubepath)
-        db = io.DBManager(dbname)
         if read_data:
+            db = io.DBManager(dbname)
             self.data = db.get_obsid_markings(self.img_name)
 
     @property
