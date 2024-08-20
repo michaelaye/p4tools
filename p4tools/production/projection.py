@@ -278,7 +278,7 @@ class TileCalculator:
     def __init__(self, cubepath, read_data=True, dbname=None):
         self.cubepath = Path(cubepath)
         if read_data:
-            db = io.DBManager(dbname)
+            db = io.DBManager(dbname, obsid=self.img_name)
             self.data = db.get_obsid_markings(self.img_name)
 
     @property
