@@ -484,10 +484,11 @@ class ReleaseManager:
             tilecalc.calc_tile_coords()
 
         if not len(todo) == 0:
-            _ = execute_in_parallel(get_tile_coords, todo)##Execute in parallel?
+            for cubepath in tqdm(todo,desc="Calculating Tile Coords"):
+                _ = get_tile_coords(cubepath)
 
         bucket = []
-        for cubepath in tqdm(cubepaths):
+        for cubepath in tqdm(cubepaths,desc="Creating Cubepath Bucket"):
             tc = TileCalculator(cubepath, read_data=False, dbname=self.dbname)
             bucket.append(tc.tile_coords_df)
         coords = pd.concat(bucket, ignore_index=True, sort=False)
