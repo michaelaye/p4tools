@@ -735,7 +735,7 @@ class ReleaseManager:
         # merging metadata
         self.merge_all()
 
-    def produce_single_obsid(self, obsid:str):
+    def produce_single_obsid(self, obsid:str,  makeMosaics = True):
         """Clusters and creates all obsid data without merging 
            as this should only be done on the full catalog. This
            is meant for repairing single obsids
@@ -744,6 +744,8 @@ class ReleaseManager:
         ----------
         obsid : str
             One Singular obsid
+        makeMosaics : bool
+            wether you want to redownload and create the RED45 mosaics (not always necessary when rerunning)
         """
 
         fan_id = fan_id_generator()
@@ -758,7 +760,9 @@ class ReleaseManager:
         LOGGER.info(f"Start fnotching for {obsid}")
         fnotch_obsid(obsid,savedir=self.catalog)
 
-        create_RED45_mosaic(obsid)
+        if makeMosaics:
+            create_RED45_mosaic(obsid)
+        
         self.mark_done(obsid)
 
 
