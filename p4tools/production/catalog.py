@@ -600,10 +600,20 @@ class ReleaseManager:
         blotches = pd.read_csv(self.blotch_file)
         combined = pd.concat([fans, blotches], sort=False)
 
-        for obsid in tqdm(self.obsids):
+        obsids_with_data = combined.image_name.unique()
+        
+        if self.obsids.size == obsids_with_data.size:
+            
+            missing = list(set(self.obsids) - set(obsids_with_data))
+
+            LOGGER.warn("The following obsids have no data from clustering")
+            LOGGER.warn(missing)
+
+        for obsid in tqdm(obsids_with_data):
             data = combined[combined.image_name == obsid]
             xy = XY2LATLON(data, self.savefolder, overwrite=self.overwrite)
             xy.process_inpath()
+
 
     def collect_marking_coordinates(self):
         bucket = []
