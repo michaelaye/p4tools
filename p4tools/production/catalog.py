@@ -602,7 +602,7 @@ class ReleaseManager:
 
         obsids_with_data = combined.image_name.unique()
         
-        if len(self.obsids) == len(obsids_with_data):
+        if len(self.obsids) != len(obsids_with_data):
             
             missing = list(set(self.obsids) - set(obsids_with_data))
 
@@ -615,9 +615,14 @@ class ReleaseManager:
             xy.process_inpath()
 
 
-    def collect_marking_coordinates(self):
+    def collect_marking_coordinates(self,obsids = None):
         bucket = []
-        for obsid in self.obsids:
+
+        if obsids == None:
+            working_obsids = self.obsids
+        else:
+            working_obsids = obsids
+        for obsid in working_obsids:
             xy = XY2LATLON(None, self.savefolder, obsid=obsid)
             bucket.append(pd.read_csv(xy.savepath).assign(obsid=obsid))
 
@@ -633,7 +638,13 @@ class ReleaseManager:
     def merge_campt_results(self, fans, blotches):
         INDEX = ["obsid", "image_x", "image_y"]
 
-        ground = self.collect_marking_coordinates().round(decimals=7)
+        ## This part is necessary for the case in which not all obsids have data left after clustering
+        obsids_1 = fans.image_ids.unique()
+        obsids_2 = blotches.image_ids.unique()
+        image_ids = np.concatenate(obsids_1,obsids_2)
+        image_ids = np.unique(image_ids)
+
+        ground = self.collect_marking_coordinates(image_ids).round(decimals=7)
         # ground = self.fix_marking_coordinates_precision(ground)
         fans = fans.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         blotches = blotches.merge(ground[self.COLS_TO_MERGE], on=INDEX)
