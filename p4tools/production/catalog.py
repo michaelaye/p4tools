@@ -602,7 +602,7 @@ class ReleaseManager:
 
         obsids_with_data = combined.image_name.unique()
         
-        if self.obsids.size == obsids_with_data.size:
+        if len(self.obsids) == len(obsids_with_data):
             
             missing = list(set(self.obsids) - set(obsids_with_data))
 
