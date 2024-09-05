@@ -519,9 +519,9 @@ class ReleaseManager:
         """
         out = []
         for df in [fans, blotches]:
-            averaged = df.groupby("marking_id").mean(numeric_only=True)
-            tmp = df.drop_duplicates(subset="marking_id").set_index("marking_id")
-            averaged = averaged.join(tmp[["image_id", "obsid"]], how="inner")
+            averaged = df.groupby(["obsid","marking_id"]).mean(numeric_only=True)
+            tmp = df.drop_duplicates(subset=["marking_id","obsid"]).set_index(["obsid","marking_id"])
+            averaged = averaged.join(tmp[["image_id"]],how="inner")
             out.append(averaged.reset_index())
 
         return out
@@ -575,7 +575,7 @@ class ReleaseManager:
             axis=1,
             inplace=True,
         )
-        fans[self.FAN_COLUMNS_AS_PUBLISHED].to_csv(self.fan_merged, index=False, mode = "a")
+        fans[self.FAN_COLUMNS_AS_PUBLISHED].to_csv(self.fan_merged, index=False, mode = "w")
 
         LOGGER.info("Wrote %s", str(self.fan_merged))
 
@@ -591,7 +591,7 @@ class ReleaseManager:
             inplace=True,
         )
         blotches[self.BLOTCH_COLUMNS_AS_PUBLISHED].to_csv(
-            self.blotch_merged, index=False, mode = "a"
+            self.blotch_merged, index=False, mode = "w"
         )
         LOGGER.info("Wrote %s", str(self.blotch_merged))
 
@@ -618,10 +618,11 @@ class ReleaseManager:
     def collect_marking_coordinates(self,obsids = None):
         bucket = []
 
-        if obsids == None:
-            working_obsids = self.obsids
-        else:
+        if type(obsids) is np.ndarray:
             working_obsids = obsids
+        else:
+            working_obsids = self.obsids
+            
         for obsid in working_obsids:
             xy = XY2LATLON(None, self.savefolder, obsid=obsid)
             bucket.append(pd.read_csv(xy.savepath).assign(obsid=obsid))
@@ -639,12 +640,12 @@ class ReleaseManager:
         INDEX = ["obsid", "image_x", "image_y"]
 
         ## This part is necessary for the case in which not all obsids have data left after clustering
-        obsids_1 = fans.image_ids.unique()
-        obsids_2 = blotches.image_ids.unique()
-        image_ids = np.concatenate(obsids_1,obsids_2)
-        image_ids = np.unique(image_ids)
+        obsids_1 = fans.obsid.unique()
+        obsids_2 = blotches.obsid.unique()
+        obsids = np.append(obsids_1,obsids_2)
+        obsids = np.unique(obsids)
 
-        ground = self.collect_marking_coordinates(image_ids).round(decimals=7)
+        ground = self.collect_marking_coordinates(obsids).round(decimals=7)
         # ground = self.fix_marking_coordinates_precision(ground)
         fans = fans.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         blotches = blotches.merge(ground[self.COLS_TO_MERGE], on=INDEX)
