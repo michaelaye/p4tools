@@ -2,11 +2,15 @@
 
 # %% auto 0
 __all__ = ['plot_blotches_for_tile', 'plot_fans_for_tile', 'plot_original_tile', 'plot_original_and_fans',
-           'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans']
+           'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans',
+           'plot_windrose_histogram', 'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale',
+           'differentiate_ls']
 
 # %% ../notebooks/02_plotting.ipynb 2
 from matplotlib import pyplot as plt
-
+from matplotlib import colormaps
+import numpy as np
+import pandas as pd
 from . import io, markings
 
 # %% ../notebooks/02_plotting.ipynb 3
@@ -75,3 +79,92 @@ def plot_x_random_tiles_with_n_fans(
     tile_ids = n_fans[n_fans >= n].sample(x, random_state=random_state).index
     for tile_id in tile_ids:
         plot_original_fans_blotches(tile_id, save=save)
+
+# %% ../notebooks/02_plotting.ipynb 20
+def plot_windrose_histogram(df,ax=None,segmentsize = 3.6, color = "tab:blue", label = None,):
+    """Create a Windrose like histogram from a Dataframe containing the fan data.
+       The fan dataframe should at least contain the following columns :["angle","north_azimuth"]
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The Dataframe containing the fan data
+    ax : matplotlib.Axes.axes, optional
+        A previously existing axes, by default None
+    segmentsize : float, optional
+        _description_, by default 4
+    color : str, optional
+        _description_, by default "tab:blue"
+    label : _type_, optional
+        _description_, by default None
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    theta, radii = compute_direction_histogram(df, segmentsize)
+    width = np.diff(theta)
+
+    if ax is None:
+        ax = plt.subplot(projection='polar')
+    
+    ax.bar(theta[:-1],radii, width=width, color=color,label=label)
+
+    return ax
+
+def compute_direction_histogram(df, segmentsize):
+    direction = df["angle"]
+    
+    north_azimuth = np.deg2rad(df["north_azimuth"])
+
+    direction = (direction - north_azimuth)%360
+
+    bins = np.arange(0,360+segmentsize,segmentsize)
+    counts,edges = np.histogram(direction,bins,density=False)
+
+    theta = np.deg2rad(bins)
+    radii = counts
+    return theta,radii
+
+
+def initialize_polar_axes(ax):
+    """Initializes the Polar Axes to Wind Directions, counted in clockwise direction from N
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        An Matplotlib polar Axis
+    """
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction("clockwise")
+    ax.set_xticks(np.linspace(0,2*np.pi,8,endpoint=False))
+    ax.set_xticklabels(["N","NE","E","SE","S","SW","W","NW"])
+
+
+def get_colorscale(nr):
+    color_scale = np.linspace(0,1,nr)
+    if nr > 20:   
+        cmap = colormaps["turbo"](color_scale)
+    else:
+        cmap = colormaps["tab20"](color_scale)
+
+    return cmap
+
+def differentiate_ls(df,ls_bin = 4, ):
+
+    ax = plt.subplot(projection = "polar")
+    
+    _,ls_bin = pd.cut(df.l_s, bins=ls_bin,retbins=True)
+    cmap = get_colorscale(ls_bin.size - 1)
+
+    for i,ls in enumerate(ls_bin[:-1]):
+        df_sub = df[df.l_s.between(left=ls_bin[i],right=ls_bin[i+1])]
+        label = f"[{ls_bin[i]:.1f}, {ls_bin[i+1]:.1f}]"
+        ax = plot_windrose_histogram(df_sub, ax, color=cmap[i], label=label)
+    
+    initialize_polar_axes(ax)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    return ax
+
