@@ -81,7 +81,7 @@ def plot_x_random_tiles_with_n_fans(
         plot_original_fans_blotches(tile_id, save=save)
 
 # %% ../notebooks/02_plotting.ipynb 20
-def plot_windrose_histogram(df,ax=None,segmentsize = 3.6, color = "tab:blue", label = None,):
+def plot_windrose_histogram(df,ax=None,segmentsize = 3.6, color = "tab:blue", label = None, alpha=0.5):
     """Create a Windrose like histogram from a Dataframe containing the fan data.
        The fan dataframe should at least contain the following columns :["angle","north_azimuth"]
 
@@ -109,7 +109,7 @@ def plot_windrose_histogram(df,ax=None,segmentsize = 3.6, color = "tab:blue", la
     if ax is None:
         ax = plt.subplot(projection='polar')
     
-    ax.bar(theta[:-1],radii, width=width, color=color,label=label)
+    ax.bar(theta[:-1],radii, width=width, color=color,label=label, alpha=alpha)
 
     return ax
 
@@ -144,12 +144,15 @@ def initialize_polar_axes(ax):
 
 def get_colorscale(nr):
     color_scale = np.linspace(0,1,nr)
-    if nr > 20:   
-        cmap = colormaps["turbo"](color_scale)
+    if nr < 9:
+        cmap = colormaps["Pastel1"]
+    if nr < 20:   
+        cmap = colormaps["tab20"]
     else:
-        cmap = colormaps["tab20"](color_scale)
+        cmap = colormaps["turbo"]
 
-    return cmap
+
+    return cmap(color_scale)
 
 def differentiate_ls(df,ls_bin = 4, ):
 
@@ -160,7 +163,7 @@ def differentiate_ls(df,ls_bin = 4, ):
 
     for i,ls in enumerate(ls_bin[:-1]):
         df_sub = df[df.l_s.between(left=ls_bin[i],right=ls_bin[i+1])]
-        label = f"[{ls_bin[i]:.1f}, {ls_bin[i+1]:.1f}]"
+        label = f"[{ls_bin[i]:.0f}, {ls_bin[i+1]:.0f}]"
         ax = plot_windrose_histogram(df_sub, ax, color=cmap[i], label=label)
     
     initialize_polar_axes(ax)
