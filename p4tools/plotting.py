@@ -163,9 +163,10 @@ def differentiate_ls(df,ls_bin = 4, ):
         df_sub = df[df.l_s.between(left=ls_bin[i],right=ls_bin[i+1])]
 
         label1 = f"[{ls_bin[i]:.0f}, {ls_bin[i+1]:.0f}]"
-        label2 = f"#Fans = {df.shape[0]}"
-        label = label1 + "\n" + label2
-        
+        label2 = f"#Fans = {df_sub.shape[0]}"
+        label3 = f"#images = {df_sub.obsid.unique().size}"
+        label = label1 + "\n" + label2 + "\n" + label3
+
         ax = plot_windrose_histogram(df_sub, ax, color=cmap[i], label=label)
     
     initialize_polar_axes(ax)
