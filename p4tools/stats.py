@@ -25,6 +25,17 @@ mars_years = {
 
 # %% ../notebooks/03_stats.ipynb 2
 def define_martian_year(df, time_col_name):
+    """This Function Modifies the Dataframe it is given. And adds a Column named "MY",
+        which signifies the Mars Year a Datapoint was taken.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A Dataframe for which we wish to calculate the Mars Years
+    time_col_name : str
+        The Name of the column which has the Dates 
+        which to correspond to Mars Years.
+    """
     mars_timestamps = {k: pd.to_datetime(v) for k, v in mars_years.items()}
     df["MY"] = 0
     for yr, t in mars_timestamps.items():
