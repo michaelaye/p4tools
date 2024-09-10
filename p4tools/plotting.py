@@ -121,7 +121,7 @@ def compute_direction_histogram(df, segmentsize):
     direction = (direction - north_azimuth)%360
 
     bins = np.arange(0,360+segmentsize,segmentsize)
-    counts,edges = np.histogram(direction,bins,density=False)
+    counts,edges = np.histogram(direction,bins,density=True)
 
     theta = np.deg2rad(bins)
     radii = counts
