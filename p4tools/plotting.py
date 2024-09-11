@@ -3,8 +3,8 @@
 # %% auto 0
 __all__ = ['plot_blotches_for_tile', 'plot_fans_for_tile', 'plot_original_tile', 'plot_original_and_fans',
            'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans',
-           'plot_windrose_histogram', 'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale',
-           'differentiate_ls']
+           'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale', 'histogram_polar',
+           'histogram_unnormalized']
 
 # %% ../notebooks/02_plotting.ipynb 2
 from matplotlib import pyplot as plt
@@ -81,47 +81,17 @@ def plot_x_random_tiles_with_n_fans(
         plot_original_fans_blotches(tile_id, save=save)
 
 # %% ../notebooks/02_plotting.ipynb 20
-def plot_windrose_histogram(df,ax=None,segmentsize = 3.6, color = "tab:blue", label = None, alpha=0.5):
-    """Create a Windrose like histogram from a Dataframe containing the fan data.
-       The fan dataframe should at least contain the following columns :["angle","north_azimuth"]
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        The Dataframe containing the fan data
-    ax : matplotlib.Axes.axes, optional
-        A previously existing axes, by default None
-    segmentsize : float, optional
-        _description_, by default 4
-    color : str, optional
-        _description_, by default "tab:blue"
-    label : _type_, optional
-        _description_, by default None
-
-    Returns
-    -------
-    _type_
-        _description_
-    """
-    theta, radii = compute_direction_histogram(df, segmentsize)
-    width = np.diff(theta)
-
-    if ax is None:
-        ax = plt.subplot(projection='polar')
+def compute_direction_histogram(df, segmentsize, density=True):
     
-    ax.bar(theta[:-1],radii, width=width, color=color,label=label, alpha=alpha)
-
-    return ax
-
-def compute_direction_histogram(df, segmentsize):
     direction = df["angle"]
-    
     north_azimuth = np.deg2rad(df["north_azimuth"])
-
     direction = (direction - north_azimuth)%360
-
     bins = np.arange(0,360+segmentsize,segmentsize)
-    counts,edges = np.histogram(direction,bins,density=True)
+    if df.shape[0] != 0:
+        counts,edges = np.histogram(direction,bins,density=density)
+    else:
+        #Maybe issue a warning
+        return [0,0],[0,0]
 
     theta = np.deg2rad(bins)
     radii = counts
@@ -152,10 +122,9 @@ def get_colorscale(nr):
         cmap = colormaps["turbo"]
     return cmap(color_scale)
 
-def differentiate_ls(df,ls_bin = 4, ):
 
-    ax = plt.subplot(projection = "polar")
-    
+def _draw_histogram(ax, df, ls_bin = 4, density = True, segmentsize=3.6, alpha=0.5):
+
     _,ls_bin = pd.cut(df.l_s, bins=ls_bin,retbins=True)
     cmap = get_colorscale(ls_bin.size - 1)
 
@@ -167,10 +136,22 @@ def differentiate_ls(df,ls_bin = 4, ):
         label3 = f"#images = {df_sub.obsid.unique().size}"
         label = label1 + "\n" + label2 + "\n" + label3
 
-        ax = plot_windrose_histogram(df_sub, ax, color=cmap[i], label=label)
-    
+        theta, radii = compute_direction_histogram(df_sub, segmentsize, density=density)
+        width = np.diff(theta)
+        ax.bar(theta[:-1],radii, width=width, color=cmap[i],label=label, alpha=alpha)
+
+    return ax
+
+def histogram_polar(df,ls_bin = 4, segmentsize=3.6, alpha=0.5):
+
+    ax = plt.subplot(projection = "polar")
+    ax = _draw_histogram(ax, df, ls_bin=ls_bin, segmentsize=segmentsize, alpha=alpha)
     initialize_polar_axes(ax)
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
     return ax
 
+def histogram_unnormalized(df, ls_bin = 4, segmentsize=3.6, alpha=0.5):
+    ax = plt.subplot()
+    ax = _draw_histogram(ax, df, ls_bin=ls_bin, density=False ,segmentsize=segmentsize, alpha=alpha)
+    return ax
