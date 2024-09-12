@@ -4,7 +4,7 @@
 __all__ = ['plot_blotches_for_tile', 'plot_fans_for_tile', 'plot_original_tile', 'plot_original_and_fans',
            'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans',
            'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale', 'histogram_polar',
-           'histogram_unnormalized']
+           'histogram_cartesian']
 
 # %% ../notebooks/02_plotting.ipynb 2
 from matplotlib import pyplot as plt
@@ -81,7 +81,7 @@ def plot_x_random_tiles_with_n_fans(
         plot_original_fans_blotches(tile_id, save=save)
 
 # %% ../notebooks/02_plotting.ipynb 20
-def compute_direction_histogram(df, segmentsize, density=True):
+def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
     
     direction = df["angle"]
     north_azimuth = np.deg2rad(df["north_azimuth"])
@@ -93,7 +93,11 @@ def compute_direction_histogram(df, segmentsize, density=True):
         #Maybe issue a warning
         return [0,0],[0,0]
 
-    theta = np.deg2rad(bins)
+    if not degrees:
+        theta = np.deg2rad(bins)
+    else: 
+        theta = bins
+        
     radii = counts
     return theta,radii
 
@@ -123,7 +127,7 @@ def get_colorscale(nr):
     return cmap(color_scale)
 
 
-def _draw_histogram(ax, df, ls_bin = 4, density = True, segmentsize=3.6, alpha=0.5):
+def _draw_histogram(ax, df, ls_bin = 4, density = True, segmentsize=3.6, alpha=0.5, degrees=False):
 
     _,ls_bin = pd.cut(df.l_s, bins=ls_bin,retbins=True)
     cmap = get_colorscale(ls_bin.size - 1)
@@ -136,7 +140,7 @@ def _draw_histogram(ax, df, ls_bin = 4, density = True, segmentsize=3.6, alpha=0
         label3 = f"#images = {df_sub.obsid.unique().size}"
         label = label1 + "\n" + label2 + "\n" + label3
 
-        theta, radii = compute_direction_histogram(df_sub, segmentsize, density=density)
+        theta, radii = compute_direction_histogram(df_sub, segmentsize, density=density, degrees=degrees)
         width = np.diff(theta)
         ax.bar(theta[:-1],radii, width=width, color=cmap[i],label=label, alpha=alpha)
 
@@ -151,7 +155,7 @@ def histogram_polar(df,ls_bin = 4, segmentsize=3.6, alpha=0.5):
 
     return ax
 
-def histogram_unnormalized(df, ls_bin = 4, segmentsize=3.6, alpha=0.5):
+def histogram_cartesian(df, ls_bin = 4, segmentsize=3.6, alpha=0.5, degrees=True):
     ax = plt.subplot()
-    ax = _draw_histogram(ax, df, ls_bin=ls_bin, density=False ,segmentsize=segmentsize, alpha=alpha)
+    ax = _draw_histogram(ax, df, ls_bin=ls_bin, density=False ,segmentsize=segmentsize, alpha=alpha, degrees=degrees)
     return ax
