@@ -126,30 +126,80 @@ def get_colorscale(nr):
         cmap = colormaps["turbo"]
     return cmap(color_scale)
 
+def _get_filtered_index(df,ls_bin, per_obsid=False):
 
-def _draw_histogram(ax, df, ls_bin = 4, density = True, segmentsize=3.6, alpha=0.5, degrees=False):
+    indexes = []
+    label_list = []
+    if per_obsid:
+        obsids = df.obsid.unique()
+        for id in obsids:    
+            ind = df.obsid == id
+            indexes.append(ind)
+            label_list.append(id)
+        
+        return indexes, label_list
+    
+    else:
+        _,ls_bin = pd.cut(df.l_s, bins=ls_bin,retbins=True)
 
-    _,ls_bin = pd.cut(df.l_s, bins=ls_bin,retbins=True)
-    cmap = get_colorscale(ls_bin.size - 1)
+        for i,ls in enumerate(ls_bin[:-1]):
 
-    for i,ls in enumerate(ls_bin[:-1]):
-        df_sub = df[df.l_s.between(left=ls_bin[i],right=ls_bin[i+1])]
+            ind = df.l_s.between(left=ls_bin[i],right=ls_bin[i+1])
+            df_sub = df[ind]
+            label1 = f"[{ls_bin[i]:.0f}, {ls_bin[i+1]:.0f}]"
+            label2 = f"#Fans = {df_sub.shape[0]}"
+            label3 = f"#images = {df_sub.obsid.unique().size}"
+            label = label1 + "\n" + label2 + "\n" + label3
 
-        label1 = f"[{ls_bin[i]:.0f}, {ls_bin[i+1]:.0f}]"
-        label2 = f"#Fans = {df_sub.shape[0]}"
-        label3 = f"#images = {df_sub.obsid.unique().size}"
-        label = label1 + "\n" + label2 + "\n" + label3
+            indexes.append(ind)
+            label_list.append(label)
 
+        return indexes, label_list
+
+
+def _draw_histogram(ax, df, ls_bin = 4, per_obsid=False, density = True, segmentsize=3.6, alpha=0.5, degrees=False, cutoff = None):
+
+    indexes,label_list = _get_filtered_index(df,ls_bin,per_obsid)
+
+    cmap = get_colorscale(len(indexes))
+
+
+    for i in range(0,len(indexes)):
+        df_sub = df[indexes[i]]
+
+        if (cutoff is not None) and (df_sub.shape[0] < cutoff):
+            continue
+        
+        label = label_list[i]
         theta, radii = compute_direction_histogram(df_sub, segmentsize, density=density, degrees=degrees)
         width = np.diff(theta)
         ax.bar(theta[:-1],radii, width=width, color=cmap[i],label=label, alpha=alpha)
 
     return ax
 
-def histogram_polar(df,ls_bin = 4, segmentsize=3.6, alpha=0.5):
+def histogram_polar(df,ls_bin = 4, per_obsid = False , segmentsize=3.6, alpha=0.5, cutoff = None,):
+    """
+    Plots a histogram in polar coordinates.
+    Parameters:
+    df : pandas.DataFrame
+        The data frame containing the data to be plotted.
+    ls_bin : int, optional
+        The bin size for the histogram (default is 4).
+    per_obsid : bool, optional
+        If True, the histogram is plotted per observation ID (default is False).
+    segmentsize : float, optional
+        The size of each segment in the histogram (default is 3.6).
+    alpha : float, optional
+        The transparency level of the histogram bars (default is 0.5).
+    cutoff : float, optional
+        A cutoff value for the data (default is None).
+    Returns:
+    matplotlib.axes._subplots.PolarAxesSubplot
+        The polar axes with the histogram plotted.
+    """
 
     ax = plt.subplot(projection = "polar")
-    ax = _draw_histogram(ax, df, ls_bin=ls_bin, segmentsize=segmentsize, alpha=alpha)
+    ax = _draw_histogram(ax, df, ls_bin=ls_bin, per_obsid=per_obsid, segmentsize=segmentsize, alpha=alpha, cutoff= cutoff)
     initialize_polar_axes(ax)
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
