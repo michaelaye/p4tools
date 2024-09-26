@@ -4,13 +4,14 @@
 __all__ = ['plot_blotches_for_tile', 'plot_fans_for_tile', 'plot_original_tile', 'plot_original_and_fans',
            'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans',
            'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale', 'histogram_polar',
-           'histogram_cartesian']
+           'histogram_cartesian', 'show_stamps']
 
 # %% ../notebooks/02_plotting.ipynb 2
 from matplotlib import pyplot as plt
 from matplotlib import colormaps
 import numpy as np
 import pandas as pd
+import matplotlib
 from . import io, markings
 
 # %% ../notebooks/02_plotting.ipynb 3
@@ -84,7 +85,7 @@ def plot_x_random_tiles_with_n_fans(
 def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
     
     direction = df["angle"]
-    north_azimuth = np.deg2rad(df["north_azimuth"])
+    north_azimuth = df["north_azimuth"]
     direction = (direction - north_azimuth)%360
     bins = np.arange(0,360+segmentsize,segmentsize)
     if df.shape[0] != 0:
@@ -102,7 +103,7 @@ def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
     return theta,radii
 
 
-def initialize_polar_axes(ax):
+def initialize_polar_axes(ax : matplotlib.projections.polar.PolarAxes):
     """Initializes the Polar Axes to Wind Directions, counted in clockwise direction from N
 
     Parameters
@@ -114,6 +115,8 @@ def initialize_polar_axes(ax):
     ax.set_theta_direction("clockwise")
     ax.set_xticks(np.linspace(0,2*np.pi,8,endpoint=False))
     ax.set_xticklabels(["N","NE","E","SE","S","SW","W","NW"])
+    ax.set_yticklabels([])
+
 
 
 def get_colorscale(nr):
@@ -208,4 +211,27 @@ def histogram_polar(df,ls_bin = 4, per_obsid = False , segmentsize=3.6, alpha=0.
 def histogram_cartesian(df, ls_bin = 4, segmentsize=3.6, alpha=0.5, degrees=True):
     ax = plt.subplot()
     ax = _draw_histogram(ax, df, ls_bin=ls_bin, density=False ,segmentsize=segmentsize, alpha=alpha, degrees=degrees)
+    return ax
+
+# %% ../notebooks/02_plotting.ipynb 24
+import geopandas as gpd 
+from typing import Optional,Union
+
+def show_stamps(df_stamps : gpd.GeoDataFrame , mark_stamp : Optional[Union[str,list[str]]] = None, ax=None):
+
+    if ax is None:
+        fig,ax = plt.subplots()
+    
+    df_stamps.plot(ax=ax,color="gold",edgecolor="k")
+
+    if mark_stamp is None:
+        return ax
+    
+    elif type(mark_stamp) is str:
+        df_select = df_stamps[df_stamps.image_name == mark_stamp]
+        df_select.plot(color="r",ax=ax,edgecolor="k")
+    
+    elif type(mark_stamp) is list:
+        df_select = df_stamps[df_stamps.image_name.isin(mark_stamp)]
+        df_select.plot(color="r",ax=ax, edgecolor="k")
     return ax
