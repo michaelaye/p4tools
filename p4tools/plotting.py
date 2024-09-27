@@ -142,6 +142,7 @@ def _get_filtered_index(df,ls_bin, per_obsid=False):
         
         return indexes, label_list
     
+
     else:
         _,ls_bin = pd.cut(df.l_s, bins=ls_bin,retbins=True)
 
@@ -171,6 +172,7 @@ def _draw_histogram(ax, df, ls_bin = 4, per_obsid=False, density = True, segment
         df_sub = df[indexes[i]]
 
         if (cutoff is not None) and (df_sub.shape[0] < cutoff):
+            ax.bar([0,0],[0,0], width=3.6, color="k",label=label_list[i], alpha=0.0)
             continue
         
         label = label_list[i]
@@ -213,7 +215,7 @@ def histogram_cartesian(df, ls_bin = 4, segmentsize=3.6, alpha=0.5, degrees=True
     ax = _draw_histogram(ax, df, ls_bin=ls_bin, density=False ,segmentsize=segmentsize, alpha=alpha, degrees=degrees)
     return ax
 
-# %% ../notebooks/02_plotting.ipynb 24
+# %% ../notebooks/02_plotting.ipynb 25
 import geopandas as gpd 
 from typing import Optional,Union
 
