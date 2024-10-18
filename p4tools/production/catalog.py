@@ -559,7 +559,8 @@ class ReleaseManager:
         """
         out = []
         for df in [fans, blotches]:
-            averaged = df.groupby(["obsid","marking_id"]).mean(numeric_only=True)
+            #This grouping by obsid and marking_id is necessary for the case that we do parallel processing which will create duplicate marking ids per obsid
+            averaged = df.groupby(["obsid","marking_id"]).mean(numeric_only=True) 
             tmp = df.drop_duplicates(subset=["marking_id","obsid"]).set_index(["obsid","marking_id"])
             averaged = averaged.join(tmp[["image_id"]],how="inner")
             out.append(averaged.reset_index())
@@ -690,6 +691,28 @@ class ReleaseManager:
         fans = fans.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         blotches = blotches.merge(ground[self.COLS_TO_MERGE], on=INDEX)
         return fans, blotches
+    
+    def fix_marking_ids(self):
+        """
+        This function is supposed to be called to fix the marking IDs when parallely proccessed
+        """
+
+        bucket = [(self.fan_merged,fan_id_generator),(self.blotch_merged,blotch_id_generator)]
+        
+        for path, gen in bucket:
+            df = pd.read_csv(path)
+            length = df.shape[0]
+
+            markingid = np.zeros(df.shape[0],dtype=str)
+            generator_marking = gen()
+
+            markingid = []
+            for i in range(length):
+
+                markingid.append(next(generator_marking))
+
+            df["marking_id"] = markingid
+            assert df.marking_id.unique().size == length
 
     def launch_catalog_production(self,kind : str = "serial", parallel_tasks : int = 10):
 
