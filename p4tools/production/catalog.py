@@ -82,6 +82,19 @@ def blotch_id_generator() -> Generator[str, Any, None]:
 
 
 def get_L1A_paths(obsid, savefolder):
+    """
+    Retrieve L1A observation paths for a given observation ID.
+    Parameters
+    ----------
+    obsid : str
+        The observation ID for which to retrieve the paths.
+    savefolder : str
+        The directory path where the data is stored.
+    Returns
+    -------
+    list
+        A list of paths corresponding to the L1A observation data.
+    """
     pm = io.PathManager(obsid=obsid, datapath=savefolder)
     paths = pm.get_obsid_paths("L1A")
     return paths
@@ -117,9 +130,24 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None):
 
 # %% ../../notebooks/05_production.catalog.ipynb 7
 def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
-    """
-    fnotch_via_obsid: bool, optional
-        Switch to control if fnotching happens per image_id or per obsid
+    """Perform fnotching on HiRISE images based on observation ID or image ID.
+
+    Parameters
+    ----------
+    obsid : str, optional
+        The observation ID to be processed.
+    savedir : str, optional
+        The directory where the results will be saved.
+    fnotch_via_obsid : bool, optional
+        Switch to control if fnotching happens per observation ID (obsid) or per image ID.
+        If True, fnotching is done per observation ID. If False, fnotching is done per image ID.
+    imgid : str, optional
+        The image ID to be processed. This parameter is currently not used in the function.
+
+    Returns
+    -------
+    str
+        The observation ID that was processed.
     """
     from p4tools.production import fnotching
 
@@ -365,6 +393,11 @@ class ReleaseManager:
 
     @obsids.setter
     def obsids(self, values):
+        """
+        Sets the observation IDs.
+        Parameters:
+        values (list or array-like): A list or array of observation IDs to be set.
+        """
         self._obsids = values
 
     @property
@@ -385,6 +418,13 @@ class ReleaseManager:
 
     @property
     def fan_merged(self):
+        """
+        Generates the file path for the merged fan metadata CSV file.
+        Returns:
+            pathlib.Path: The path to the merged fan metadata CSV file, 
+                          constructed by appending '_meta_merged.csv' to the stem of the original fan file.
+        """
+        
         return self.fan_file.parent / f"{self.fan_file.stem}_meta_merged.csv"
 
     @property
@@ -661,7 +701,23 @@ class ReleaseManager:
 
 
     def launch_parallel_production(self,parallel_tasks : int = 10):
-        
+        """
+        Launches the production process in parallel.
+        This method performs several tasks in parallel, including clustering, 
+        fnotching, and creating mosaics. It also generates summary CSV files, 
+        calculates ground coordinates, and writes metadata.
+
+        USE AT YOUR OWN RISK. Does not scale very well. 
+        It is recommended to do process paraellism with:
+        ReleaseManager.produce_single_obsid(...)
+
+        Args:
+            parallel_tasks (int, optional): The number of parallel tasks to run. 
+                                            Defaults to 10.
+        Raises:
+            Exception: If there is an issue with slicing the obsids list.
+        """
+
         self.check_for_todo()
         
         fan_id = fan_id_generator()
@@ -743,8 +799,6 @@ class ReleaseManager:
         LOGGER.info("Creating L1C fan and blotch database files.")
         create_roi_file(self.obsids, self.catalog, self.catalog)
 
-
-        
         LOGGER.info("Calculating the center ground coordinates for all P4 tiles.")
         self.calc_tile_coordinates()
 
@@ -791,6 +845,17 @@ class ReleaseManager:
 
 # %% ../../notebooks/05_production.catalog.ipynb 11
 def read_csvfiles_into_lists_of_frames(folders):
+    """
+    Reads CSV files from given folders into lists of DataFrames.
+    This function iterates over a list of folders, reads CSV files within those folders,
+    and categorizes them into two lists: 'fan' and 'blotch'. The categorization is based
+    on the filename ending with 'fans.csv' or blotch.csv.
+    Args:
+        folders (list of pathlib.Path): A list of folder paths to search for CSV files.
+    Returns:
+        dict: A dictionary with two keys, 'fan' and 'blotch', each containing a list of
+              pandas DataFrames read from the CSV files.
+    """
     
     bucket = dict(fan=[], blotch=[])
     for folder in folders:

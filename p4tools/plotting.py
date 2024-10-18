@@ -120,6 +120,7 @@ def initialize_polar_axes(ax : matplotlib.projections.polar.PolarAxes):
 
 
 def get_colorscale(nr):
+    
     color_scale = np.linspace(0,1,nr)
     if nr < 9:
         cmap = colormaps["Pastel1"]
