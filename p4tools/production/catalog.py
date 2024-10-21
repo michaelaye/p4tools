@@ -713,6 +713,8 @@ class ReleaseManager:
 
             df["marking_id"] = markingid
             assert df.marking_id.unique().size == length
+            df.to_csv(path, index=False)
+
 
     def launch_catalog_production(self,kind : str = "serial", parallel_tasks : int = 10):
 
