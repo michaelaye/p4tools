@@ -429,12 +429,25 @@ class ReleaseManager:
 
     @property
     def blotch_merged(self):
+        """
+        Return the filepath for the blotch.csv which has the Metadata Merged.
+        """
         return self.blotch_file.parent / f"{self.blotch_file.stem}_meta_merged.csv"
 
     def read_fan_file(self):
+        """
+        Reads the fan CSV with merged metadata file and returns it as a pandas DataFrame.
+        Returns:
+            pd.DataFrame: The contents of the fan merged CSV file.
+        """
         return pd.read_csv(self.fan_merged)
 
     def read_blotch_file(self):
+        """
+        Reads the blotch CSV with merged metadata file and returns it as a pandas DataFrame.
+        Returns:
+            pd.DataFrame: The contents of the fan merged CSV file.
+        """
         return pd.read_csv(self.blotch_merged)
 
     def mark_done(self,obsid):
@@ -452,6 +465,24 @@ class ReleaseManager:
     
 
     def check_for_todo(self, overwrite=None):
+        """
+        Check for TODO items based on the existence of "Done.txt" files.
+
+        This method checks each observation ID (obsid) in the `self.obsids` list to determine if a "Done.txt" file exists
+        in the corresponding results save folder. If the file exists and `overwrite` is set to False, the obsid is skipped.
+        Otherwise, the obsid is added to the `self.todo` list.
+
+        Parameters
+        ----------
+        overwrite : bool, optional
+            If provided, this value will override the instance's `overwrite` attribute. Defaults to None.
+
+        Attributes
+        ----------
+        self.todo : list
+            A list of obsids that need to be processed.
+        """
+
         if overwrite is None:
             overwrite = self.overwrite
         bucket = []
@@ -468,11 +499,23 @@ class ReleaseManager:
         return [(i, self.catalog, self.dbname) for i in self.todo]
 
     def get_no_of_tiles_per_obsid(self):
+        """
+        Calculate the number of unique tiles per observation ID.
+        Returns:
+            pandas.Series: A series with the "image_name" as the index and the count of
+                   unique "image_id" values as the values.
+        """
+        #This method reads data from a parquet file specified by the `dbname` attribute,
+        #groups the data by the "image_name" column, and then counts the number of unique
+        #"image_id" values for each group.
         all_data = pd.read_parquet(self.dbname)
         return all_data.groupby("image_name").image_id.nunique()
 
     @property
     def EDRINDEX_meta_path(self):
+        """
+        Returns the EDRINDEX_metdata.csv
+        """
         return self.savefolder / f"{self.catalog}_EDRINDEX_metadata.csv"
 
     def calc_metadata(self):
@@ -568,6 +611,31 @@ class ReleaseManager:
         return out
 
     def merge_all(self):
+        """
+        Merges multiple data sources into a consolidated format for fans and blotches.
+        Logging:
+        - Logs the paths of the written fans and blotches CSV files.
+        """
+
+        #This function performs the following steps:
+        #1. Reads in data files for fans, blotches, metadata, and tile coordinates.
+        #2. Averages multiple fnotch results for fans and blotches.
+        #3. Merges metadata into the fans and blotches dataframes.
+        #4. Drops unnecessary columns from tile coordinates and saves the cleaned data.
+        #5. Merges campt results into the fans and blotches dataframes.
+        #6. Writes out the consolidated fans and blotches data to CSV files.
+        #The function assumes that the following instance variables are defined:
+        #   - self.fan_file: Path to the fans data file.
+        #   - self.blotch_file: Path to the blotches data file.
+        #   - self.metadata_path: Path to the metadata file.
+        #   - self.tile_coords_path: Path to the tile coordinates file.
+        #   - self.tile_coords_path_final: Path to save the cleaned tile coordinates file.
+        #   - self.fan_merged: Path to save the consolidated fans data.
+        #   - self.blotch_merged: Path to save the consolidated blotches data.
+        #   - self.DROP_FOR_TILE_COORDS: List of columns to drop from tile coordinates.
+        #   - self.FAN_COLUMNS_AS_PUBLISHED: List of columns to include in the final fans CSV.
+        #   - self.BLOTCH_COLUMNS_AS_PUBLISHED: List of columns to include in the final blotches CSV.
+
         # read in data files
         fans = pd.read_csv(self.fan_file)
         blotches = pd.read_csv(self.blotch_file)
@@ -637,6 +705,31 @@ class ReleaseManager:
         LOGGER.info("Wrote %s", str(self.blotch_merged))
 
     def calc_marking_coordinates(self):
+        """
+        Calculate marking coordinates by processing fan and blotch data.
+        This method reads fan and blotch data from CSV files, combines them, and processes the data to calculate marking coordinates. 
+        It checks for any missing observation IDs and logs a warning if any are found. For each observation ID with data, 
+        it processes the data to convert XY coordinates to latitude and longitude.
+        Parameters
+        ----------
+        self : object
+            The instance of the class containing this method. It should have the following attributes:
+            - fan_file : str
+                Path to the CSV file containing fan data.
+            - blotch_file : str
+                Path to the CSV file containing blotch data.
+            - obsids : list
+                List of observation IDs to be processed.
+            - savefolder : str
+                Directory where the processed data will be saved.
+            - overwrite : bool
+                Flag indicating whether to overwrite existing files.
+        Raises
+        ------
+        Warning
+            If any observation IDs have no data from clustering, a warning is logged.
+        """
+        
         fans = pd.read_csv(self.fan_file)
         blotches = pd.read_csv(self.blotch_file)
         combined = pd.concat([fans, blotches], sort=False)
@@ -717,6 +810,20 @@ class ReleaseManager:
 
 
     def launch_catalog_production(self,kind : str = "serial", parallel_tasks : int = 10):
+        """
+        Launch the catalog production process.
+
+        Parameters
+        ----------
+        kind : str, optional
+            The type of production to launch. Can be "serial" or "parallel". Defaults to "serial".
+        parallel_tasks : int, optional
+            The number of parallel tasks to run if kind is "parallel". Defaults to 10.
+
+        Returns
+        -------
+        None
+        """
 
         if kind == "serial":
             self.launch_serial_production()
