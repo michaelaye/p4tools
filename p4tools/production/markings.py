@@ -52,6 +52,11 @@ class TileID:
         Default: Latest one.
     data : pd.DataFrame, optional
         If the data was already extracted before init, it can be provided here.
+    image_name : str, optional
+        The name of the image associated with the `imgid`.
+        Default: None.
+    scope : str, optional
+        The scope of the image data. Default: 'planet4'.
     """
 
     def __init__(self, imgid, scope='planet4', dbname=None, data=None, image_name=None):
@@ -75,6 +80,7 @@ class TileID:
 
     @property
     def image_name(self):
+        "Return the name of the image i.e. the HiRISE ID"
         if self._image_name is None:
             db = io.DBManager(self.dbname)
             self._image_name = db.get_obsid_for_tile_id(self.imgid)
@@ -82,14 +88,30 @@ class TileID:
 
     @property
     def tile_coords(self):
+        "The Coordinates for the tiles in x and y"
         return self.data[['x_tile', 'y_tile']].drop_duplicates().values[0]
 
     @property
     def blotchmask(self):
+        """
+        Check if the marking is 'blotch'.
+        Returns
+        -------
+        pandas.Series
+            A boolean series indicating rows where the 'marking' column is 'blotch'.
+        """
+        
         return self.data.marking == 'blotch'
 
     @property
     def fanmask(self):
+        """
+        Check if the marking is a 'fan'
+        Returns
+        -------
+        pandas.Series
+            A boolean series indicating rows where the 'marking' column is 'fan'.
+        """
         return self.data.marking == 'fan'
 
     @property
@@ -130,6 +152,7 @@ class TileID:
         return self.filter_data('blotch', user_name, without_users)
 
     def show_subframe(self, ax=None, aspect='auto'):
+        "Plot the image of a tile"
         if ax is None:
             fig, ax = plt.subplots(figsize=calc_fig_size(8))
         ax.imshow(self.subframe, origin='upper', aspect=aspect)
@@ -137,7 +160,29 @@ class TileID:
 
     def plot_objects(self, objects, n=None, img=True, ax=None,
                      user_color=None, user_colors=None, wind_pointer=False):
-        """Plotting either fans or blotches with p4 subframe background."""
+        """
+        Plot either fans or blotches with p4 subframe background.
+        Parameters
+        ----------
+        objects : list
+            List of objects to plot. Each object should have a `plot` method.
+        n : int, optional
+            Number of objects to plot. If None, all objects are plotted.
+        img : bool, optional
+            If True, plot the background image. Default is True.
+        ax : matplotlib.axes.Axes, optional
+            Matplotlib axis to plot on. If None, a new axis is created.
+        user_color : str or tuple, optional
+            Color to use for all objects. If None, colors are cycled.
+        user_colors : list, optional
+            List of colors to cycle through for each object. If None, a default color palette is used.
+        wind_pointer : bool, optional
+            If True, add a mean wind pointer for objects of type `Fan`. Default is False.
+        Returns
+        -------
+        None
+        """
+
         LOGGER.debug("Entering markings.plot_objects")
         LOGGER.debug("Received %i objects to plot.", len(objects))
         if ax is None:
@@ -195,12 +240,25 @@ class TileID:
         self.plot_objects(data, **kwargs)
 
     def plot_blotches(self, data=None, **kwargs):
+        "Plot blotches within the TileID"
         self.plot_markings('blotch', data=data, **kwargs)
 
     def plot_fans(self, data=None, **kwargs):
+        "Plot fans within the TileID"
         self.plot_markings('fan', data=data, **kwargs)
 
     def plot_all(self, savedir=None):
+        """
+        Plots various subframes and markings on a 2x2 grid of subplots.
+        Parameters
+        ----------
+        savedir : str or pathlib.Path, optional
+            Directory where the plot image will be saved. If None, the plot is not saved.
+        Returns
+        -------
+        None
+        """
+        
         fig, axes = plt.subplots(2, 2)
         axes = axes.ravel()
         for i in [0, 2]:
@@ -228,23 +286,15 @@ class Fnotch(object):
 
     Parameters
     ----------
-    value : float
-        Fnotch value (= 1 - blotchiness), as calculated in clustering.ClusterManager()
-    fandata : pandas.Series
+    fan : pandas.Series
         data set containing all required for Fan object (see `Fan`)
-    blotchdata : pandas.Series
+    blotch : pandas.Series
         data set containing all required for Blotch object (see `Blotch`)
+    scope : str, optional
+        the scope in which the coordinates are calculated (default is 'planet4')
+
+
     """
-
-    @classmethod
-    def from_series(cls, series, scope):
-        "Create Fnotch instance from series with fan_ and blotch_ indices."
-        fan = Fan(series.filter(regex='fan_').rename(lambda x: x[4:]),
-                  scope=scope)
-        blotch = Blotch(series.filter(regex='blotch_').rename(lambda x: x[7:]),
-                        scope=scope)
-        return cls(series.fnotch_value, fan, blotch, scope)
-
     def __init__(self, fan, blotch, scope='planet4'):
         self.fan = fan
         self.blotch = blotch
@@ -256,6 +306,16 @@ class Fnotch(object):
                                        blotch.iloc[0]['n_votes'])
         self.data.loc['fan', 'vote_ratio'] = (1 - blotchiness) + 0.01
         self.data.loc['blotch', 'vote_ratio'] = blotchiness - 0.01
+
+    @classmethod
+    def from_series(cls, series, scope):
+        "Create Fnotch instance from series with fan_ and blotch_ indices."
+        fan = Fan(series.filter(regex='fan_').rename(lambda x: x[4:]),
+                  scope=scope)
+        blotch = Blotch(series.filter(regex='blotch_').rename(lambda x: x[7:]),
+                        scope=scope)
+        return cls(series.fnotch_value, fan, blotch, scope)
+
 
     def apply_cut(self, cut):
         """Return the right marking, depending on cut value.

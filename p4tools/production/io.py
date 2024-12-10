@@ -202,6 +202,16 @@ class PathManager:
 
     @property
     def clustering_logfile(self):
+        """
+        Returns the path to the clustering settings YAML file.
+        This method constructs the path to the "clustering_settings.yaml" file
+        located in the same directory as the fanfile.
+        Returns
+        -------
+        pathlib.Path
+            The path to the "clustering_settings.yaml" file.
+        """
+
         return self.fanfile.parent / "clustering_settings.yaml"
 
     @property
@@ -266,6 +276,26 @@ class PathManager:
         return "L1C_cut_{:.1f}".format(self.cut)
 
     def get_path(self, marking, specific="")-> Path:
+        """
+        Generate a file path based on the provided parameters.
+        Parameters
+        ----------
+        marking : str
+            A string to be included in the file name.
+        specific : str, optional
+            A specific sub-folder or identifier to be included in the path (default is "").
+        Returns
+        -------
+        Path
+            The constructed file path as a Path object.
+        Notes
+        -----
+        - If `self.id` is not set, a warning is logged and `self.obsid` is used instead.
+        - The `specific` parameter, if provided, is included in both the path and the file name.
+        - The file name is constructed as "{id_}_{specific}_{marking}{self.suffix}" if `specific` is not empty,
+          otherwise it is "{id_}_{marking}{self.suffix}".
+        """
+
         
         p = self.path_so_far
         # now add the image_id
@@ -417,6 +447,28 @@ class DBManager:
         return s
 
     def read(self, **kwargs):
+        """
+        Reads data from a database file based on its extension and returns as a pandas DataFrame.
+        Parameters
+        ----------
+        **kwargs : dict
+            Additional keyword arguments passed to the pandas read functions.
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing the data read from the file.
+        Notes
+        -----
+        The method supports reading from files with the following extensions:
+        - .hdf: Uses `pd.read_hdf`.
+        - .parquet: Uses `pd.read_parquet`. If a `where` condition is provided in `kwargs`, it extracts the observation ID from the condition and reads the corresponding file.
+        - .csv: Uses `pd.read_csv`.
+        Raises
+        ------
+        ValueError
+            If the file extension is not supported.
+        """
+
         p = Path(self.dbname)
         if p.suffix.endswith("hdf"):
             return pd.read_hdf(p, **kwargs)
