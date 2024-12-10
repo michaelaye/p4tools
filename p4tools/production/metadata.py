@@ -16,6 +16,34 @@ logger = logging.getLogger(__name__)
 
 # %% ../../notebooks/05c_production.metadata.ipynb 4
 class MetadataReader:
+    """
+    A class to read and manage metadata for a given observation ID (obsid).
+    Parameters
+    ----------
+    obsid : str
+        The observation ID for which metadata is to be read and managed.
+    Attributes
+    ----------
+    obsid : str
+        The observation ID.
+    prodid : ProductPathfinder
+        An instance of ProductPathfinder initialized with the observation ID and "_COLOR" suffix.
+    labelpath : pathlib.Path
+        The local path to the label file.
+    label : labels.HiRISE_Label
+        An instance of HiRISE_Label initialized with the label path.
+    campt_out_path : pathlib.Path
+        The path to the campt output CSV file.
+    campt_out_df : pandas.DataFrame
+        A DataFrame containing the contents of the campt output CSV file.
+    Methods
+    -------
+    read_edr_index()
+        Reads the EDR index for the HiRISE instrument.
+    download_label()
+        Downloads the label file if it does not exist locally.
+    """
+
 
     def __init__(self, obsid):
         self.obsid = obsid
@@ -24,31 +52,49 @@ class MetadataReader:
             self.download_label()
 
     def read_edr_index(self):
+        """Reads the EDR index for the HiRISE instrument"""
         return get_index("mro.hirise", "edr")
 
     @property
     def labelpath(self):
+        """local path to the label file"""
         return self.prodid.local_label_path
 
     def download_label(self):
+        """Downloads the label file if it does not exist locally"""
         self.prodid.download_label()
 
     @property
     def label(self):
+        """HiRISE_Label initialized with the label path"""
         return labels.HiRISE_Label(self.labelpath)
 
     @property
     def campt_out_path(self):
+        """The path to the campt output CSV file"""
         p4m = P4Mosaic(self.obsid)
         return p4m.mosaic_path.parent / f"{self.obsid}_campt_out.csv"
 
     @property
     def campt_out_df(self):
+        """DataFrame containing the contents of the campt output CSV file"""
         return pd.read_csv(self.campt_out_path)
 
 
 # %% ../../notebooks/05c_production.metadata.ipynb 5
 def get_north_azimuths_from_SPICE(obsids):
+    """
+    Calculate the North Azimuth for a list of observation IDs using SPICE metadata.
+    Parameters
+    ----------
+    obsids : list of str
+        List of observation IDs for which to calculate the North Azimuth direction.
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing the observation IDs and their corresponding North Azimuth values.
+        The DataFrame has two columns: 'OBSERVATION_ID' and 'north_azimuth'.
+    """
     NAs = []
     for obsid in obsids:
         meta = MetadataReader(obsid)
