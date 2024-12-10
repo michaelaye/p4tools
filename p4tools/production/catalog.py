@@ -552,6 +552,19 @@ class ReleaseManager:
         LOGGER.info("Wrote %s", str(self.metadata_path))
 
     def calc_tile_coordinates(self):
+        """
+        Calculate the tile coordinates for a set of observation IDs and save the results to a CSV file.
+        This method processes a list of observation IDs to calculate their corresponding tile coordinates.
+        It first checks if the tile coordinates need to be calculated for each observation ID, and if so,
+        it performs the calculation. Finally, it concatenates the results and saves them to a CSV file.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+
         cubepaths = [P4Mosaic(obsid).mosaic_path for obsid in self.obsids]
 
         todo = []
@@ -750,6 +763,20 @@ class ReleaseManager:
 
 
     def collect_marking_coordinates(self,obsids = None):
+        """
+        Collect marking coordinates from observation IDs.
+        Parameters
+        ----------
+        obsids : numpy.ndarray or None, optional
+            An array of observation IDs to process. If None, the method will use 
+            `self.obsids`.
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the collected marking coordinates with columns 
+            renamed to 'image_x' and 'image_y', and duplicates removed.
+        """
+
         bucket = []
 
         if type(obsids) is np.ndarray:
@@ -766,11 +793,39 @@ class ReleaseManager:
         return ground
 
     def fix_marking_coordinates_precision(self, df):
+        """
+        Adjust the precision of marking coordinates in a DataFrame.
+        This method saves the DataFrame to a temporary CSV file with a specified 
+        floating-point precision and then reads it back as strings.
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The DataFrame containing marking coordinates to be adjusted.
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame with marking coordinates as strings, with the specified precision.
+        """
+        
         fname = "tempfile.csv"
         df.to_csv(fname, float_format="%.7f")
         return pd.read_csv(fname, dtype="str")
 
     def merge_campt_results(self, fans, blotches):
+        """
+        Merges the results of the campt output with ground marking coordinates.
+        Parameters
+        ----------
+        fans : pandas.DataFrame
+            DataFrame containing fan data with columns including 'obsid', 'image_x', and 'image_y'.
+        blotches : pandas.DataFrame
+            DataFrame containing blotch data with columns including 'obsid', 'image_x', and 'image_y'.
+        Returns
+        -------
+        tuple of pandas.DataFrame
+            A tuple containing two DataFrames: the merged fans DataFrame and the merged blotches DataFrame.
+        """
+        
         INDEX = ["obsid", "image_x", "image_y"]
 
         ## This part is necessary for the case in which not all obsids have data left after clustering
@@ -787,7 +842,24 @@ class ReleaseManager:
     
     def fix_marking_ids(self):
         """
-        This function is supposed to be called to fix the marking IDs when parallely proccessed
+        Fix the marking IDs for the merged fan and blotch dataframes.
+        This function reads the merged fan and blotch CSV files, generates unique marking IDs for each row,
+        and writes the updated data back to the CSV files. It ensures that each marking ID is unique within
+        the respective dataframe.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        Raises
+        ------
+        AssertionError
+            If the number of unique marking IDs does not match the number of rows in the dataframe.
+        Notes
+        -----
+        This function is intended to be used when the dataframes have been processed in parallel and the
+        marking IDs need to be fixed to ensure uniqueness.
         """
 
         bucket = [(self.fan_merged,fan_id_generator),(self.blotch_merged,blotch_id_generator)]
