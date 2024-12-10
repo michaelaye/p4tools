@@ -368,6 +368,22 @@ import geopandas as gpd
 from typing import Optional,Union
 
 def show_stamps(df_stamps : gpd.GeoDataFrame , mark_stamp : Optional[Union[str,list[str]]] = None, ax=None):
+    """
+    Plot the geospatial stamps of the HiRISE images on a map.
+    Parameters
+    ----------
+    df_stamps : gpd.GeoDataFrame
+        A GeoDataFrame containing the geospatial HiRISE stamps to be plotted.
+    mark_stamp : str or list of str, optional
+        The ID(s) of the stamp(s) to be highlighted in red. If None, no stamps are highlighted.
+    ax : matplotlib.axes.Axes, optional
+        The axes on which to plot. If None, a new figure and axes are created.
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The axes with the plotted stamps.
+    """
+    
 
     if ax is None:
         fig,ax = plt.subplots()
