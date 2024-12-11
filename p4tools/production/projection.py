@@ -28,6 +28,24 @@ logger = logging.getLogger(__name__)
 
 # %% ../../notebooks/05d_production.projection.ipynb 4
 class P4Mosaic:
+    """
+    A class to handle mosaic operations for a given observation ID.
+    Parameters
+    ----------
+    obsid : str
+        The observation ID used to locate the source product and mosaic path.
+    Attributes
+    ----------
+    mosaic_path : pathlib.Path
+        The path to the mosaic file.
+    Methods
+    -------
+    read()
+        Reads the mosaic file and returns it as an xarray DataArray.
+    show(xslice=None, yslice=None)
+        Displays the mosaic image using hvplot with optional slicing.
+    """
+
     def __init__(self, obsid):
         source_prod = SOURCE_PRODUCT(f"{obsid}_RED4_0")
         self.mosaic_path = source_prod.local_path.parent / f"{obsid}_mosaic_RED45.cub"
@@ -38,6 +56,20 @@ class P4Mosaic:
         )
 
     def show(self, xslice=None, yslice=None):
+        """
+        Display an image with optional slicing.
+        Parameters
+        ----------
+        xslice : slice, optional
+            Slice for the x-axis. If None, no slicing is applied on the x-axis.
+        yslice : slice, optional
+            Slice for the y-axis. If None, no slicing is applied on the y-axis.
+        Returns
+        -------
+        hvplot
+            An image plot with the specified slicing and visualization options.
+        """
+        
         data = self.read()
         if xslice is not None or yslice is not None:
             data = data.isel(x=xslice, y=yslice)
@@ -81,7 +113,24 @@ def nocal_hi(source_product):
 
 
 def stitch_cubenorm(spid1, spid2):
-    "Stitch together the 2 CCD chip images and do a cubenorm."
+    """
+    Stitch together the 2 CCD chip images and perform a cubenorm operation.
+    Parameters
+    ----------
+    spid1 : object
+        The first CCD chip image object. Must have attributes `local_cube` and `stitched_cube_path`.
+    spid2 : object
+        The second CCD chip image object. Must have attributes `local_cube` and `stitched_cube_path`.
+    Returns
+    -------
+    normed : pathlib.Path
+        The path to the normalized stitched cube file.
+    Raises
+    ------
+    ProcessError
+        If there is an error during the stitching or cubenorm process.
+    """
+    
     logger.info("Stitch/cubenorm %s and %s", spid1, spid2)
     cub = spid1.stitched_cube_path
     normed = cub.with_suffix(".norm.cub")
@@ -129,6 +178,33 @@ def get_RED45_mosaic_inputs(
 
 
 def create_RED45_mosaic(obsid, overwrite=False):
+    """
+    Create a RED45 mosaic from EDR data associated with a given observation ID (obsid).
+    Parameters
+    ----------
+    obsid : str
+        The observation ID for which the RED45 mosaic is to be created.
+    overwrite : bool, optional
+        If True, existing mosaic files will be overwritten. Default is False.
+    Returns
+    -------
+    tuple
+        A tuple containing the observation ID and a boolean indicating success (True) or failure (False).
+    Notes
+    -----
+    This function processes EDR data to create a RED45 mosaic. It performs the following steps:
+    1. Retrieves the list of RED_PRODUCTS associated with the given obsid.
+    2. Checks if the mosaic file already exists and if overwriting is allowed.
+    3. Downloads the RED_PRODUCTS and performs necessary preprocessing.
+    4. Normalizes and stitches the RED4 and RED5 channels.
+    5. Uses the `handmos` tool to create the mosaic, handling the overlap gap between RED4 and RED5.
+    6. Cleans up temporary files.
+    Raises
+    ------
+    ProcessError
+        If there is an error during the `handmos` process, the error details are printed.
+    """
+
     logger.info("Processing the EDR data associated with " + obsid)
 
     products = get_RED45_mosaic_inputs(obsid)  # get list of RED_PRODUCTS
@@ -199,6 +275,24 @@ def create_RED45_mosaic(obsid, overwrite=False):
 
 # %% ../../notebooks/05d_production.projection.ipynb 6
 def do_campt(mosaicname, savepath, temppath):
+    """
+    Executes the campt command with the provided parameters from ISIS. 
+    Campt computes the geometric information like longitude and lattitude at a given pixel location.
+    Parameters
+    ----------
+    mosaicname : str
+        The name of the mosaic file to process.
+    savepath : str
+        The path where the output should be saved.
+    temppath : str
+        The path to the temporary file containing coordinates.
+    Returns
+    -------
+    tuple
+        A tuple containing the mosaicname and a boolean indicating success (False if an error occurred).
+    """
+
+    
     print("Calling do_campt")
     try:
         campt(
@@ -215,6 +309,42 @@ def do_campt(mosaicname, savepath, temppath):
 
 # %% ../../notebooks/05d_production.projection.ipynb 7
 class XY2LATLON:
+    """
+    A class to convert XY coordinates to latitude and longitude using ground projection data.
+    Attributes
+    ----------
+    edrpath : str
+        Path to the ground projection root directory.
+    df : pandas.DataFrame
+        DataFrame containing the data to be processed.
+    obsid : str
+        Observation ID, derived from the DataFrame if not provided.
+    inpath : pathlib.Path
+        Input path where the files are located.
+    overwrite : bool
+        Flag to indicate whether to overwrite existing files.
+    p4m : P4Mosaic
+        Instance of the P4Mosaic class for handling mosaic paths.
+    Properties
+    ----------
+    obsid : str
+        Gets or sets the observation ID.
+    mosaicpath : str
+        Returns the path to the mosaic file.
+    savepath : pathlib.Path
+        Returns the path to save the campt output CSV file.
+    savepath_blotch : pathlib.Path
+        Returns the path to save the blotch campt output CSV file.
+    savepath_fan : pathlib.Path
+        Returns the path to save the fan campt output CSV file.
+    temppath : pathlib.Path
+        Returns the temporary path for intermediate files.
+    Methods
+    -------
+    process_inpath():
+        Processes the input path and generates the necessary campt output files.
+    """
+    
     edrpath = io.get_ground_projection_root()
 
     def __init__(self, df, inpath, overwrite=False, obsid=None):
@@ -275,6 +405,46 @@ class XY2LATLON:
 
 # %% ../../notebooks/05d_production.projection.ipynb 8
 class TileCalculator:
+    """
+    A class to calculate tile coordinates for HiRISE images.
+    Parameters
+    ----------
+    cubepath : str or Path
+        The path to the HiRISE image cube.
+    read_data : bool, optional
+        If True, reads data from the database (default is True).
+    dbname : str, optional
+        The name of the database to read data from (default is None).
+    Attributes
+    ----------
+    cubepath : Path
+        The path to the HiRISE image cube.
+    data : DataFrame
+        The observation ID markings data from the database.
+    img_name : str
+        The image name derived from the cube path.
+    x_tile_max : int
+        The maximum x tile value.
+    y_tile_max : int
+        The maximum y tile value.
+    campt_results_path : Path
+        The path to save the campt results.
+    temppath : Path
+        The temporary path for campt input coordinates.
+    final_path : Path
+        The final path to save the tile coordinates.
+    tile_coords_df : DataFrame
+        The DataFrame containing tile coordinates.
+    Methods
+    -------
+    get_xy_tiles()
+        Returns a grid of x and y tile values.
+    get_campt_input_coords()
+        Returns a DataFrame with campt input coordinates.
+    calc_tile_coords()
+        Calculates and saves the tile coordinates.
+    """
+
     def __init__(self, cubepath, read_data=True, dbname=None):
         self.cubepath = Path(cubepath)
         if read_data:
@@ -326,6 +496,28 @@ class TileCalculator:
         return df
 
     def calc_tile_coords(self):
+        """
+        Calculate tile coordinates and correlate them with image IDs.
+
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        1. Retrieves camera input coordinates.
+        2. Saves the coordinates to a temporary CSV file.
+        3. Executes the `do_campt` function to process the coordinates.
+        4. Reads the results from the campt output CSV file.
+        5. Merges the results with the original coordinates.
+        6. Correlates the merged data with image IDs and tile coordinates.
+        7. Saves the final correlated data to a CSV file.
+        """
+        
         df = self.get_campt_input_coords()
         df[["x_hirise", "y_hirise"]].to_csv(self.temppath, header=False, index=False)
         do_campt(self.cubepath, self.campt_results_path, self.temppath)
