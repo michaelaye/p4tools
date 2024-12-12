@@ -63,6 +63,27 @@ def get_average_objects(clusters, kind):
 
 
 def plot_results(p4id, labels, data=None, kind=None, reduced_data=None, ax=None):
+    """
+    Plots the results of a clustering algorithm.
+    Parameters
+    ----------
+    p4id : object
+        An object that contains methods for plotting and showing subframes.
+    labels : array-like
+        Cluster labels for each point in the dataset.
+    data : pandas.DataFrame, optional
+        The original data points with 'x' and 'y' coordinates. Default is None.
+    kind : str, optional
+        The type of marking to plot (e.g., 'blotch', 'fan'). Default is None.
+    reduced_data : pandas.DataFrame, optional
+        The reduced data points to be plotted. Default is None.
+    ax : matplotlib.axes.Axes, optional
+        The axes on which to plot. If None, a new figure and axes are created. Default is None.
+    Returns
+    -------
+    None
+    """
+
     functions = dict(blotch=p4id.plot_blotches, fan=p4id.plot_fans)
     if ax is None:
         _, ax = plt.subplots()
@@ -77,9 +98,6 @@ def plot_results(p4id, labels, data=None, kind=None, reduced_data=None, ax=None)
     # pick correct function for kind of marking:
     if any(reduced_data):
         functions[kind](ax=ax, data=reduced_data, lw=1, with_center=True)
-
-
-
 
 # %% ../../notebooks/05e_production.dbscan.ipynb 4
 class DBScanner:
@@ -144,10 +162,38 @@ class DBScanner:
         }
 
     def show_markings(self, id_):
+        """
+        Displays the markings for a given ID.
+
+        Parameters
+        ----------
+        id_ : int or str
+            The identifier for the markings to be displayed.
+
+        Returns
+        -------
+        None
+        """
         p4id = markings.TileID(id_)
         p4id.plot_all()
 
     def cluster_any(self, X, eps):
+        """
+        Perform DBSCAN clustering on the given data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The input data to be clustered.
+        eps : float
+            The maximum distance between two samples for one to be considered as in the neighborhood of the other.
+            
+        Yields
+        ------
+        indices : array-like, shape (n_samples,)
+            Boolean mask indicating the members of the current cluster.
+        """
+
         logger.debug("Clustering any.")
         db = DBSCAN(eps, min_samples=self.min_samples).fit(X)
         labels = db.labels_

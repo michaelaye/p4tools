@@ -135,7 +135,27 @@ def calc_indices_from_index(n, c):
 
 # %% ../../notebooks/05f_production.fnotching.ipynb 4
 def fnotch_image_ids(obsid, eps=20, savedir=None, scope="hirise"):
+    """
+    Cluster each image_id for an obsid separately and perform fnotching.
+
+    Parameters
+    ----------
+    obsid : str
+        Observation ID for which the clustering and fnotching is performed.
+    eps : int, optional
+        The maximum distance in pixels to consider for fnotching, by default 20.
+    savedir : str, optional
+        Directory where the results will be saved, by default None.
+    scope : str, optional
+        Coordinate scope of the calculation, by default "hirise".
+
+    Returns
+    -------
+    None
+    """
     "Cluster each image_id for an obsid separately."
+
+
     # the clustering results were stored as L1A products
     pm = io.PathManager(obsid=obsid, datapath=savedir)
     paths = pm.get_obsid_paths("L1A")
@@ -230,6 +250,7 @@ def write_l1c(kind, slashed, pm):
 
 
 # %% ../../notebooks/05f_production.fnotching.ipynb 6
+#TODO probably combine
 def apply_cut_obsid(obsid, cut=0.5, savedir=None):
     pm = io.PathManager(obsid=obsid, cut=cut, datapath=savedir)
     try:
