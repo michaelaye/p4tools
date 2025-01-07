@@ -86,6 +86,7 @@ def plot_x_random_tiles_with_n_fans(
 def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
     """
     Compute a histogram of direction angles adjusted by north azimuth.
+    
     Parameters
     ----------
     df : pandas.DataFrame
@@ -97,6 +98,7 @@ def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
         normalized such that the integral over the range is 1. Default is True.
     degrees : bool, optional
         If True, the bin edges are returned in degrees. If False, they are returned in radians. Default is False.
+    
     Returns
     -------
     theta : numpy.ndarray
@@ -145,10 +147,12 @@ def initialize_polar_axes(ax: matplotlib.projections.polar.PolarAxes):
 def get_colorscale(nr: int):
     """
     Generate a color scale with a specified number of colors.
+    
     Parameters
     ----------
     nr : int
         The number of colors to generate in the color scale.
+    
     Returns
     -------
     numpy.ndarray
@@ -172,6 +176,7 @@ def get_colorscale(nr: int):
 def _get_filtered_index(df, ls_bin, per_obsid=False):
     """
     Filter the DataFrame based on either unique observation IDs or specified bins.
+    
     Parameters
     ----------
     df : pandas.DataFrame
@@ -181,6 +186,7 @@ def _get_filtered_index(df, ls_bin, per_obsid=False):
     per_obsid : bool, optional
         If True, the DataFrame will be filtered by unique observation IDs. 
         If False, the DataFrame will be filtered by the specified bins in `ls_bin`.
+    
     Returns
     -------
     indexes : list of pandas.Series
@@ -232,6 +238,7 @@ def _draw_histogram(
 ):
     """
     Draws a histogram on the given axes based on the provided DataFrame.
+    
     Parameters
     ----------
     ax : matplotlib.axes.Axes
@@ -252,6 +259,7 @@ def _draw_histogram(
         Whether the angles are in degrees (default is False).
     cutoff : int, optional
         Minimum number of data points required to plot a histogram (default is None).
+    
     Returns
     -------
     ax : matplotlib.axes.Axes
@@ -370,6 +378,7 @@ from typing import Optional,Union
 def show_stamps(df_stamps : gpd.GeoDataFrame , mark_stamp : Optional[Union[str,list[str]]] = None, ax=None):
     """
     Plot the geospatial stamps of the HiRISE images on a map.
+    
     Parameters
     ----------
     df_stamps : gpd.GeoDataFrame
@@ -378,6 +387,7 @@ def show_stamps(df_stamps : gpd.GeoDataFrame , mark_stamp : Optional[Union[str,l
         The ID(s) of the stamp(s) to be highlighted in red. If None, no stamps are highlighted.
     ax : matplotlib.axes.Axes, optional
         The axes on which to plot. If None, a new figure and axes are created.
+    
     Returns
     -------
     ax : matplotlib.axes.Axes
