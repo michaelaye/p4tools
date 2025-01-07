@@ -281,7 +281,7 @@ def _draw_histogram(
 
 def histogram_polar(
     df,
-    ls_bin: int | ArrayLike = 4,
+    ls_bin = 4,
     per_obsid=False,
     segmentsize=3.6,
     alpha=0.5,
