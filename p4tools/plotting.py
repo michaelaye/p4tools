@@ -2,12 +2,18 @@
 
 # %% auto 0
 __all__ = ['plot_blotches_for_tile', 'plot_fans_for_tile', 'plot_original_tile', 'plot_original_and_fans',
-           'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans']
+           'plot_original_and_blotches', 'plot_original_fans_blotches', 'plot_x_random_tiles_with_n_fans',
+           'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale', 'histogram_polar',
+           'histogram_cartesian', 'show_stamps']
 
 # %% ../notebooks/02_plotting.ipynb 2
 from matplotlib import pyplot as plt
-
+from matplotlib import colormaps
+import numpy as np
+import pandas as pd
+import matplotlib
 from . import io, markings
+from numpy.typing import ArrayLike
 
 # %% ../notebooks/02_plotting.ipynb 3
 def plot_blotches_for_tile(tile_id, ax=None, **plot_kwargs):
@@ -75,3 +81,333 @@ def plot_x_random_tiles_with_n_fans(
     tile_ids = n_fans[n_fans >= n].sample(x, random_state=random_state).index
     for tile_id in tile_ids:
         plot_original_fans_blotches(tile_id, save=save)
+
+# %% ../notebooks/02_plotting.ipynb 20
+def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
+    """
+    Compute a histogram of direction angles adjusted by north azimuth.
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing 'angle' and 'north_azimuth' columns.
+    segmentsize : int or float
+        Size of the segments (bins) for the histogram in degrees.
+    density : bool, optional
+        If True, the result is the value of the probability density function at the bin,
+        normalized such that the integral over the range is 1. Default is True.
+    degrees : bool, optional
+        If True, the bin edges are returned in degrees. If False, they are returned in radians. Default is False.
+    
+    Returns
+    -------
+    theta : numpy.ndarray
+        The bin edges in radians or degrees, depending on the `degrees` parameter.
+    radii : numpy.ndarray
+        The counts or density values for each bin.
+    Notes
+    -----
+    If the input DataFrame is empty, the function returns arrays with zero values.
+    """
+
+    direction = df["angle"]
+    north_azimuth = df["north_azimuth"]
+    direction = (direction - north_azimuth) % 360
+    bins = np.arange(0, 360 + segmentsize, segmentsize)
+    if df.shape[0] != 0:
+        counts, edges = np.histogram(direction, bins, density=density)
+    else:
+        # Maybe issue a warning
+        return [0, 0], [0, 0]
+
+    if not degrees:
+        theta = np.deg2rad(bins)
+    else:
+        theta = bins
+
+    radii = counts
+    return theta, radii
+
+
+def initialize_polar_axes(ax: matplotlib.projections.polar.PolarAxes):
+    """Initializes the Polar Axes to Wind Directions, counted in clockwise direction from N
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        An Matplotlib polar Axis
+    """
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction("clockwise")
+    ax.set_xticks(np.linspace(0, 2 * np.pi, 8, endpoint=False))
+    ax.set_xticklabels(["N", "NE", "E", "SE", "S", "SW", "W", "NW"])
+    ax.set_yticklabels([])
+
+
+def get_colorscale(nr: int):
+    """
+    Generate a color scale with a specified number of colors.
+    
+    Parameters
+    ----------
+    nr : int
+        The number of colors to generate in the color scale.
+    
+    Returns
+    -------
+    numpy.ndarray
+        An array of colors corresponding to the specified number of colors.
+    Notes
+    -----
+    - If `nr` is less than 9, the "Pastel1" colormap is used.
+    - If `nr` is less than 20 but greater than or equal to 9, the "tab20" colormap is used.
+    - If `nr` is 20 or greater, the "turbo" colormap is used.
+    """
+    color_scale = np.linspace(0, 1, nr)
+    if nr < 9:
+        cmap = colormaps["Pastel1"]
+    if nr < 20:
+        cmap = colormaps["tab20"]
+    else:
+        cmap = colormaps["turbo"]
+    return cmap(color_scale)
+
+
+def _get_filtered_index(df, ls_bin, per_obsid=False):
+    """
+    Filter the DataFrame based on either unique observation IDs or specified bins.
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The input DataFrame containing the data to be filtered. It must have columns 'obsid' and 'l_s'.
+    ls_bin : list or array-like
+        The bin edges for the 'l_s' column if `per_obsid` is False.
+    per_obsid : bool, optional
+        If True, the DataFrame will be filtered by unique observation IDs. 
+        If False, the DataFrame will be filtered by the specified bins in `ls_bin`.
+    
+    Returns
+    -------
+    indexes : list of pandas.Series
+        A list of boolean Series, each representing the filtered index for the DataFrame.
+    label_list : list of str
+        A list of labels corresponding to each filtered index. 
+        If `per_obsid` is True, the labels are the unique observation IDs. 
+        If False, the labels include the bin range, number of fans, and number of unique observation IDs.
+    """
+
+    indexes = []
+    label_list = []
+    if per_obsid:
+        obsids = df.obsid.unique()
+        for id in obsids:
+            ind = df.obsid == id
+            indexes.append(ind)
+            label_list.append(id)
+
+        return indexes, label_list
+
+    else:
+        _, ls_bin = pd.cut(df.l_s, bins=ls_bin, retbins=True)
+
+        for i, ls in enumerate(ls_bin[:-1]):
+            ind = df.l_s.between(left=ls_bin[i], right=ls_bin[i + 1])
+            df_sub = df[ind]
+            label1 = f"[{ls_bin[i]:.0f}, {ls_bin[i+1]:.0f}]"
+            label2 = f"#Fans = {df_sub.shape[0]}"
+            label3 = f"#images = {df_sub.obsid.unique().size}"
+            label = label1 + "\n" + label2 + "\n" + label3
+
+            indexes.append(ind)
+            label_list.append(label)
+
+        return indexes, label_list
+
+
+def _draw_histogram(
+    ax,
+    df,
+    ls_bin=4,
+    per_obsid=False,
+    density=True,
+    segmentsize=3.6,
+    alpha=0.5,
+    degrees=False,
+    cutoff=None,
+):
+    """
+    Draws a histogram on the given axes based on the provided DataFrame.
+    
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The axes on which to draw the histogram.
+    df : pandas.DataFrame
+        The DataFrame containing the data to be plotted.
+    ls_bin : int, optional
+        Bin size for filtering the data (default is 4).
+    per_obsid : bool, optional
+        Whether to filter data per observation ID (default is False).
+    density : bool, optional
+        Whether to normalize the histogram (default is True).
+    segmentsize : float, optional
+        Size of the segments for the histogram (default is 3.6).
+    alpha : float, optional
+        Transparency level of the bars (default is 0.5).
+    degrees : bool, optional
+        Whether the angles are in degrees (default is False).
+    cutoff : int, optional
+        Minimum number of data points required to plot a histogram (default is None).
+    
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The axes with the histogram drawn on it.
+    """
+
+    indexes, label_list = _get_filtered_index(df, ls_bin, per_obsid)
+
+    cmap = get_colorscale(len(indexes))
+
+    for i in range(0, len(indexes)):
+        df_sub = df[indexes[i]]
+
+        if (cutoff is not None) and (df_sub.shape[0] < cutoff):
+            ax.bar([0, 0], [0, 0], width=3.6, color="k", label=label_list[i], alpha=0.0)
+            continue
+
+        label = label_list[i]
+        theta, radii = compute_direction_histogram(
+            df_sub, segmentsize, density=density, degrees=degrees
+        )
+        width = np.diff(theta)
+        ax.bar(theta[:-1], radii, width=width, color=cmap[i], label=label, alpha=alpha)
+
+    return ax
+
+
+def histogram_polar(
+    df,
+    ls_bin = 4,
+    per_obsid=False,
+    segmentsize=3.6,
+    alpha=0.5,
+    cutoff=None,
+):
+    """
+    Plots a histogram in polar coordinates. These are the inverse windrose plots.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The input data frame containing the data to be plotted.
+    ls_bin : int or ArrayLike, optional
+        The number of bins or an array-like object defining the bin edges. Default is 4.
+    per_obsid : bool, optional
+        If True, the histogram is plotted per observation ID. Default is False.
+    segmentsize : float, optional
+        The size of each segment in degrees. Default is 3.6.
+    alpha : float, optional
+        The transparency level of the histogram bars. Default is 0.5.
+    cutoff : float, optional
+        A cutoff value to filter the data. Default is None.
+
+    Returns
+    -------
+    ax : matplotlib.axes._subplots.PolarAxesSubplot
+        The polar axes with the plotted histogram.
+    """
+
+    ax = plt.subplot(projection="polar")
+    ax = _draw_histogram(
+        ax,
+        df,
+        ls_bin=ls_bin,
+        per_obsid=per_obsid,
+        segmentsize=segmentsize,
+        alpha=alpha,
+        cutoff=cutoff,
+    )
+    initialize_polar_axes(ax)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    return ax
+
+
+def histogram_cartesian(df, ls_bin=4, segmentsize=3.6, alpha=0.5, degrees=True):
+    """
+    Plots a histogram of the wind directions on Cartesian coordinates.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data to be plotted.
+    ls_bin : int or ArrayLike, optional
+        The number of bins or an array-like object defining the bin edges. (default is 4).
+    segmentsize : float, optional
+        The size of the segments in the histogram (default is 3.6).
+    alpha : float, optional
+        The transparency level of the histogram bars (default is 0.5).
+    degrees : bool, optional
+        Whether to use degrees for the histogram (default is True).
+
+    Returns
+    -------
+    ax : matplotlib.axes._subplots.AxesSubplot
+        The axes object with the plotted histogram.
+    """
+
+    ax = plt.subplot()
+    ax = _draw_histogram(
+        ax,
+        df,
+        ls_bin=ls_bin,
+        density=False,
+        segmentsize=segmentsize,
+        alpha=alpha,
+        degrees=degrees,
+    )
+    return ax
+
+
+# %% ../notebooks/02_plotting.ipynb 25
+import geopandas as gpd 
+from typing import Optional,Union
+
+def show_stamps(df_stamps : gpd.GeoDataFrame , mark_stamp : Optional[Union[str,list[str]]] = None, ax=None):
+    """
+    Plot the geospatial stamps of the HiRISE images on a map.
+    
+    Parameters
+    ----------
+    df_stamps : gpd.GeoDataFrame
+        A GeoDataFrame containing the geospatial HiRISE stamps to be plotted.
+    mark_stamp : str or list of str, optional
+        The ID(s) of the stamp(s) to be highlighted in red. If None, no stamps are highlighted.
+    ax : matplotlib.axes.Axes, optional
+        The axes on which to plot. If None, a new figure and axes are created.
+    
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The axes with the plotted stamps.
+    """
+    
+
+    if ax is None:
+        fig,ax = plt.subplots()
+    
+    df_stamps.plot(ax=ax,color="gold",edgecolor="k")
+
+    if mark_stamp is None:
+        return ax
+    
+    elif type(mark_stamp) is str:
+        df_select = df_stamps[df_stamps.image_name == mark_stamp]
+        df_select.plot(color="r",ax=ax,edgecolor="k")
+    
+    elif type(mark_stamp) is list:
+        df_select = df_stamps[df_stamps.image_name.isin(mark_stamp)]
+        df_select.plot(color="r",ax=ax, edgecolor="k")
+    return ax
