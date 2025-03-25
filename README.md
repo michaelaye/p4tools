@@ -22,6 +22,22 @@ pip install p4tools
 - Provide automatic downloading of the png tiles of the catalog.
 - Provide plotting tools
 
+> Note: The original data for input to the Planet Four projects were
+> these `_COLOR` products like this one:
+> https://hirise-pds.lpl.arizona.edu/PDS/EXTRAS/RDR/ESP/ORB_011400_011499/ESP_011486_0980/ESP_011486_0980_IRB.NOMAP.browse.jpg
+> (not the browse product though, but the full size of course)
+
+## Paper
+
+The underlying paper for this work is:
+
+> Aye, K.-M., Schwamb, M.E., Portyankina, G., Hansen, C.J., McMaster,
+> A., Miller, G.R.M., Carstensen, B., Snyder, C., Parrish, M., Lynn, S.,
+> Mai, C., Miller, D., Simpson, R.J., Smith, A.M., 2019. Planet Four:
+> Probing springtime winds on Mars by mapping the southern polar CO2 jet
+> deposits. Icarus 319, 558–598.
+> https://doi.org/10.1016/j.icarus.2018.08.018
+
 ``` python
 from p4tools import io
 ```
