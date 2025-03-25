@@ -4,9 +4,9 @@
 
 # %% auto 0
 __all__ = ['logger', 'base_url', 'urls', 'hashes', 'fetch_zipped_file', 'get_blotch_catalog', 'get_fan_catalog', 'get_meta_data',
-           'get_tile_coords', 'get_region_names', 'get_tile_urls', 'get_subframe', 'get_url_for_tile_id',
-           'get_url_for_tile', 'get_subframe_by_tile_id', 'get_subframe_for_tile', 'get_fans_for_tile',
-           'get_blotches_for_tile', 'get_hirise_id_for_tile']
+           'get_tile_coords', 'get_region_names', 'get_tile_urls', 'normalize_tile_id', 'get_subframe',
+           'get_url_for_tile_id', 'get_url_for_tile', 'get_subframe_by_tile_id', 'get_subframe_for_tile',
+           'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile']
 
 # %% ../notebooks/00_io.ipynb 2
 import matplotlib.image as mplimg
@@ -88,6 +88,48 @@ def get_tile_urls() -> pd.DataFrame:
     return pd.read_csv(fetch_zipped_file("tile_urls"))
 
 # %% ../notebooks/00_io.ipynb 12
+def normalize_tile_id(tile_id: str) -> str:
+    """Normalize a tile ID by adding 'APF' prefix and leading zeros if necessary.
+
+    Parameters
+    ----------
+    tile_id : str
+        Full or partial tile ID. If partial, it will be padded with 'APF' and leading zeros.
+
+    Returns
+    -------
+    str
+        Complete tile ID in format 'APF0000xxx' (always 9 characters)
+
+    Examples
+    --------
+    >>> normalize_tile_id('r8y')
+    'APF0000r8y'
+    >>> normalize_tile_id('0000r8y')
+    'APF0000r8y'
+    >>> normalize_tile_id('APF0000r8y')
+    'APF0000r8y'
+    >>> normalize_tile_id('123r8y')
+    'APF0123r8y'
+    """
+    # Remove 'APF' prefix if present
+    if tile_id.upper().startswith("APF"):
+        tile_id = tile_id[3:]
+
+    # Calculate how many zeros we need to add
+    target_length = 7  # length without 'APF'
+    current_length = len(tile_id)
+
+    if current_length > target_length:
+        raise ValueError(f"Tile ID too long: {tile_id}")
+
+    # Add necessary leading zeros
+    padded_id = "0" * (target_length - current_length) + tile_id
+
+    # Add APF prefix
+    return f"APF{padded_id}"
+
+# %% ../notebooks/00_io.ipynb 14
 def get_subframe(url):
     targetpath = pooch.retrieve(
         url, path=pooch.os_cache("p4tools/tiles"), known_hash=None, progressbar=True
@@ -95,16 +137,16 @@ def get_subframe(url):
     im = mplimg.imread(targetpath)
     return im
 
-# %% ../notebooks/00_io.ipynb 13
+# %% ../notebooks/00_io.ipynb 15
 def get_url_for_tile_id(tile_id):
-    return get_tile_urls().set_index("tile_id").squeeze().at[tile_id]
+    return get_tile_urls().set_index("tile_id").squeeze().at[normalize_tile_id(tile_id)]
 
 
 def get_url_for_tile(tile_id):
     # alias for get_url_for_tile_id
     return get_url_for_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb 16
+# %% ../notebooks/00_io.ipynb 19
 def get_subframe_by_tile_id(tile_id):
     url = get_url_for_tile_id(tile_id)
     return get_subframe(url)
@@ -115,18 +157,21 @@ def get_subframe_for_tile(tile_id):
     return get_subframe_by_tile_id(tile_id)
 
 
-# %% ../notebooks/00_io.ipynb 18
+# %% ../notebooks/00_io.ipynb 21
 def get_fans_for_tile(tile_id):
+    tile_id = normalize_tile_id(tile_id)
     fans = get_fan_catalog()
     return fans.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb 20
+# %% ../notebooks/00_io.ipynb 23
 def get_blotches_for_tile(tile_id):
+    tile_id = normalize_tile_id(tile_id)
     blotches = get_blotch_catalog()
     return blotches.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb 23
+# %% ../notebooks/00_io.ipynb 26
 def get_hirise_id_for_tile(tile_id):
+    tile_id = normalize_tile_id(tile_id)
     try:
         obsid = get_fan_catalog().query("tile_id == @tile_id").obsid.iloc[0]
     except IndexError:

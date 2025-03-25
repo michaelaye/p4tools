@@ -14,6 +14,8 @@ from . import io, markings
 # %% ../notebooks/02_plotting.ipynb 3
 def plot_blotches_for_tile(tile_id, ax=None, **plot_kwargs):
     tile_blotches = io.get_blotches_for_tile(tile_id)
+    if len(tile_blotches) == 0:
+        print("Warning: No blotches found.")
     if ax is None:
         _, ax = plt.subplots()
     for _, blotch in tile_blotches.iterrows():
