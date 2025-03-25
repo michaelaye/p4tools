@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Some examples on working with p4tools">
+
+<title>Examples – p4tools</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-ae44de7e3b26b230a7801128389852ee.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Examples – p4tools">
+<meta property="og:description" content="Some examples on working with p4tools">
+<meta property="og:image" content="https://michaelaye.github.io/p4tools/examples_files/figure-html/cell-27-output-1.png">
+<meta property="og:site_name" content="p4tools">
+<meta property="og:image:height" content="389">
+<meta property="og:image:width" content="515">
+<meta name="twitter:title" content="Examples – p4tools">
+<meta name="twitter:description" content="Some examples on working with p4tools">
+<meta name="twitter:image" content="https://michaelaye.github.io/p4tools/examples_files/figure-html/cell-27-output-1.png">
+<meta name="twitter:image-height" content="389">
+<meta name="twitter:image-width" content="515">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">p4tools</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./examples.html">Examples</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">p4tools</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./io.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">IO module</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./markings.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">markings</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./plotting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">plotting</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./examples.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Examples</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./plotting_examples.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Plotting examples</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./regions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Regions</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-input-data-products-for-the-p4-project-are-the-color-products-one-can-find-on-the-uahirise.org-website" id="toc-the-input-data-products-for-the-p4-project-are-the-color-products-one-can-find-on-the-uahirise.org-website" class="nav-link active" data-scroll-target="#the-input-data-products-for-the-p4-project-are-the-color-products-one-can-find-on-the-uahirise.org-website">The input data products for the P4 project are the `<em>COLOR</em> products one can find on the uahirise.org website!</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/michaelaye/p4tools/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="examples.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Examples</h1>
+</div>
+
+<div>
+  <div class="description">
+    Some examples on working with p4tools
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<div id="cell-2" class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> p4tools.io <span class="im">import</span> (</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    get_blotch_catalog,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    get_blotches_for_tile,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    get_fan_catalog,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    get_fans_for_tile,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    get_region_names,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-3" class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>rois <span class="op">=</span> get_region_names()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-4" class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rois.roi_name.unique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>array(['Macclesfield', 'unknown', 'Starburst', 'Manhattan_Classic',
+       'Wellington', 'Albany', 'Bilbao', 'Ithaca', 'Portsmouth', 'Pisaq',
+       'Manhattan_Frontinella', 'BuenosAires', 'Inca_City_Ridges',
+       'Inca_City', 'Giza', 'Potsdam', 'Troy', 'Oswego_Edge', 'Halifax',
+       'Caterpillar', 'Rochester', 'Manhattan_Cracks', 'Schenectady',
+       'Binghamton', 'Atka', 'Cortland', 'Geneseo', 'Manhattan2'],
+      dtype=object)</code></pre>
+</div>
+</div>
+<div id="cell-5" class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>rois.query(<span class="st">"roi_name=='Giza'"</span>).describe()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">lat_IND</th>
+<th data-quarto-table-cell-role="th">lon_IND</th>
+<th data-quarto-table-cell-role="th">minimal_distance</th>
+<th data-quarto-table-cell-role="th">lat_WORD</th>
+<th data-quarto-table-cell-role="th">lon_WORD</th>
+<th data-quarto-table-cell-role="th">MY</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">count</td>
+<td>35.000000</td>
+<td>35.000000</td>
+<td>35.000000</td>
+<td>3.500000e+01</td>
+<td>3.500000e+01</td>
+<td>35.000000</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">mean</td>
+<td>-84.829069</td>
+<td>66.071666</td>
+<td>6.318094</td>
+<td>-8.482000e+01</td>
+<td>6.570000e+01</td>
+<td>29.057143</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">std</td>
+<td>0.066423</td>
+<td>0.991527</td>
+<td>11.242504</td>
+<td>2.883665e-14</td>
+<td>1.441832e-14</td>
+<td>1.027357</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">min</td>
+<td>-84.979100</td>
+<td>65.637800</td>
+<td>0.720371</td>
+<td>-8.482000e+01</td>
+<td>6.570000e+01</td>
+<td>28.000000</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">25%</td>
+<td>-84.834950</td>
+<td>65.736450</td>
+<td>1.254355</td>
+<td>-8.482000e+01</td>
+<td>6.570000e+01</td>
+<td>28.000000</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">50%</td>
+<td>-84.812200</td>
+<td>65.774200</td>
+<td>1.487853</td>
+<td>-8.482000e+01</td>
+<td>6.570000e+01</td>
+<td>29.000000</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">75%</td>
+<td>-84.809350</td>
+<td>65.799750</td>
+<td>4.005964</td>
+<td>-8.482000e+01</td>
+<td>6.570000e+01</td>
+<td>30.000000</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">max</td>
+<td>-84.581900</td>
+<td>69.890400</td>
+<td>44.631912</td>
+<td>-8.482000e+01</td>
+<td>6.570000e+01</td>
+<td>31.000000</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="cell-6" class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fans <span class="op">=</span> get_fan_catalog()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>blotches <span class="op">=</span> get_blotch_catalog()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-7" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fansperobsid <span class="op">=</span> fans.groupby(<span class="st">"obsid"</span>).size()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-8" class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fansperobsid.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>obsid
+ESP_011296_0975    4472
+ESP_011341_0980     455
+ESP_011348_0950       4
+ESP_011350_0945    1107
+ESP_011351_0945    1636
+dtype: int64</code></pre>
+</div>
+</div>
+<div id="cell-9" class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>blotchesperobsid <span class="op">=</span> blotches.groupby(<span class="st">"obsid"</span>).size()</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>blotchesperobsid.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>obsid
+ESP_011296_0975    1014
+ESP_011341_0980     283
+ESP_011348_0950     195
+ESP_011350_0945     625
+ESP_011351_0945    1167
+dtype: int64</code></pre>
+</div>
+</div>
+<div id="cell-10" class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> fansperobsid.to_frame()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-11" class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"blotches counts"</span>] <span class="op">=</span> blotchesperobsid</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-12" class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>df.columns <span class="op">=</span> [<span class="st">"fan_count_per_obsid"</span>, <span class="st">"blotch_count_per_obsid"</span>]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">fan_count_per_obsid</th>
+<th data-quarto-table-cell-role="th">blotch_count_per_obsid</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">obsid</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">ESP_011296_0975</td>
+<td>4472</td>
+<td>1014</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">ESP_011341_0980</td>
+<td>455</td>
+<td>283</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">ESP_011348_0950</td>
+<td>4</td>
+<td>195</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">ESP_011350_0945</td>
+<td>1107</td>
+<td>625</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">ESP_011351_0945</td>
+<td>1636</td>
+<td>1167</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="cell-13" class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fan_counts_per_tile <span class="op">=</span> fans.groupby(<span class="st">"tile_id"</span>).size()</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>fan_counts_per_tile.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tile_id
+APF0000001    3
+APF0000006    4
+APF0000009    1
+APF000000b    1
+APF000000c    4
+dtype: int64</code></pre>
+</div>
+</div>
+<div id="cell-14" class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>blotch_counts_per_tile <span class="op">=</span> blotches.groupby(<span class="st">"tile_id"</span>).size()</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>blotch_counts_per_tile.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>tile_id
+APF0000001    1
+APF0000002    2
+APF0000004    4
+APF0000005    5
+APF0000006    7
+dtype: int64</code></pre>
+</div>
+</div>
+<div id="cell-15" class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fan_counts_per_tile.name <span class="op">=</span> <span class="st">"fans"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-16" class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>blotch_counts_per_tile.name <span class="op">=</span> <span class="st">"blotches"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-17" class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.DataFrame(fan_counts_per_tile)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-18" class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"blotches"</span>] <span class="op">=</span> blotch_counts_per_tile</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>df.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">fans</th>
+<th data-quarto-table-cell-role="th">blotches</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">tile_id</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">APF0000001</td>
+<td>3</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">APF0000006</td>
+<td>4</td>
+<td>7.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">APF0000009</td>
+<td>1</td>
+<td>26.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">APF000000b</td>
+<td>1</td>
+<td>3.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">APF000000c</td>
+<td>4</td>
+<td>3.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="cell-19" class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df[(df.fans <span class="op">+</span> df.blotches) <span class="op">&gt;</span> <span class="dv">100</span>].head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">fans</th>
+<th data-quarto-table-cell-role="th">blotches</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">tile_id</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">APF00002zj</td>
+<td>99</td>
+<td>4.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">APF00006mg</td>
+<td>98</td>
+<td>7.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">APF00006mt</td>
+<td>118</td>
+<td>2.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">APF00006mv</td>
+<td>95</td>
+<td>19.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">APF00006n0</td>
+<td>43</td>
+<td>58.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<section id="the-input-data-products-for-the-p4-project-are-the-color-products-one-can-find-on-the-uahirise.org-website" class="level3">
+<h3 class="anchored" data-anchor-id="the-input-data-products-for-the-p4-project-are-the-color-products-one-can-find-on-the-uahirise.org-website">The input data products for the P4 project are the `<em>COLOR</em> products one can find on the uahirise.org website!</h3>
+<div id="cell-21" class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>buffalo <span class="op">=</span> <span class="st">"ESP_011486_0980_COLOR ESP_011987_0975_COLOR ESP_012198_0975_COLOR ESP_012277_0975_COLOR ESP_012620_0975_COLOR"</span>.split()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-22" class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>buffalo <span class="op">=</span> [i.rstrip(<span class="st">"_COLOR"</span>) <span class="cf">for</span> i <span class="kw">in</span> buffalo]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-23" class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>p4_buffalo <span class="op">=</span> fans[fans.obsid.isin(buffalo)].obsid.unique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-24" class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>fans[fans.obsid.isin(p4_buffalo)].groupby(<span class="st">"obsid"</span>).size()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>obsid
+ESP_011486_0980    242
+ESP_012277_0975     19
+ESP_012620_0975     30
+dtype: int64</code></pre>
+</div>
+</div>
+<div id="cell-25" class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fans[fans.obsid.isin(p4_buffalo)][[<span class="st">"l_s"</span>, <span class="st">"obsid"</span>]].drop_duplicates()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">l_s</th>
+<th data-quarto-table-cell-role="th">obsid</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">124564</td>
+<td>241.144</td>
+<td>ESP_012620_0975</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">136301</td>
+<td>187.254</td>
+<td>ESP_011486_0980</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">139964</td>
+<td>224.333</td>
+<td>ESP_012277_0975</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="cell-26" class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>fans[fans.tile_id.<span class="bu">str</span>.contains(<span class="st">"r8y"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">marking_id</th>
+<th data-quarto-table-cell-role="th">angle</th>
+<th data-quarto-table-cell-role="th">distance</th>
+<th data-quarto-table-cell-role="th">tile_id</th>
+<th data-quarto-table-cell-role="th">image_x</th>
+<th data-quarto-table-cell-role="th">image_y</th>
+<th data-quarto-table-cell-role="th">n_votes</th>
+<th data-quarto-table-cell-role="th">obsid</th>
+<th data-quarto-table-cell-role="th">spread</th>
+<th data-quarto-table-cell-role="th">version</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">y_angle</th>
+<th data-quarto-table-cell-role="th">l_s</th>
+<th data-quarto-table-cell-role="th">map_scale</th>
+<th data-quarto-table-cell-role="th">north_azimuth</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateX</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateY</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateZ</th>
+<th data-quarto-table-cell-role="th">PlanetocentricLatitude</th>
+<th data-quarto-table-cell-role="th">PlanetographicLatitude</th>
+<th data-quarto-table-cell-role="th">Longitude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154795</td>
+<td>F02a9f2</td>
+<td>34.16</td>
+<td>171.27</td>
+<td>APF0000r8y</td>
+<td>505.45</td>
+<td>13038.68</td>
+<td>19</td>
+<td>ESP_020242_0945</td>
+<td>41.85</td>
+<td>1</td>
+<td>...</td>
+<td>0.56</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.560715</td>
+<td>265.134952</td>
+<td>-3370.241784</td>
+<td>-85.374934</td>
+<td>-85.428989</td>
+<td>103.481087</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">154796</td>
+<td>F02a9f3</td>
+<td>38.19</td>
+<td>86.92</td>
+<td>APF0000r8y</td>
+<td>387.19</td>
+<td>12617.75</td>
+<td>16</td>
+<td>ESP_020242_0945</td>
+<td>33.44</td>
+<td>1</td>
+<td>...</td>
+<td>0.62</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.930749</td>
+<td>264.887663</td>
+<td>-3370.271982</td>
+<td>-85.377575</td>
+<td>-85.431599</td>
+<td>103.568870</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154797</td>
+<td>F02a9f4</td>
+<td>36.11</td>
+<td>106.09</td>
+<td>APF0000r8y</td>
+<td>30.86</td>
+<td>13128.72</td>
+<td>18</td>
+<td>ESP_020242_0945</td>
+<td>36.90</td>
+<td>1</td>
+<td>...</td>
+<td>0.59</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.883825</td>
+<td>265.528290</td>
+<td>-3370.208031</td>
+<td>-85.367154</td>
+<td>-85.421299</td>
+<td>103.527769</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">154798</td>
+<td>F02a9f5</td>
+<td>76.52</td>
+<td>63.91</td>
+<td>APF0000r8y</td>
+<td>32.33</td>
+<td>13128.33</td>
+<td>3</td>
+<td>ESP_020242_0945</td>
+<td>46.96</td>
+<td>1</td>
+<td>...</td>
+<td>0.96</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.882893</td>
+<td>265.526982</td>
+<td>-3370.208168</td>
+<td>-85.367179</td>
+<td>-85.421324</td>
+<td>103.527643</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154799</td>
+<td>F02a9f6</td>
+<td>33.30</td>
+<td>90.38</td>
+<td>APF0000r8y</td>
+<td>249.21</td>
+<td>12781.71</td>
+<td>14</td>
+<td>ESP_020242_0945</td>
+<td>25.57</td>
+<td>1</td>
+<td>...</td>
+<td>0.55</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.935125</td>
+<td>265.109183</td>
+<td>-3370.249450</td>
+<td>-85.373890</td>
+<td>-85.427956</td>
+<td>103.558845</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">154800</td>
+<td>F02a9f7</td>
+<td>32.72</td>
+<td>77.35</td>
+<td>APF0000r8y</td>
+<td>204.00</td>
+<td>13205.53</td>
+<td>15</td>
+<td>ESP_020242_0945</td>
+<td>36.85</td>
+<td>1</td>
+<td>...</td>
+<td>0.54</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.694249</td>
+<td>265.469837</td>
+<td>-3370.212149</td>
+<td>-85.368868</td>
+<td>-85.422993</td>
+<td>103.491955</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154801</td>
+<td>F02a9f8</td>
+<td>39.19</td>
+<td>54.32</td>
+<td>APF0000r8y</td>
+<td>73.62</td>
+<td>13114.42</td>
+<td>12</td>
+<td>ESP_020242_0945</td>
+<td>30.04</td>
+<td>1</td>
+<td>...</td>
+<td>0.63</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.858677</td>
+<td>265.487992</td>
+<td>-3370.211967</td>
+<td>-85.367920</td>
+<td>-85.422056</td>
+<td>103.524616</td>
+</tr>
+</tbody>
+</table>
+
+<p>7 rows × 24 columns</p>
+</div>
+</div>
+</div>
+<div id="cell-27" class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> p4tools.plotting <span class="im">import</span> plot_blotches_for_tile, plot_fans_for_tile</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-28" class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>plot_fans_for_tile(<span class="st">"r8y"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="examples_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-29" class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>get_blotches_for_tile(<span class="st">"r8y"</span>)  <span class="co"># no blotches, that's why below plot is empty</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">marking_id</th>
+<th data-quarto-table-cell-role="th">angle</th>
+<th data-quarto-table-cell-role="th">tile_id</th>
+<th data-quarto-table-cell-role="th">image_x</th>
+<th data-quarto-table-cell-role="th">image_y</th>
+<th data-quarto-table-cell-role="th">n_votes</th>
+<th data-quarto-table-cell-role="th">obsid</th>
+<th data-quarto-table-cell-role="th">radius_1</th>
+<th data-quarto-table-cell-role="th">radius_2</th>
+<th data-quarto-table-cell-role="th">vote_ratio</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">y_angle</th>
+<th data-quarto-table-cell-role="th">l_s</th>
+<th data-quarto-table-cell-role="th">map_scale</th>
+<th data-quarto-table-cell-role="th">north_azimuth</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateX</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateY</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateZ</th>
+<th data-quarto-table-cell-role="th">PlanetocentricLatitude</th>
+<th data-quarto-table-cell-role="th">PlanetographicLatitude</th>
+<th data-quarto-table-cell-role="th">Longitude</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+
+<p>0 rows × 23 columns</p>
+</div>
+</div>
+</div>
+<div id="cell-30" class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>plot_blotches_for_tile(<span class="st">"APF0000r8y"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Warning: No blotches found.</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="examples_files/figure-html/cell-29-output-2.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="cell-31" class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>get_fans_for_tile(<span class="st">"APF0000r8y"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">marking_id</th>
+<th data-quarto-table-cell-role="th">angle</th>
+<th data-quarto-table-cell-role="th">distance</th>
+<th data-quarto-table-cell-role="th">tile_id</th>
+<th data-quarto-table-cell-role="th">image_x</th>
+<th data-quarto-table-cell-role="th">image_y</th>
+<th data-quarto-table-cell-role="th">n_votes</th>
+<th data-quarto-table-cell-role="th">obsid</th>
+<th data-quarto-table-cell-role="th">spread</th>
+<th data-quarto-table-cell-role="th">version</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">y_angle</th>
+<th data-quarto-table-cell-role="th">l_s</th>
+<th data-quarto-table-cell-role="th">map_scale</th>
+<th data-quarto-table-cell-role="th">north_azimuth</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateX</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateY</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateZ</th>
+<th data-quarto-table-cell-role="th">PlanetocentricLatitude</th>
+<th data-quarto-table-cell-role="th">PlanetographicLatitude</th>
+<th data-quarto-table-cell-role="th">Longitude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154795</td>
+<td>F02a9f2</td>
+<td>34.16</td>
+<td>171.27</td>
+<td>APF0000r8y</td>
+<td>505.45</td>
+<td>13038.68</td>
+<td>19</td>
+<td>ESP_020242_0945</td>
+<td>41.85</td>
+<td>1</td>
+<td>...</td>
+<td>0.56</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.560715</td>
+<td>265.134952</td>
+<td>-3370.241784</td>
+<td>-85.374934</td>
+<td>-85.428989</td>
+<td>103.481087</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">154796</td>
+<td>F02a9f3</td>
+<td>38.19</td>
+<td>86.92</td>
+<td>APF0000r8y</td>
+<td>387.19</td>
+<td>12617.75</td>
+<td>16</td>
+<td>ESP_020242_0945</td>
+<td>33.44</td>
+<td>1</td>
+<td>...</td>
+<td>0.62</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.930749</td>
+<td>264.887663</td>
+<td>-3370.271982</td>
+<td>-85.377575</td>
+<td>-85.431599</td>
+<td>103.568870</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154797</td>
+<td>F02a9f4</td>
+<td>36.11</td>
+<td>106.09</td>
+<td>APF0000r8y</td>
+<td>30.86</td>
+<td>13128.72</td>
+<td>18</td>
+<td>ESP_020242_0945</td>
+<td>36.90</td>
+<td>1</td>
+<td>...</td>
+<td>0.59</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.883825</td>
+<td>265.528290</td>
+<td>-3370.208031</td>
+<td>-85.367154</td>
+<td>-85.421299</td>
+<td>103.527769</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">154798</td>
+<td>F02a9f5</td>
+<td>76.52</td>
+<td>63.91</td>
+<td>APF0000r8y</td>
+<td>32.33</td>
+<td>13128.33</td>
+<td>3</td>
+<td>ESP_020242_0945</td>
+<td>46.96</td>
+<td>1</td>
+<td>...</td>
+<td>0.96</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.882893</td>
+<td>265.526982</td>
+<td>-3370.208168</td>
+<td>-85.367179</td>
+<td>-85.421324</td>
+<td>103.527643</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154799</td>
+<td>F02a9f6</td>
+<td>33.30</td>
+<td>90.38</td>
+<td>APF0000r8y</td>
+<td>249.21</td>
+<td>12781.71</td>
+<td>14</td>
+<td>ESP_020242_0945</td>
+<td>25.57</td>
+<td>1</td>
+<td>...</td>
+<td>0.55</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.935125</td>
+<td>265.109183</td>
+<td>-3370.249450</td>
+<td>-85.373890</td>
+<td>-85.427956</td>
+<td>103.558845</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">154800</td>
+<td>F02a9f7</td>
+<td>32.72</td>
+<td>77.35</td>
+<td>APF0000r8y</td>
+<td>204.00</td>
+<td>13205.53</td>
+<td>15</td>
+<td>ESP_020242_0945</td>
+<td>36.85</td>
+<td>1</td>
+<td>...</td>
+<td>0.54</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.694249</td>
+<td>265.469837</td>
+<td>-3370.212149</td>
+<td>-85.368868</td>
+<td>-85.422993</td>
+<td>103.491955</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">154801</td>
+<td>F02a9f8</td>
+<td>39.19</td>
+<td>54.32</td>
+<td>APF0000r8y</td>
+<td>73.62</td>
+<td>13114.42</td>
+<td>12</td>
+<td>ESP_020242_0945</td>
+<td>30.04</td>
+<td>1</td>
+<td>...</td>
+<td>0.63</td>
+<td>184.557</td>
+<td>1.0</td>
+<td>143.674895</td>
+<td>-63.858677</td>
+<td>265.487992</td>
+<td>-3370.211967</td>
+<td>-85.367920</td>
+<td>-85.422056</td>
+<td>103.524616</td>
+</tr>
+</tbody>
+</table>
+
+<p>7 rows × 24 columns</p>
+</div>
+</div>
+</div>
+<div id="cell-32" class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>get_blotches_for_tile(<span class="st">"5g"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">marking_id</th>
+<th data-quarto-table-cell-role="th">angle</th>
+<th data-quarto-table-cell-role="th">tile_id</th>
+<th data-quarto-table-cell-role="th">image_x</th>
+<th data-quarto-table-cell-role="th">image_y</th>
+<th data-quarto-table-cell-role="th">n_votes</th>
+<th data-quarto-table-cell-role="th">obsid</th>
+<th data-quarto-table-cell-role="th">radius_1</th>
+<th data-quarto-table-cell-role="th">radius_2</th>
+<th data-quarto-table-cell-role="th">vote_ratio</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">y_angle</th>
+<th data-quarto-table-cell-role="th">l_s</th>
+<th data-quarto-table-cell-role="th">map_scale</th>
+<th data-quarto-table-cell-role="th">north_azimuth</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateX</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateY</th>
+<th data-quarto-table-cell-role="th">BodyFixedCoordinateZ</th>
+<th data-quarto-table-cell-role="th">PlanetocentricLatitude</th>
+<th data-quarto-table-cell-role="th">PlanetographicLatitude</th>
+<th data-quarto-table-cell-role="th">Longitude</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">176515</td>
+<td>B0319e4</td>
+<td>37.52</td>
+<td>APF000005g</td>
+<td>542.44</td>
+<td>26364.59</td>
+<td>56</td>
+<td>ESP_012254_1065</td>
+<td>19.55</td>
+<td>15.01</td>
+<td>1.00</td>
+<td>...</td>
+<td>0.57</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.726050</td>
+<td>-336.053862</td>
+<td>-3241.541739</td>
+<td>-73.480739</td>
+<td>-73.664238</td>
+<td>339.539847</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">176516</td>
+<td>B0319e5</td>
+<td>38.16</td>
+<td>APF000005g</td>
+<td>462.73</td>
+<td>26382.80</td>
+<td>51</td>
+<td>ESP_012254_1065</td>
+<td>21.88</td>
+<td>15.47</td>
+<td>0.84</td>
+<td>...</td>
+<td>0.58</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.739915</td>
+<td>-336.038989</td>
+<td>-3241.539335</td>
+<td>-73.480601</td>
+<td>-73.664101</td>
+<td>339.540967</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">176517</td>
+<td>B0319e6</td>
+<td>38.65</td>
+<td>APF000005g</td>
+<td>407.45</td>
+<td>26519.19</td>
+<td>58</td>
+<td>ESP_012254_1065</td>
+<td>22.04</td>
+<td>16.82</td>
+<td>1.00</td>
+<td>...</td>
+<td>0.60</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.774887</td>
+<td>-336.044180</td>
+<td>-3241.529264</td>
+<td>-73.479991</td>
+<td>-73.663497</td>
+<td>339.541405</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">176518</td>
+<td>B0319e7</td>
+<td>21.95</td>
+<td>APF000005g</td>
+<td>755.74</td>
+<td>26755.94</td>
+<td>53</td>
+<td>ESP_012254_1065</td>
+<td>15.90</td>
+<td>12.94</td>
+<td>1.00</td>
+<td>...</td>
+<td>0.39</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.779119</td>
+<td>-336.148800</td>
+<td>-3241.518294</td>
+<td>-73.479279</td>
+<td>-73.662792</td>
+<td>339.535652</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">176519</td>
+<td>B0319e8</td>
+<td>15.11</td>
+<td>APF000005g</td>
+<td>424.85</td>
+<td>26942.25</td>
+<td>35</td>
+<td>ESP_012254_1065</td>
+<td>14.20</td>
+<td>11.73</td>
+<td>1.00</td>
+<td>...</td>
+<td>0.31</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.859355</td>
+<td>-336.100928</td>
+<td>-3241.500795</td>
+<td>-73.478246</td>
+<td>-73.661769</td>
+<td>339.539996</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">176520</td>
+<td>B0319e9</td>
+<td>40.97</td>
+<td>APF000005g</td>
+<td>134.64</td>
+<td>26914.32</td>
+<td>52</td>
+<td>ESP_012254_1065</td>
+<td>22.44</td>
+<td>15.85</td>
+<td>1.00</td>
+<td>...</td>
+<td>0.61</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.890531</td>
+<td>-336.034981</td>
+<td>-3241.498434</td>
+<td>-73.478134</td>
+<td>-73.661658</td>
+<td>339.544328</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">176521</td>
+<td>B0319ea</td>
+<td>4.13</td>
+<td>APF000005g</td>
+<td>313.37</td>
+<td>26945.62</td>
+<td>26</td>
+<td>ESP_012254_1065</td>
+<td>14.23</td>
+<td>12.12</td>
+<td>1.00</td>
+<td>...</td>
+<td>0.23</td>
+<td>223.218</td>
+<td>0.25</td>
+<td>100.857869</td>
+<td>900.874218</td>
+<td>-336.077360</td>
+<td>-3241.498931</td>
+<td>-73.478144</td>
+<td>-73.661668</td>
+<td>339.541622</td>
+</tr>
+</tbody>
+</table>
+
+<p>7 rows × 23 columns</p>
+</div>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/michaelaye\.github\.io\/p4tools\/");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/michaelaye/p4tools/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
