@@ -5,7 +5,7 @@ website:
       - 00_io.ipynb
       - 01_markings.ipynb
       - 02_plotting.ipynb
-      - 04_data_extract.ipynb
       - examples.ipynb
+      - p4_db_reading.ipynb
       - plotting_examples.ipynb
       - regions.ipynb
