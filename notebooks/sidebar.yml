@@ -6,6 +6,5 @@ website:
       - 01_markings.ipynb
       - 02_plotting.ipynb
       - examples.ipynb
-      - p4_db_reading.ipynb
       - plotting_examples.ipynb
       - regions.ipynb

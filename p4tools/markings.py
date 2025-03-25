@@ -27,11 +27,9 @@ from . import io
 
 # %% ../notebooks/01_markings.ipynb 3
 IMG_X_SIZE = 840
-
-# %% ../notebooks/01_markings.ipynb 4
 IMG_Y_SIZE = 648
 
-# %% ../notebooks/01_markings.ipynb 5
+# %% ../notebooks/01_markings.ipynb 4
 def show_subframe(tile_id, ax=None, aspect="auto"):
     subframe = io.get_subframe_by_tile_id(tile_id)
     if ax is None:
@@ -40,46 +38,26 @@ def show_subframe(tile_id, ax=None, aspect="auto"):
     ax.set_axis_off()
     return ax
 
-# %% ../notebooks/01_markings.ipynb 6
+# %% ../notebooks/01_markings.ipynb 5
 def set_subframe_size(ax):
     """Set plot view limit on Planet 4 subframe size."""
     ax.set_xlim(0, IMG_X_SIZE)
     ax.set_ylim(IMG_Y_SIZE, 0)
 
-# %% ../notebooks/01_markings.ipynb 7
+# %% ../notebooks/01_markings.ipynb 6
 def calc_fig_size(width):
     """Calc figure height in ratio of subframes."""
     ratio = IMG_X_SIZE / IMG_Y_SIZE
     return (width, width / ratio)
 
-# %% ../notebooks/01_markings.ipynb 8
+# %% ../notebooks/01_markings.ipynb 7
 # class Marking:
 #     def __init__(self, data, scope="planet4"):
 #         self.data = data
 #         self.scope = scope
 
-# %% ../notebooks/01_markings.ipynb 9
+# %% ../notebooks/01_markings.ipynb 8
 class Blotch(Ellipse):
-    """Blotch management class for P4.
-
-    Parameters
-    ----------
-    data : object with blotch data attributes
-        object should provide attributes [`x`, `y`, `radius_1`, `radius_2`, `angle`]
-    scope : {'planet4', 'hirise'}
-        string that decides between using x/y or image_x/image_y as center corods
-    color : str, optional
-        to control the color of the mpl.Ellipse object
-
-    Attributes
-    ----------
-    to_average : list
-        List of cols to be averaged after clustering
-    data : object with blotch data attributes, as provided by `data`
-    center : tuple (inherited from matplotlib.Ellipse)
-        Coordinates of center, i.e. self.x, self.y
-    """
-
     to_average = "x y image_x image_y angle radius_1 radius_2".split()
 
     @classmethod
@@ -88,7 +66,25 @@ class Blotch(Ellipse):
         data = df[df.tile_id == tile_id].iloc[n]
         return cls(data, **kwargs)
 
-    def __init__(self, data, scope="planet4", with_center=False, url_db="", **kwargs):
+    def __init__(
+        self,
+        data,  # object with blotch data attributes: x, y, radius_1, radius_2, angle
+        scope="planet4",  # "planet4" or "hirise"
+        with_center=False,  # if True, plot the center of the blotch
+        url_db="",  # path to the url database
+        **kwargs,
+    ):
+        """
+        Blotch management class for P4.
+
+        Attributes
+        ----------
+        to_average : list
+            List of cols to be averaged after clustering
+        data : object with blotch data attributes, as provided by `data`
+        center : tuple (inherited from matplotlib.Ellipse)
+            Coordinates of center, i.e. self.x, self.y
+        """
         self.data = data
         self.scope = scope if scope is not None else "planet4"
         self.with_center = with_center
@@ -248,7 +244,7 @@ class Blotch(Ellipse):
     def __repr__(self):
         return self.__str__()
 
-# %% ../notebooks/01_markings.ipynb 13
+# %% ../notebooks/01_markings.ipynb 12
 class TileBlotches:
     def __init__(self, tile_id, with_center=False, color="green"):
         """Container for all blotches of a tile.
@@ -274,7 +270,7 @@ class TileBlotches:
         ax.add_collection(self.p)
         set_subframe_size(ax)
 
-# %% ../notebooks/01_markings.ipynb 16
+# %% ../notebooks/01_markings.ipynb 15
 def rotate_vector(v, angle):
     """Rotate vector by angle given in degrees.
 
@@ -289,43 +285,8 @@ def rotate_vector(v, angle):
     rotmat = np.array([[cos(rangle), -sin(rangle)], [sin(rangle), cos(rangle)]])
     return rotmat.dot(v)
 
-# %% ../notebooks/01_markings.ipynb 17
+# %% ../notebooks/01_markings.ipynb 16
 class Fan(lines.Line2D):
-    """Fan management class for P4.
-
-    Parameters
-    ----------
-    data : object with fan data attributes
-        object has to provide [`x`, `y`, `angle`, `spread`, `distance`]
-    scope : {'planet4', 'hirise'}
-        string that decides between using x/y or image_x/image_y as base coords
-    kwargs : dictionary, optional
-
-    Attributes
-    ----------
-    to_average : list
-        List of columns to average after clustering
-    data : object with fan data attributes
-        as provided by `data`.
-    base : tuple
-        base coordinates `x` and `y`.
-    inside_half : float
-        `data` divided by 2.0.
-    armlength : float
-        length of the fan arms.
-    v1 : float[2]
-        vector of first arm of fan.
-    v2 : float[2]
-        vector of second arm of fan.
-    coords : float[3, 2]
-        Set of coords to draw for MPL.Line2D object: arm1->base->arm2
-    circle_base
-    center
-    radius
-    midpoint
-    base_to_midpoint_vec
-    """
-
     to_average = "x y image_x image_y angle spread distance".split()
 
     @classmethod
@@ -334,7 +295,39 @@ class Fan(lines.Line2D):
         data = df[df.tile_id == tile_id].iloc[n]
         return cls(data, **kwargs)
 
-    def __init__(self, data, scope="planet4", with_center=False, **kwargs):
+    def __init__(
+        self,
+        data,  # object with fan data attributes: x, y, angle, spread, distance
+        scope="planet4",  # "planet4" or "hirise"
+        with_center=False,  # if True, plot the center of the fan
+        **kwargs,
+    ):
+        """
+        Fan management class for P4.
+
+        Attributes
+        ----------
+        to_average : list
+            List of columns to average after clustering
+        data : object with fan data attributes
+            as provided by `data`.
+        base : tuple
+            base coordinates `x` and `y`.
+        inside_half : float
+            `data` divided by 2.0.
+        armlength : float
+            length of the fan arms.
+        v1 : float[2]
+            vector of first arm of fan.
+        v2 : float[2]
+        coords : float[3, 2]
+            Set of coords to draw for MPL.Line2D object: arm1->base->arm2
+        circle_base
+        center
+        radius
+        midpoint
+        base_to_midpoint_vec
+        """
         self.data = data
         self.scope = scope if scope is not None else "planet4"
         self.with_center = with_center

@@ -5,7 +5,8 @@
 # %% auto 0
 __all__ = ['logger', 'base_url', 'urls', 'hashes', 'fetch_zipped_file', 'get_blotch_catalog', 'get_fan_catalog', 'get_meta_data',
            'get_tile_coords', 'get_region_names', 'get_tile_urls', 'get_subframe', 'get_url_for_tile_id',
-           'get_subframe_by_tile_id', 'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile']
+           'get_url_for_tile', 'get_subframe_by_tile_id', 'get_subframe_for_tile', 'get_fans_for_tile',
+           'get_blotches_for_tile', 'get_hirise_id_for_tile']
 
 # %% ../notebooks/00_io.ipynb 2
 import matplotlib.image as mplimg
@@ -98,10 +99,21 @@ def get_subframe(url):
 def get_url_for_tile_id(tile_id):
     return get_tile_urls().set_index("tile_id").squeeze().at[tile_id]
 
+
+def get_url_for_tile(tile_id):
+    # alias for get_url_for_tile_id
+    return get_url_for_tile_id(tile_id)
+
 # %% ../notebooks/00_io.ipynb 16
 def get_subframe_by_tile_id(tile_id):
     url = get_url_for_tile_id(tile_id)
     return get_subframe(url)
+
+
+def get_subframe_for_tile(tile_id):
+    # alias for get_subframe_by_tile_id for consistency
+    return get_subframe_by_tile_id(tile_id)
+
 
 # %% ../notebooks/00_io.ipynb 18
 def get_fans_for_tile(tile_id):
