@@ -275,7 +275,7 @@ def rotate_vector(v, angle):
     """Rotate vector by angle given in degrees.
 
     Parameters
-    ----------
+    ----------\\\
     v : np.array
         Vector to be rotated
     angle : float
