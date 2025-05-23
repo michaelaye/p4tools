@@ -68,3 +68,9 @@ _docs/
 _proc/
 .ipynb_checkpoints
 .mypy_cache
+p4tools_bak/*
+
+notebooks/plots
+notebooks/images
+notebooks/catalogs
+
