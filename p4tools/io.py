@@ -219,13 +219,13 @@ def get_blotches_for_tile(tile_id, version='v3'):
     return blotches.query("tile_id == @tile_id")
 
 # %% ../notebooks/00_io.ipynb 34
-def get_hirise_id_for_tile(tile_id):
+def get_hirise_id_for_tile(tile_id, version='v3'):
     tile_id = normalize_tile_id(tile_id)
     try:
-        obsid = get_fan_catalog().query("tile_id == @tile_id").obsid.iloc[0]
+        obsid = get_fan_catalog(version).query("tile_id == @tile_id").obsid.iloc[0]
     except IndexError:
         try:
-            obsid = get_blotch_catalog().query("tile_id == @tile_id").obsid.iloc[0]
+            obsid = get_blotch_catalog(version).query("tile_id == @tile_id").obsid.iloc[0]
         except IndexError:
             raise ValueError(f"No obsid found for tile {tile_id}")
     else:
