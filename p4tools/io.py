@@ -15,7 +15,6 @@ import matplotlib.image as mplimg
 import pandas as pd
 import pooch
 from matplotlib import pyplot as plt
-from yarl import URL
 
 # %% ../notebooks/00_io.ipynb 3
 logger = pooch.get_logger()
@@ -25,7 +24,7 @@ logger.setLevel("DEBUG")
 v1 = pooch.create(
     path=pooch.os_cache("p4tools"),
     base_url="",
-    # version = "v1",
+    version = "v1",
     registry= {
         'fans': 'md5:71ff51ff79d6e975f704f19b1996d8ea',
         'blotches': 'md5:f4d0c101f65abbaf34e092620133d56e',
@@ -125,19 +124,21 @@ def get_blotch_catalog(version='v3') -> pd.DataFrame:
 def get_fan_catalog(version='v3') -> pd.DataFrame:
     return pd.read_parquet(fetchers[version]('fans', **kwargs))
 
-def get_tile_coords() -> pd.DataFrame:
+def get_tile_coords(version='v3') -> pd.DataFrame:
     return pd.read_parquet(fetchers[version]("tile_coords", **kwargs))
 
-def get_meta_data() -> pd.DataFrame:
+def get_meta_data(version='v3') -> pd.DataFrame:
     return pd.read_parquet(fetchers[version]("metadata", **kwargs))
 
 def get_region_names() -> pd.DataFrame:
+    "only v1 exists"
     return pd.read_parquet(v1.fetch("region_names", **kwargs))
 
 def get_tile_urls() -> pd.DataFrame:
+    "only v1 exists"
     return pd.read_parquet(v1.fetch("tile_urls", **kwargs))
 
-# %% ../notebooks/00_io.ipynb 19
+# %% ../notebooks/00_io.ipynb 20
 def normalize_tile_id(tile_id: str) -> str:
     """Normalize a tile ID by adding 'APF' prefix and leading zeros if necessary.
 
@@ -179,7 +180,7 @@ def normalize_tile_id(tile_id: str) -> str:
     # Add APF prefix
     return f"APF{padded_id}"
 
-# %% ../notebooks/00_io.ipynb 21
+# %% ../notebooks/00_io.ipynb 22
 def get_subframe(url):
     targetpath = pooch.retrieve(
         url, path=pooch.os_cache("p4tools/tiles"), known_hash=None, progressbar=True
@@ -187,7 +188,7 @@ def get_subframe(url):
     im = mplimg.imread(targetpath)
     return im
 
-# %% ../notebooks/00_io.ipynb 22
+# %% ../notebooks/00_io.ipynb 23
 def get_url_for_tile_id(tile_id):
     return get_tile_urls().set_index("tile_id").squeeze().at[normalize_tile_id(tile_id)]
 
@@ -196,7 +197,7 @@ def get_url_for_tile(tile_id):
     # alias for get_url_for_tile_id
     return get_url_for_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb 26
+# %% ../notebooks/00_io.ipynb 27
 def get_subframe_by_tile_id(tile_id):
     url = get_url_for_tile_id(tile_id)
     return get_subframe(url)
@@ -206,19 +207,19 @@ def get_subframe_for_tile(tile_id):
     # alias for get_subframe_by_tile_id for consistency
     return get_subframe_by_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb 28
+# %% ../notebooks/00_io.ipynb 29
 def get_fans_for_tile(tile_id, version='v3'):
     tile_id = normalize_tile_id(tile_id)
     fans = get_fan_catalog(version)
     return fans.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb 31
+# %% ../notebooks/00_io.ipynb 32
 def get_blotches_for_tile(tile_id, version='v3'):
     tile_id = normalize_tile_id(tile_id)
     blotches = get_blotch_catalog(version)
     return blotches.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb 34
+# %% ../notebooks/00_io.ipynb 35
 def get_hirise_id_for_tile(tile_id, version='v3'):
     tile_id = normalize_tile_id(tile_id)
     try:
