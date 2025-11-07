@@ -22,7 +22,7 @@ def plot_blotches_for_tile(tile_id, ax=None, **plot_kwargs):
         m = markings.Blotch(blotch, with_center=False)
         m.plot(ax=ax, **plot_kwargs)
 
-# %% ../notebooks/02_plotting.ipynb 6
+# %% ../notebooks/02_plotting.ipynb 7
 def plot_fans_for_tile(tile_id, ax=None, **plot_kwargs):
     tile_fans = io.get_fans_for_tile(tile_id)
     if len(tile_fans) == 0:
@@ -33,28 +33,28 @@ def plot_fans_for_tile(tile_id, ax=None, **plot_kwargs):
         m = markings.Fan(fan, with_center=False)
         m.plot(ax=ax, **plot_kwargs)
 
-# %% ../notebooks/02_plotting.ipynb 9
+# %% ../notebooks/02_plotting.ipynb 10
 def plot_original_tile(tileID, ax=None):
     if ax is None:
         _, ax = plt.subplots()
     ax.imshow(io.get_subframe_by_tile_id(tileID), origin="upper", aspect="auto")
     ax.set_axis_off()
 
-# %% ../notebooks/02_plotting.ipynb 11
+# %% ../notebooks/02_plotting.ipynb 12
 def plot_original_and_fans(tileID):
     fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
     plot_original_tile(tileID, ax=axes[0])
     plot_fans_for_tile(tileID, ax=axes[1])
     fig.suptitle(f"Planet Four tile ID: {tileID}")
 
-# %% ../notebooks/02_plotting.ipynb 13
+# %% ../notebooks/02_plotting.ipynb 14
 def plot_original_and_blotches(tileID):
     fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
     plot_original_tile(tileID, ax=axes[0])
     plot_blotches_for_tile(tileID, ax=axes[1], color="magenta")
     fig.suptitle(f"Planet Four tile ID: {tileID}")
 
-# %% ../notebooks/02_plotting.ipynb 15
+# %% ../notebooks/02_plotting.ipynb 16
 def plot_original_fans_blotches(tileID, save=False):
     fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
     plot_original_tile(tileID, ax=axes[0])
@@ -64,7 +64,7 @@ def plot_original_fans_blotches(tileID, save=False):
     if save:
         fig.savefig(f"{tileID}.png", dpi=150)
 
-# %% ../notebooks/02_plotting.ipynb 18
+# %% ../notebooks/02_plotting.ipynb 19
 def plot_x_random_tiles_with_n_fans(
     x: int = 3,  # how many of 2 col original+p4 data plots to receive
     n: int = 15,  # whats the minimum number of fans to contain
