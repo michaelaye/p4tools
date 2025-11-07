@@ -103,7 +103,7 @@ v3 = pooch.create(
         "fans": "md5:186c98dee8712dcab1ea08317e60ed9b",
         "blotches": "md5:651d767533f70196ab36512eff01a941",
         "metafull": "md5:5c2e5f34e2b9c98b18b35ed5e16f68b4",
-        "tile_coords": "md5:5c2e5f34e2b9c98b18b35ed5e16f68b4",
+        "tile_coords": "md5:adb3958c7ff2f80385ddcf4c6a7b8da1",
         "metadata": "md5:fa1ed90fd731fabc0f760b2d51759b4f",
     },
     urls={
@@ -115,10 +115,10 @@ v3 = pooch.create(
     },
 )
 
-# %% ../notebooks/00_io.ipynb 13
+# %% ../notebooks/00_io.ipynb 14
 fetchers = dict(v1=v1.fetch, v3=v3.fetch)
 
-# %% ../notebooks/00_io.ipynb 14
+# %% ../notebooks/00_io.ipynb 15
 def get_metafull() -> pd.DataFrame:
     "only v3 exists"
     df = pd.read_parquet(v3.fetch("metafull", **kwargs)).drop("Unnamed: 0", axis=1)
@@ -200,7 +200,7 @@ def define_martian_year(df, time_col_name):
     return df
 
 
-# %% ../notebooks/00_io.ipynb 22
+# %% ../notebooks/00_io.ipynb 23
 def normalize_tile_id(tile_id: str) -> str:
     """Normalize a tile ID by adding 'APF' prefix and leading zeros if necessary.
 
@@ -242,7 +242,7 @@ def normalize_tile_id(tile_id: str) -> str:
     # Add APF prefix
     return f"APF{padded_id}"
 
-# %% ../notebooks/00_io.ipynb 24
+# %% ../notebooks/00_io.ipynb 25
 def get_subframe(url):
     targetpath = pooch.retrieve(
         url, path=pooch.os_cache("p4tools/tiles"), known_hash=None, progressbar=True
@@ -250,7 +250,7 @@ def get_subframe(url):
     im = mplimg.imread(targetpath)
     return im
 
-# %% ../notebooks/00_io.ipynb 25
+# %% ../notebooks/00_io.ipynb 26
 def get_url_for_tile_id(tile_id):
     return get_tile_urls().set_index("tile_id").squeeze().at[normalize_tile_id(tile_id)]
 
@@ -259,7 +259,7 @@ def get_url_for_tile(tile_id):
     # alias for get_url_for_tile_id
     return get_url_for_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb 29
+# %% ../notebooks/00_io.ipynb 30
 def get_subframe_by_tile_id(tile_id):
     url = get_url_for_tile_id(tile_id)
     return get_subframe(url)
@@ -269,19 +269,19 @@ def get_subframe_for_tile(tile_id):
     # alias for get_subframe_by_tile_id for consistency
     return get_subframe_by_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb 31
+# %% ../notebooks/00_io.ipynb 32
 def get_fans_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     fans = get_fan_catalog(version)
     return fans.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb 34
+# %% ../notebooks/00_io.ipynb 35
 def get_blotches_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     blotches = get_blotch_catalog(version)
     return blotches.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb 37
+# %% ../notebooks/00_io.ipynb 38
 def get_hirise_id_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     try:
