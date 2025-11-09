@@ -128,13 +128,13 @@ def get_metafull() -> pd.DataFrame:
 def get_blotch_catalog(version="v3") -> pd.DataFrame:
     bl = pd.read_parquet(fetchers[version]("blotches", **kwargs))
     meta = get_metafull()
-    return bl.set_index("obsid").join(meta.set_index("OBSERVATION_ID")["MY"])
+    return bl.set_index("obsid").join(meta.set_index("OBSERVATION_ID")["MY"]).reset_index()
 
 
 def get_fan_catalog(version="v3") -> pd.DataFrame:
     fans = pd.read_parquet(fetchers[version]("fans", **kwargs))
     meta = get_metafull()
-    return fans.set_index("obsid").join(meta.set_index("OBSERVATION_ID")["MY"])
+    return fans.set_index("obsid").join(meta.set_index("OBSERVATION_ID")["MY"]).reset_index()
 
 
 def get_tile_coords(version="v3") -> pd.DataFrame:
@@ -285,7 +285,7 @@ def get_blotches_for_tile(tile_id, version="v3"):
 def get_hirise_id_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     try:
-        obsid = get_fan_catalog(version).query("tile_id == @tile_id").obsid.iloc[0]
+        obsid = get_fans_for_tile(tile_id).obsid.iloc[0]
     except IndexError:
         try:
             obsid = (
