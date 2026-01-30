@@ -1,0 +1,235 @@
+---
+title: "DBSCAN Clustering Pipeline Bug Investigation"
+subtitle: "How min_samples=3 validation was lost in v3 catalog production"
+author: "Planet Four Team"
+date: "2026-01-30"
+format:
+  html:
+    toc: true
+    code-fold: true
+---
+
+## Executive Summary
+
+The v3 catalog contains single-marking entries (`n_votes=1`) that should have been rejected by DBSCAN's `min_samples=3` requirement. This document explains how the bug occurred during the migration from the old `planet4` codebase to the new `p4tools_tihro` implementation.
+
+## Architecture Comparison
+
+### Old Pipeline (planet4)
+
+The original implementation had a **three-tier architecture** with explicit validation at the orchestrator level:
+
+```{mermaid}
+flowchart TB
+    subgraph "Old Architecture (planet4)"
+        RM[ReleaseManager<br/>catalog_production.py]
+        CM[ClusteringManager<br/>clustering.py]
+        DB[DBScanner<br/>dbscan.py]
+        DBSCAN[sklearn.DBSCAN<br/>min_samples=3]
+
+        RM -->|"orchestrates"| CM
+        CM -->|"low-level calls"| DB
+        DB -->|"algorithm"| DBSCAN
+
+        subgraph "Validation Layer"
+            VAL[post_processing<br/>line 229]
+            VAL -->|"if len < min_samples:<br/>continue"| REJECT[Reject Cluster]
+        end
+
+        CM --> VAL
+    end
+
+    style CM fill:#90EE90
+    style VAL fill:#90EE90
+    style REJECT fill:#FFB6C1
+```
+
+**Key Point**: `ClusteringManager.post_processing()` validated cluster sizes AFTER multi-stage clustering completed. Clusters with `< min_samples` members were rejected before saving.
+
+### New Pipeline (p4tools_tihro)
+
+The new implementation **removed the ClusteringManager layer**, leaving no validation between DBScanner and the final output:
+
+```{mermaid}
+flowchart TB
+    subgraph "New Architecture (p4tools_tihro)"
+        RM2[ReleaseManager<br/>catalog.py]
+        CO[cluster_obsid<br/>thin wrapper]
+        DB2[DBScanner<br/>dbscan.py]
+        DBSCAN2[sklearn.DBSCAN<br/>min_samples=3]
+
+        RM2 -->|"orchestrates"| CO
+        CO -->|"direct call"| DB2
+        DB2 -->|"algorithm"| DBSCAN2
+
+        subgraph "Missing Validation"
+            MISS[❌ No validation<br/>after subclustering]
+        end
+
+        DB2 -.->|"should validate here"| MISS
+        MISS -.->|"allows"| SINGLE[Single-marking<br/>clusters pass through]
+    end
+
+    style CO fill:#FFB6C1
+    style MISS fill:#FFB6C1
+    style SINGLE fill:#FF6347
+```
+
+**The Problem**: Without `ClusteringManager`, there's no post-clustering validation. The thin `cluster_obsid()` wrapper just calls DBScanner and returns.
+
+## The Multi-Stage Clustering Problem
+
+DBSCAN's `min_samples=3` is enforced at initialization, but clusters can **shrink below 3** during subsequent pipeline stages:
+
+```{mermaid}
+flowchart LR
+    subgraph "Multi-Stage Pipeline"
+        RAW[Raw Markings<br/>5 markings at similar location]
+
+        subgraph "Stage 1: XY Clustering"
+            XY[cluster_xy<br/>eps=12 pixels]
+            XY_OUT[Cluster: 5 members ✓]
+        end
+
+        subgraph "Stage 2: Radius Clustering"
+            RAD[cluster_radii<br/>eps_rad=5]
+            RAD_OUT[Cluster: 2 members ✗]
+        end
+
+        subgraph "Stage 3: Angle Clustering"
+            ANG[cluster_angles<br/>eps_angle=10°]
+            ANG_OUT[Cluster: 1 member ✗]
+        end
+
+        subgraph "Averaging"
+            AVG[get_average_objects]
+            OUT[n_votes=1 in catalog]
+        end
+
+        RAW --> XY --> XY_OUT
+        XY_OUT -->|"Only 2 have<br/>similar radius"| RAD --> RAD_OUT
+        RAD_OUT -->|"Only 1 has<br/>matching angle"| ANG --> ANG_OUT
+        ANG_OUT -->|"NO SIZE CHECK"| AVG --> OUT
+    end
+
+    style XY_OUT fill:#90EE90
+    style RAD_OUT fill:#FFD700
+    style ANG_OUT fill:#FF6347
+    style OUT fill:#FF6347
+```
+
+## Root Cause Analysis
+
+### What's Working (NOT the problem)
+
+- `min_samples` property correctly enforces `max(3, ...)` at lines 336-342 in `dbscan.py`
+- DBSCAN is correctly initialized: `DBSCAN(eps, min_samples=self.min_samples).fit(X)`
+- Noise points (label=-1) are correctly excluded
+
+### What's Broken (THE problem)
+
+The **multi-stage clustering pipeline** (`_cluster_pipeline()` at lines 499-529) can shrink clusters below 3 members:
+
+1. **Stage 1 (XY)**: DBSCAN correctly requires ≥3 members ✓
+2. **Stage 2 (Radii)**: Re-clusters each XY cluster - can shrink to <3 ✗
+3. **Stage 3 (Angles)**: Re-clusters again - can shrink further ✗
+4. **Averaging**: `get_average_objects()` has NO size check - processes all ✗
+
+### The Smoking Gun
+
+**File**: `p4tools_tihro/p4tools/production/dbscan.py` lines 24-61
+
+```python
+def get_average_objects(clusters, kind):
+    for cluster_df in clusters:
+        # ^^^ NO CHECK: if len(cluster_df) < 3: continue
+        meandata["n_votes"] = len(cluster_df)  # Sets n_votes=1 for singles
+        yield meandata.to_frame().T  # YIELDS SINGLE MARKING AS VALID
+```
+
+### The Old Correct Implementation
+
+**File**: `planet4/planet4/clustering.py` lines 229-231
+
+```python
+if len(filtered) < self.min_samples:
+    logger.debug("Throwing away this cluster for < min_samples")
+    continue  # REJECT THIS CLUSTER
+```
+
+This validation was NOT carried over to `p4tools_tihro`.
+
+## The Fix
+
+Add validation in `cluster_obsid()` at the orchestrator level in `catalog.py`:
+
+```python
+MIN_CLUSTER_SIZE = 3  # DBSCAN requirement
+
+def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None,
+                  min_cluster_size=MIN_CLUSTER_SIZE):
+    """Cluster with post-clustering validation."""
+    from p4tools.production import markings, dbscan
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if obsid is None and imgid is not None:
+        obsid = markings.TileID(imgid).image_name
+    elif obsid is None and imgid is None:
+        raise ValueError("Provide either obsid or imgid.")
+
+    # Cluster with save_results=False to intercept before saving
+    dbscanner = dbscan.DBScanner(savedir=savedir, dbname=dbname,
+                                  save_results=False)
+    dbscanner.cluster_image_name(obsid)
+
+    # Validate: filter clusters with insufficient votes
+    for kind in ['fan', 'blotch']:
+        if kind in dbscanner.reduced_data:
+            validated = []
+            for df in dbscanner.reduced_data[kind]:
+                if df is not None and len(df) > 0:
+                    valid_df = df[df['n_votes'] >= min_cluster_size]
+                    rejected = len(df) - len(valid_df)
+                    if rejected > 0:
+                        logger.info("Rejected %d %s clusters with < %d votes",
+                                   rejected, kind, min_cluster_size)
+                    validated.append(valid_df)
+            dbscanner.reduced_data[kind] = validated
+
+    # Save validated results
+    dbscanner.store_clustered(dbscanner.reduced_data)
+
+    return obsid
+```
+
+## Verification
+
+Query current v3 catalog for affected entries:
+
+```{python}
+#| eval: false
+import p4tools
+from p4tools import io
+
+fans = io.get_fan_catalog("v3")
+singles = fans[fans.n_votes == 1]
+print(f"Affected fan entries: {len(singles)}")
+
+blotches = io.get_blotch_catalog("v3")
+singles_bl = blotches[blotches.n_votes == 1]
+print(f"Affected blotch entries: {len(singles_bl)}")
+```
+
+After fix, regenerate catalog and verify:
+
+```{python}
+#| eval: false
+fans_fixed = io.get_fan_catalog("v3")
+assert (fans_fixed.n_votes >= 3).all(), "Still have undersized fan clusters!"
+
+blotches_fixed = io.get_blotch_catalog("v3")
+assert (blotches_fixed.n_votes >= 3).all(), "Still have undersized blotch clusters!"
+
+print("✓ All clusters have n_votes >= 3")
+```
