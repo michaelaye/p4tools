@@ -5,6 +5,14 @@ website:
       - 00_io.ipynb
       - 01_markings.ipynb
       - 02_plotting.ipynb
+      - 03_stats.ipynb
+      - 05_production.catalog.ipynb
+      - 05a_production.io.ipynb
+      - 05b_production.markings.ipynb
+      - 05c_production.metadata.ipynb
+      - 05d_production.projection.ipynb
+      - 05e_production.dbscan.ipynb
+      - 05f_production.fnotching.ipynb
       - examples.ipynb
       - plotting_examples.ipynb
       - regions.ipynb

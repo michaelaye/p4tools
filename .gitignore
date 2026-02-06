@@ -74,3 +74,5 @@ notebooks/plots
 notebooks/images
 notebooks/catalogs
 
+#ISIS files
+.prt
