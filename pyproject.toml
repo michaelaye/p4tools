@@ -1,11 +1,37 @@
 [build-system]
-requires = ["setuptools>=64.0"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="p4tools"
-requires-python=">=3.10"
-dynamic = [ "keywords", "description", "version", "dependencies", "optional-dependencies", "readme", "license", "authors", "classifiers", "entry-points", "scripts", "urls"]
+name = "p4tools"
+dynamic = ["version"]
+description = "Tools for working with data from the Planet Four Zooniverse project."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Michael Aye", email = "kmichael.aye@gmail.com"}]
+keywords = ['zooniverse', 'citizen_science', 'panoptes']
+classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 4 - Beta", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
+dependencies = ['pandas', 'pooch', 'numpy', 'matplotlib', 'shapely', 'tqdm', 'pyarrow', 'typer', 'rich']
 
-[tool.uv]
-cache-keys = [{ file = "pyproject.toml" }, { file = "settings.ini" }, { file = "setup.py" }]
+[project.urls]
+Repository = "https://github.com/michaelaye/p4tools"
+Documentation = "https://michaelaye.github.io/p4tools/"
+
+[project.entry-points.nbdev]
+p4tools = "p4tools._modidx:d"
+
+
+[project.scripts]
+p4 = "p4tools.clis:app"
+
+[tool.setuptools.dynamic]
+version = {attr = "p4tools.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["p4tools"]
+
+[tool.nbdev]
+nbs_path = 'notebooks'
+jupyter_hooks = true
+custom_sidebar = false
