@@ -4,7 +4,7 @@
 __all__ = ['logger', 'data_to_centers', 'get_id_from_path', 'get_clusters_in_path', 'remove_opposing_fans',
            'calc_indices_from_index', 'fnotch_image_ids', 'write_l1c', 'apply_cut_obsid', 'apply_cut']
 
-# %% ../../notebooks/05f_production.fnotching.ipynb #217d4690
+# %% ../../notebooks/05f_production.fnotching.ipynb #f1ef76c8
 from . import io
 from ..markings import Blotch,Fan
 from . import markings
@@ -19,7 +19,7 @@ import random
 
 logger = logging.getLogger(__name__)
 
-# %% ../../notebooks/05f_production.fnotching.ipynb #1d4bb7d8
+# %% ../../notebooks/05f_production.fnotching.ipynb #deb7d094
 def data_to_centers(df, kind, scope="hirise"):
     """Convert a dataframe with marking data to an array of center coords.
 
@@ -133,7 +133,7 @@ def calc_indices_from_index(n, c):
     return ti[0][c], ti[1][c]
 
 
-# %% ../../notebooks/05f_production.fnotching.ipynb #9df017d3
+# %% ../../notebooks/05f_production.fnotching.ipynb #25940b4f
 def fnotch_image_ids(obsid, eps=20, savedir=None, scope="hirise"):
     """
     Cluster each image_id for an obsid separately and perform fnotching.
@@ -214,7 +214,7 @@ def fnotch_image_ids(obsid, eps=20, savedir=None, scope="hirise"):
                 fans.to_csv(pm.reduced_fanfile, index=False)
 
 
-# %% ../../notebooks/05f_production.fnotching.ipynb #c04e96fa
+# %% ../../notebooks/05f_production.fnotching.ipynb #6411d0d4
 def write_l1c(kind, slashed, pm):
     """Write the L1C for marking `kind`.
 
@@ -249,7 +249,7 @@ def write_l1c(kind, slashed, pm):
         combined.to_csv(str(l1c), index=False)
 
 
-# %% ../../notebooks/05f_production.fnotching.ipynb #fa26d72e
+# %% ../../notebooks/05f_production.fnotching.ipynb #557f8b8c
 #TODO probably combine
 def apply_cut_obsid(obsid, cut=0.5, savedir=None):
     pm = io.PathManager(obsid=obsid, cut=cut, datapath=savedir)
@@ -272,7 +272,7 @@ def apply_cut_obsid(obsid, cut=0.5, savedir=None):
             write_l1c(kind, slashed, pm)
 
 
-# %% ../../notebooks/05f_production.fnotching.ipynb #87bab4c3
+# %% ../../notebooks/05f_production.fnotching.ipynb #06194f64
 def apply_cut(obsid, cut=0.5, savedir=None):
     """Loop over all image_id paths for an obsid and apply cut to fnotches.
 

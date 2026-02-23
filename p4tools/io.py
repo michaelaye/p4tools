@@ -9,7 +9,7 @@ __all__ = ['logger', 'v1', 'kwargs', 'v3', 'fetchers', 'mars_years', 'postproces
            'get_subframe_by_tile_id', 'get_subframe_for_tile', 'get_fans_for_tile', 'get_blotches_for_tile',
            'get_hirise_id_for_tile']
 
-# %% ../notebooks/00_io.ipynb #19c46ef9
+# %% ../notebooks/00_io.ipynb #01e8d4bb
 from pathlib import Path
 
 import matplotlib.image as mplimg
@@ -17,11 +17,11 @@ import pandas as pd
 import pooch
 from matplotlib import pyplot as plt
 
-# %% ../notebooks/00_io.ipynb #1a8e7d34
+# %% ../notebooks/00_io.ipynb #9e2ce9bb
 logger = pooch.get_logger()
 logger.setLevel("DEBUG")
 
-# %% ../notebooks/00_io.ipynb #d82abb87
+# %% ../notebooks/00_io.ipynb #c0603bee
 v1 = pooch.create(
     path=pooch.os_cache("p4tools"),
     base_url="",
@@ -48,7 +48,7 @@ v1 = pooch.create(
     },
 )
 
-# %% ../notebooks/00_io.ipynb #fee7e380
+# %% ../notebooks/00_io.ipynb #3c5b6344
 def postprocessor(fname, action, pup):
     """
     Post-processing hook to process the downloaded v1 catalog file.
@@ -91,10 +91,10 @@ def postprocessor(fname, action, pup):
         pd.read_csv(csvfname).to_parquet(parquetfname)
     return parquetfname
 
-# %% ../notebooks/00_io.ipynb #0fb63d20
+# %% ../notebooks/00_io.ipynb #cb9ff670
 kwargs = dict(processor=postprocessor, progressbar=True)
 
-# %% ../notebooks/00_io.ipynb #162e1ec8
+# %% ../notebooks/00_io.ipynb #3b971642
 v3 = pooch.create(
     path=pooch.os_cache("p4tools"),
     base_url="",
@@ -115,10 +115,10 @@ v3 = pooch.create(
     },
 )
 
-# %% ../notebooks/00_io.ipynb #bc74398a
+# %% ../notebooks/00_io.ipynb #cc70324f
 fetchers = dict(v1=v1.fetch, v3=v3.fetch)
 
-# %% ../notebooks/00_io.ipynb #4797943b
+# %% ../notebooks/00_io.ipynb #6a0bd18d
 def get_metafull() -> pd.DataFrame:
     "only v3 exists"
     df = pd.read_parquet(v3.fetch("metafull", **kwargs)).drop("Unnamed: 0", axis=1)
@@ -200,7 +200,7 @@ def define_martian_year(df, time_col_name):
     return df
 
 
-# %% ../notebooks/00_io.ipynb #df7404f4
+# %% ../notebooks/00_io.ipynb #c48c0fdf
 def normalize_tile_id(tile_id: str) -> str:
     """Normalize a tile ID by adding 'APF' prefix and leading zeros if necessary.
 
@@ -242,7 +242,7 @@ def normalize_tile_id(tile_id: str) -> str:
     # Add APF prefix
     return f"APF{padded_id}"
 
-# %% ../notebooks/00_io.ipynb #9bd9d2da
+# %% ../notebooks/00_io.ipynb #37f11760
 def get_subframe(url):
     targetpath = pooch.retrieve(
         url, path=pooch.os_cache("p4tools/tiles"), known_hash=None, progressbar=True
@@ -250,7 +250,7 @@ def get_subframe(url):
     im = mplimg.imread(targetpath)
     return im
 
-# %% ../notebooks/00_io.ipynb #3a0b7640
+# %% ../notebooks/00_io.ipynb #5be3647b
 def get_url_for_tile_id(tile_id):
     return get_tile_urls().set_index("tile_id").squeeze().at[normalize_tile_id(tile_id)]
 
@@ -259,7 +259,7 @@ def get_url_for_tile(tile_id):
     # alias for get_url_for_tile_id
     return get_url_for_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb #474d1131
+# %% ../notebooks/00_io.ipynb #6f898f43
 def get_subframe_by_tile_id(tile_id):
     url = get_url_for_tile_id(tile_id)
     return get_subframe(url)
@@ -269,19 +269,19 @@ def get_subframe_for_tile(tile_id):
     # alias for get_subframe_by_tile_id for consistency
     return get_subframe_by_tile_id(tile_id)
 
-# %% ../notebooks/00_io.ipynb #3024c89c
+# %% ../notebooks/00_io.ipynb #e070f1b1
 def get_fans_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     fans = get_fan_catalog(version)
     return fans.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb #66a33d58
+# %% ../notebooks/00_io.ipynb #eeeefa7e
 def get_blotches_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     blotches = get_blotch_catalog(version)
     return blotches.query("tile_id == @tile_id")
 
-# %% ../notebooks/00_io.ipynb #6b0244a0
+# %% ../notebooks/00_io.ipynb #1a956b41
 def get_hirise_id_for_tile(tile_id, version="v3"):
     tile_id = normalize_tile_id(tile_id)
     try:

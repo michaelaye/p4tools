@@ -3,7 +3,7 @@
 # %% auto #0
 __all__ = ['logger', 'get_average_objects', 'plot_results', 'DBScanner']
 
-# %% ../../notebooks/05e_production.dbscan.ipynb #e3184276
+# %% ../../notebooks/05e_production.dbscan.ipynb #a1073e42
 from . import io,markings
 
 
@@ -20,7 +20,7 @@ from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
-# %% ../../notebooks/05e_production.dbscan.ipynb #4d6f7e8a
+# %% ../../notebooks/05e_production.dbscan.ipynb #f0496c53
 def get_average_objects(clusters, kind):
     """Create the average object out of a sequence of clusters.
 
@@ -99,7 +99,7 @@ def plot_results(p4id, labels, data=None, kind=None, reduced_data=None, ax=None)
     if any(reduced_data):
         functions[kind](ax=ax, data=reduced_data, lw=1, with_center=True)
 
-# %% ../../notebooks/05e_production.dbscan.ipynb #8b9b1ea7
+# %% ../../notebooks/05e_production.dbscan.ipynb #bf1842f7
 class DBScanner:
     """
 

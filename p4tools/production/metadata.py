@@ -5,7 +5,7 @@
 # %% auto #0
 __all__ = ['logger', 'MetadataReader', 'get_north_azimuths_from_SPICE']
 
-# %% ../../notebooks/05c_production.metadata.ipynb #1a43fc93
+# %% ../../notebooks/05c_production.metadata.ipynb #6892b18d
 import logging
 from planetarypy.pds.apps import get_index
 from planetarypy.hirise import ProductPathfinder
@@ -13,10 +13,10 @@ import pandas as pd
 
 from .projection import P4Mosaic
 
-# %% ../../notebooks/05c_production.metadata.ipynb #d2c1919f
+# %% ../../notebooks/05c_production.metadata.ipynb #43db2a59
 logger = logging.getLogger(__name__)
 
-# %% ../../notebooks/05c_production.metadata.ipynb #e72a8d1c
+# %% ../../notebooks/05c_production.metadata.ipynb #f162e788
 class MetadataReader:
     """
     A class to read and manage metadata for a given observation ID (obsid).
@@ -83,7 +83,7 @@ class MetadataReader:
         return pd.read_csv(self.campt_out_path)
 
 
-# %% ../../notebooks/05c_production.metadata.ipynb #5d892806
+# %% ../../notebooks/05c_production.metadata.ipynb #40d485a3
 def get_north_azimuths_from_SPICE(obsids):
     """
     Calculate the North Azimuth for a list of observation IDs using SPICE metadata.

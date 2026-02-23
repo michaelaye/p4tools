@@ -7,7 +7,7 @@ __all__ = ['LOGGER', 'MIN_CLUSTER_SIZE', 'execute_in_parallel', 'fan_id_generato
            'cluster_obsid', 'fnotch_obsid', 'fnotch_obsid_parallel', 'cluster_obsid_parallel', 'add_marking_ids',
            'create_roi_file', 'ReleaseManager', 'read_csvfiles_into_lists_of_frames']
 
-# %% ../../notebooks/05_production.catalog.ipynb #a0dc1bb9
+# %% ../../notebooks/05_production.catalog.ipynb #fb00586c
 # other imports
 from tqdm.auto import tqdm
 import pandas as pd
@@ -30,11 +30,11 @@ from typing import Any, Generator
 from logging import Logger
 from pandas import DataFrame
 
-# %% ../../notebooks/05_production.catalog.ipynb #31553112
+# %% ../../notebooks/05_production.catalog.ipynb #85f47b87
 #starting the logger
 LOGGER: Logger = logging.getLogger(__name__)
 
-# %% ../../notebooks/05_production.catalog.ipynb #3d48af61
+# %% ../../notebooks/05_production.catalog.ipynb #cebf26a2
 def execute_in_parallel(func : Callable, iterable : Iterable):
     """This function is used to execute a function in paralle over a list-like or iterable using the power of Dask's lazy compute.
 
@@ -55,7 +55,7 @@ def execute_in_parallel(func : Callable, iterable : Iterable):
         lazys.append(delayed(func)(item))
     return compute(*lazys)
 
-# %% ../../notebooks/05_production.catalog.ipynb #dcd8f44e
+# %% ../../notebooks/05_production.catalog.ipynb #3c233b86
 from typing import Any, Generator
 
 
@@ -101,7 +101,7 @@ def get_L1A_paths(obsid, savefolder):
     paths = pm.get_obsid_paths("L1A")
     return paths
 
-# %% ../../notebooks/05_production.catalog.ipynb #d289b0d1
+# %% ../../notebooks/05_production.catalog.ipynb #56c301a1
 MIN_CLUSTER_SIZE = 3  # DBSCAN requirement: at least 3 members per cluster
 
 def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None, min_cluster_size=MIN_CLUSTER_SIZE):
@@ -167,7 +167,7 @@ def cluster_obsid(obsid=None, savedir=None, imgid=None, dbname=None, min_cluster
 
     return obsid
 
-# %% ../../notebooks/05_production.catalog.ipynb #5955b3f1
+# %% ../../notebooks/05_production.catalog.ipynb #b014978b
 def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
     """Perform fnotching on HiRISE images based on observation ID or image ID.
 
@@ -238,7 +238,7 @@ def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
 
 
 
-# %% ../../notebooks/05_production.catalog.ipynb #4be30e6d
+# %% ../../notebooks/05_production.catalog.ipynb #6a182e65
 def add_marking_ids(path, fan_id, blotch_id):
     """Add marking_ids for catalog to cluster results.
 
@@ -263,7 +263,7 @@ def add_marking_ids(path, fan_id, blotch_id):
             df["marking_id"] = marking_ids
             df.to_csv(fname, index=False)
 
-# %% ../../notebooks/05_production.catalog.ipynb #c328ebd9
+# %% ../../notebooks/05_production.catalog.ipynb #ae74e8d8
 def create_roi_file(obsids, roi_name, datapath):
     """Create a Region of Interest file, based on list of obsids.
 
@@ -317,7 +317,7 @@ def create_roi_file(obsids, roi_name, datapath):
             print(f"Created {savepath}.")
 
 
-# %% ../../notebooks/05_production.catalog.ipynb #751ba886
+# %% ../../notebooks/05_production.catalog.ipynb #51af4216
 class ReleaseManager:
     """Class to manage releases and find relevant files.
     TODO better description
@@ -1086,7 +1086,7 @@ class ReleaseManager:
 
 
 
-# %% ../../notebooks/05_production.catalog.ipynb #4ecaf579
+# %% ../../notebooks/05_production.catalog.ipynb #394591af
 def read_csvfiles_into_lists_of_frames(folders):
     """
     Reads CSV files from given folders into lists of DataFrames.

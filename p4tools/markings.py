@@ -6,7 +6,7 @@
 __all__ = ['IMG_X_SIZE', 'IMG_Y_SIZE', 'calc_fig_size', 'show_subframe', 'set_subframe_size', 'Blotch', 'Blotches',
            'TileBlotches', 'rotate_vector', 'Fan', 'Fans', 'TileFans']
 
-# %% ../notebooks/01_markings.ipynb #c0e9fcbc
+# %% ../notebooks/01_markings.ipynb #c56a75b3
 import math
 from math import cos, degrees, pi, radians, sin
 from pathlib import Path
@@ -25,17 +25,17 @@ from shapely import geometry as geom
 
 from . import io
 
-# %% ../notebooks/01_markings.ipynb #832a4ea9
+# %% ../notebooks/01_markings.ipynb #ea47fd18
 IMG_X_SIZE = 840
 IMG_Y_SIZE = 648
 
-# %% ../notebooks/01_markings.ipynb #7b15eedd
+# %% ../notebooks/01_markings.ipynb #7ce226fe
 def calc_fig_size(width):
     """Calc figure height in ratio of subframes."""
     ratio = IMG_X_SIZE / IMG_Y_SIZE
     return (width, width / ratio)
 
-# %% ../notebooks/01_markings.ipynb #6c5c9d79
+# %% ../notebooks/01_markings.ipynb #00ce46c8
 def show_subframe(tile_id, ax=None, aspect="auto"):
     subframe = io.get_subframe_by_tile_id(tile_id)
     if ax is None:
@@ -44,13 +44,13 @@ def show_subframe(tile_id, ax=None, aspect="auto"):
     ax.set_axis_off()
     return ax
 
-# %% ../notebooks/01_markings.ipynb #d4de80eb
+# %% ../notebooks/01_markings.ipynb #5a2dbd94
 def set_subframe_size(ax):
     """Set plot view limit on Planet 4 subframe size."""
     ax.set_xlim(0, IMG_X_SIZE)
     ax.set_ylim(IMG_Y_SIZE, 0)
 
-# %% ../notebooks/01_markings.ipynb #a668e9e5
+# %% ../notebooks/01_markings.ipynb #0b961499
 class Blotch(Ellipse):
     to_average = "x y image_x image_y angle radius_1 radius_2".split()
 
@@ -298,7 +298,7 @@ class Blotch(Ellipse):
             r2 = getattr(self.data, "radius_2", None)
         return f"Blotch(marking_id={mid!r}, x={self.x:.2f}, y={self.y:.2f}, r1={r1}, r2={r2})  # {meta}"
 
-# %% ../notebooks/01_markings.ipynb #bf3909c8
+# %% ../notebooks/01_markings.ipynb #67f99879
 class Blotches:
     """Container for Blotch objects with idempotent plotting.
 
@@ -377,7 +377,7 @@ class Blotches:
         return f"Blotches(tile_id={tid!r}, n={n}, sample={sample})"
 
 
-# %% ../notebooks/01_markings.ipynb #00336b3b
+# %% ../notebooks/01_markings.ipynb #f1c9aa25
 class TileBlotches(Blotches):
     def __init__(self, tile_id, with_center=False, color="green"):
         """Container for all blotches of a tile.
@@ -391,7 +391,7 @@ class TileBlotches(Blotches):
         super().__init__(df, with_center=with_center, color=color)
 
 
-# %% ../notebooks/01_markings.ipynb #ba99f135
+# %% ../notebooks/01_markings.ipynb #d5b10a9a
 def rotate_vector(v, angle):
     """Rotate vector by angle given in degrees.
 
@@ -410,7 +410,7 @@ def rotate_vector(v, angle):
         raise ValueError(f"rotate_vector expects a length-2 vector, got shape {v_arr.shape}")
     return rotmat.dot(v_arr)
 
-# %% ../notebooks/01_markings.ipynb #399ab8f3
+# %% ../notebooks/01_markings.ipynb #69d42724
 class Fan(lines.Line2D):
     to_average = "x y image_x image_y angle spread distance".split()
 
@@ -732,7 +732,7 @@ class Fan(lines.Line2D):
         return geom.Polygon(df.round(2).drop_duplicates().values)
 
 
-# %% ../notebooks/01_markings.ipynb #dd7dde01
+# %% ../notebooks/01_markings.ipynb #2735d680
 class Fans:
     """Container for Fan objects backed by a LineCollection for plotting.
 
@@ -813,7 +813,7 @@ class Fans:
         return f"Fans(tile_id={tid!r}, n={n}, sample={sample})"
 
 
-# %% ../notebooks/01_markings.ipynb #d17db8d1
+# %% ../notebooks/01_markings.ipynb #ce2844f6
 class TileFans(Fans):
     def __init__(self, tile_id, scope="planet4", with_center=False, color="green", **kwargs):
         """Container for all fans of a tile.
