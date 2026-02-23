@@ -14,6 +14,9 @@ keywords = ['zooniverse', 'citizen_science', 'panoptes']
 classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 4 - Beta", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
 dependencies = ['pandas', 'pooch', 'numpy', 'matplotlib', 'shapely', 'tqdm', 'pyarrow', 'typer', 'rich']
 
+[project.optional-dependencies]
+dev = ["nbdev>=3"]
+
 [project.urls]
 Repository = "https://github.com/michaelaye/p4tools"
 Documentation = "https://michaelaye.github.io/p4tools/"

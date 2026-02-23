@@ -12,5 +12,5 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: answerdotai/workflows/quarto-ghp@master
+      - uses: answerdotai/workflows/quarto-ghp3@master
 #
