@@ -3,7 +3,7 @@
 # %% auto #0
 __all__ = ['mars_years', 'define_martian_year']
 
-# %% ../notebooks/03_stats.ipynb #1ca87b29
+# %% ../notebooks/03_stats.ipynb #80103df1
 import pandas as pd
 
 
@@ -23,7 +23,7 @@ mars_years = {
     40: "2028-08-17",
 }
 
-# %% ../notebooks/03_stats.ipynb #0131b116
+# %% ../notebooks/03_stats.ipynb #2e807c7f
 def define_martian_year(df, time_col_name):
     """This Function Modifies the Dataframe it is given. And adds a Column named "MY",
         which signifies the Mars Year a Datapoint was taken.

@@ -4,16 +4,24 @@
 __all__ = ['logger', 'P4Mosaic', 'nocal_hi', 'stitch_cubenorm', 'get_RED45_mosaic_inputs', 'create_RED45_mosaic', 'do_campt',
            'XY2LATLON', 'TileCalculator', 'p4pix_to_hirise_pix', 'p4tile_center_to_hirise_pix']
 
-# %% ../../notebooks/05d_production.projection.ipynb #4c31a319
+# %% ../../notebooks/05d_production.projection.ipynb #8b1f73a4
 ###external imports
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from kalasiris import campt ,cubenorm, getkey, handmos, hi2isis, histitch, spiceinit
-from kalasiris.pysis import ProcessError
+try:
+    from kalasiris import campt ,cubenorm, getkey, handmos, hi2isis, histitch, spiceinit
+    from kalasiris.pysis import ProcessError
+except ImportError:
+    campt = cubenorm = getkey = handmos = hi2isis = histitch = spiceinit = None
+    ProcessError = Exception
 import logging
-import rasterio
-import rioxarray as rxr
+try:
+    import rasterio
+    import rioxarray as rxr
+except ImportError:
+    rasterio = None
+    rxr = None
 from planetarypy.hirise import RED_PRODUCT, SOURCE_PRODUCT
 
 
@@ -22,11 +30,10 @@ import p4tools.production.io as io
 
 
 
-
-# %% ../../notebooks/05d_production.projection.ipynb #54fca6a0
+# %% ../../notebooks/05d_production.projection.ipynb #d811b933
 logger = logging.getLogger(__name__)
 
-# %% ../../notebooks/05d_production.projection.ipynb #b690b4c5
+# %% ../../notebooks/05d_production.projection.ipynb #f0ce1aac
 class P4Mosaic:
     """
     A class to handle mosaic operations for a given observation ID.
@@ -146,7 +153,7 @@ def stitch_cubenorm(spid1, spid2):
     cub.unlink()
     return normed
 
-# %% ../../notebooks/05d_production.projection.ipynb #914d1266
+# %% ../../notebooks/05d_production.projection.ipynb #07b979c3
 def get_RED45_mosaic_inputs(
     obsid: str, saveroot: Path = None
 ) -> list[type[RED_PRODUCT]]:
@@ -273,7 +280,7 @@ def create_RED45_mosaic(obsid, overwrite=False):
     return obsid, True
 
 
-# %% ../../notebooks/05d_production.projection.ipynb #50d00a29
+# %% ../../notebooks/05d_production.projection.ipynb #a1488765
 def do_campt(mosaicname, savepath, temppath):
     """
     Executes the campt command with the provided parameters from ISIS. 
@@ -307,7 +314,7 @@ def do_campt(mosaicname, savepath, temppath):
         print(e.stderr)
         return mosaicname, False
 
-# %% ../../notebooks/05d_production.projection.ipynb #bc22660f
+# %% ../../notebooks/05d_production.projection.ipynb #a80e1f99
 class XY2LATLON:
     """
     A class to convert XY coordinates to latitude and longitude using ground projection data.
@@ -403,7 +410,7 @@ class XY2LATLON:
             return False
 
 
-# %% ../../notebooks/05d_production.projection.ipynb #3b58bab7
+# %% ../../notebooks/05d_production.projection.ipynb #79c1cb34
 class TileCalculator:
     """
     A class to calculate tile coordinates for HiRISE images.
@@ -550,7 +557,7 @@ class TileCalculator:
 
 
 
-# %% ../../notebooks/05d_production.projection.ipynb #ec7e8d90
+# %% ../../notebooks/05d_production.projection.ipynb #ef8ee838
 def p4pix_to_hirise_pix(p4pix, tile, x_or_y):
     """This convert either x or y coordinate of a planet4 pixel to Hirise coordinate.
 

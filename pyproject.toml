@@ -12,10 +12,11 @@ license = {text = "MIT"}
 authors = [{name = "Michael Aye", email = "kmichael.aye@gmail.com"}]
 keywords = ['zooniverse', 'citizen_science', 'panoptes']
 classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 4 - Beta", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
-dependencies = ['pandas', 'pooch', 'numpy', 'matplotlib', 'shapely', 'tqdm', 'pyarrow', 'typer', 'rich', 'geopandas']
+dependencies = ['pandas', 'pooch', 'numpy', 'matplotlib', 'shapely', 'tqdm', 'pyarrow', 'typer', 'rich', 'geopandas', 'planetarypy', 'scikit-learn', 'scipy', 'seaborn', 'pyaml']
 
 [project.optional-dependencies]
 dev = ["nbdev>=3"]
+geo = ["kalasiris", "rasterio", "rioxarray"]
 
 [project.urls]
 Repository = "https://github.com/michaelaye/p4tools"

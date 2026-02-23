@@ -8,7 +8,7 @@ __all__ = ['plot_blotches_for_tile', 'plot_fans_for_tile', 'plot_original_tile',
            'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale', 'histogram_polar',
            'histogram_cartesian', 'show_stamps']
 
-# %% ../notebooks/02_plotting.ipynb #4338f16e
+# %% ../notebooks/02_plotting.ipynb #afa123a5
 from matplotlib import pyplot as plt
 from matplotlib import colormaps
 import numpy as np
@@ -17,7 +17,7 @@ import matplotlib
 from . import io, markings
 from numpy.typing import ArrayLike
 
-# %% ../notebooks/02_plotting.ipynb #66ae396a
+# %% ../notebooks/02_plotting.ipynb #35cd9809
 def plot_blotches_for_tile(tile_id, ax=None, **plot_kwargs):
     tile_blotches = io.get_blotches_for_tile(tile_id)
     if len(tile_blotches) == 0:
@@ -28,7 +28,7 @@ def plot_blotches_for_tile(tile_id, ax=None, **plot_kwargs):
         m = markings.Blotch(blotch, with_center=False)
         m.plot(ax=ax, **plot_kwargs)
 
-# %% ../notebooks/02_plotting.ipynb #2be1d7fb
+# %% ../notebooks/02_plotting.ipynb #7718773d
 def plot_fans_for_tile(tile_id, ax=None, **plot_kwargs):
     tile_fans = io.get_fans_for_tile(tile_id)
     if len(tile_fans) == 0:
@@ -39,28 +39,28 @@ def plot_fans_for_tile(tile_id, ax=None, **plot_kwargs):
         m = markings.Fan(fan, with_center=False)
         m.plot(ax=ax, **plot_kwargs)
 
-# %% ../notebooks/02_plotting.ipynb #919e58e0
+# %% ../notebooks/02_plotting.ipynb #e1e53674
 def plot_original_tile(tileID, ax=None):
     if ax is None:
         _, ax = plt.subplots()
     ax.imshow(io.get_subframe_by_tile_id(tileID), origin="upper", aspect="auto")
     ax.set_axis_off()
 
-# %% ../notebooks/02_plotting.ipynb #efb85596
+# %% ../notebooks/02_plotting.ipynb #1e5be965
 def plot_original_and_fans(tileID):
     fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
     plot_original_tile(tileID, ax=axes[0])
     plot_fans_for_tile(tileID, ax=axes[1])
     fig.suptitle(f"Planet Four tile ID: {tileID}")
 
-# %% ../notebooks/02_plotting.ipynb #b4321049
+# %% ../notebooks/02_plotting.ipynb #31824294
 def plot_original_and_blotches(tileID):
     fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
     plot_original_tile(tileID, ax=axes[0])
     plot_blotches_for_tile(tileID, ax=axes[1], color="magenta")
     fig.suptitle(f"Planet Four tile ID: {tileID}")
 
-# %% ../notebooks/02_plotting.ipynb #a4e3b007
+# %% ../notebooks/02_plotting.ipynb #187030a4
 def plot_original_fans_blotches(tileID, save=False):
     fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
     plot_original_tile(tileID, ax=axes[0])
@@ -70,7 +70,7 @@ def plot_original_fans_blotches(tileID, save=False):
     if save:
         fig.savefig(f"{tileID}.png", dpi=150)
 
-# %% ../notebooks/02_plotting.ipynb #9abd3edd
+# %% ../notebooks/02_plotting.ipynb #088ffce2
 def plot_x_random_tiles_with_n_fans(
     x: int = 3,  # how many of 2 col original+p4 data plots to receive
     n: int = 15,  # whats the minimum number of fans to contain
@@ -85,7 +85,7 @@ def plot_x_random_tiles_with_n_fans(
     for tile_id in tile_ids:
         plot_original_fans_blotches(tile_id, save=save)
 
-# %% ../notebooks/02_plotting.ipynb #cdb5ef19
+# %% ../notebooks/02_plotting.ipynb #6eff11cf
 def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
     """
     Compute a histogram of direction angles adjusted by north azimuth.
@@ -374,7 +374,7 @@ def histogram_cartesian(df, ls_bin=4, segmentsize=3.6, alpha=0.5, degrees=True):
     return ax
 
 
-# %% ../notebooks/02_plotting.ipynb #204cb827
+# %% ../notebooks/02_plotting.ipynb #e7dabbcc
 import geopandas as gpd 
 from typing import Optional,Union
 

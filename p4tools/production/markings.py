@@ -4,7 +4,7 @@
 __all__ = ['LOGGER', 'IMG_X_SIZE', 'IMG_Y_SIZE', 'IMG_SHAPE', 'GOLD_MEMBERS', 'GOLD_PLOT_COLORS', 'set_subframe_size',
            'calc_fig_size', 'TileID', 'calc_blotchiness', 'Fnotch']
 
-# %% ../../notebooks/05b_production.markings.ipynb #2e30b15a
+# %% ../../notebooks/05b_production.markings.ipynb #cbfee496
 from . import io
 from ..markings import Blotch,Fan
 
@@ -16,7 +16,7 @@ import pandas as pd
 
 LOGGER = logging.getLogger(__name__)
 
-# %% ../../notebooks/05b_production.markings.ipynb #3a0aafee
+# %% ../../notebooks/05b_production.markings.ipynb #0c096fb7
 IMG_X_SIZE = 840
 IMG_Y_SIZE = 648
 
@@ -25,7 +25,7 @@ IMG_SHAPE = (IMG_Y_SIZE, IMG_X_SIZE)
 GOLD_MEMBERS = ['michaelaye', 'mschwamb', 'Portyankina']  # 'CJ-DPI']
 GOLD_PLOT_COLORS = list('bmg')
 
-# %% ../../notebooks/05b_production.markings.ipynb #20623291
+# %% ../../notebooks/05b_production.markings.ipynb #b053bce5
 def set_subframe_size(ax):
     """Set plot view limit on Planet 4 subframe size."""
     ax.set_xlim(0, IMG_X_SIZE)
@@ -36,7 +36,7 @@ def calc_fig_size(width):
     ratio = IMG_X_SIZE / IMG_Y_SIZE
     return (width, width / ratio)
 
-# %% ../../notebooks/05b_production.markings.ipynb #653e8ba8
+# %% ../../notebooks/05b_production.markings.ipynb #6b08d000
 class TileID:
 
     """Manage Planet 4 Image ids, getting data, plot stuff etc.
@@ -280,7 +280,7 @@ def calc_blotchiness(nfans, nblotches):
     """Calculate the fnotch value (or fan-ness)."""
     return (nblotches) / (nfans + nblotches)
 
-# %% ../../notebooks/05b_production.markings.ipynb #075f83c4
+# %% ../../notebooks/05b_production.markings.ipynb #ebb8937a
 class Fnotch(object):
 
     """Manage Fnotch by providing a cut during output.
