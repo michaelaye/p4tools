@@ -13,7 +13,10 @@ from tqdm.auto import tqdm
 import pandas as pd
 import logging
 import itertools
-from planetarypy.pds.apps import get_index
+try:
+    from planetarypy.pds.apps import get_index
+except ImportError:
+    get_index = None
 import string
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
@@ -21,7 +24,10 @@ import numpy as np
 # p4tools package imports
 import p4tools.production.io as io
 import p4tools.production.metadata as p4meta
-from .projection import XY2LATLON, P4Mosaic, TileCalculator, create_RED45_mosaic
+try:
+    from p4tools.production.projection import XY2LATLON, P4Mosaic, TileCalculator, create_RED45_mosaic
+except ImportError:
+    XY2LATLON = P4Mosaic = TileCalculator = create_RED45_mosaic = None
 
 
 #typing imports

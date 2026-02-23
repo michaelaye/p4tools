@@ -7,8 +7,14 @@ __all__ = ['logger', 'MetadataReader', 'get_north_azimuths_from_SPICE']
 
 # %% ../../notebooks/05c_production.metadata.ipynb #d5e7d67a
 import logging
-from planetarypy.pds.apps import get_index
-from planetarypy.hirise import ProductPathfinder
+try:
+    from planetarypy.pds.apps import get_index
+except ImportError:
+    get_index = None
+try:
+    from planetarypy.hirise import ProductPathfinder
+except ImportError:
+    ProductPathfinder = None
 import pandas as pd
 
 from .projection import P4Mosaic

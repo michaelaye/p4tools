@@ -22,7 +22,10 @@ try:
 except ImportError:
     rasterio = None
     rxr = None
-from planetarypy.hirise import RED_PRODUCT, SOURCE_PRODUCT
+try:
+    from planetarypy.hirise import RED_PRODUCT, SOURCE_PRODUCT
+except ImportError:
+    RED_PRODUCT = SOURCE_PRODUCT = None
 
 
 #internal imports
