@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [{name = "Michael Aye", email = "kmichael.aye@gmail.com"}]
 keywords = ['zooniverse', 'citizen_science', 'panoptes']
 classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 4 - Beta", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
-dependencies = ['pandas', 'pooch', 'numpy', 'matplotlib', 'shapely', 'tqdm', 'pyarrow', 'typer', 'rich']
+dependencies = ['pandas', 'pooch', 'numpy', 'matplotlib', 'shapely', 'tqdm', 'pyarrow', 'typer', 'rich', 'geopandas']
 
 [project.optional-dependencies]
 dev = ["nbdev>=3"]
