@@ -12,13 +12,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import circmean, circstd
-import pyaml
+import json
 from pathlib import Path
 import logging
 import pandas as pd
 from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
+
 
 # %% ../../notebooks/05e_production.dbscan.ipynb #56d5ffce
 def get_average_objects(clusters, kind):
@@ -377,11 +378,11 @@ class DBScanner:
     def write_settings_file(self, eps_values):
         eps_values["min_samples"] = self.min_samples
         eps_values["only_core_samples"] = self.only_core_samples
-        settingspath = self.pm.blotchfile.parent / "clustering_settings.yaml"
+        settingspath = self.pm.blotchfile.parent / "clustering_settings.json"
         settingspath.parent.mkdir(exist_ok=True, parents=True)
         logger.info("Writing settings file at %s", str(settingspath))
         with open(settingspath, "w") as fp:
-            pyaml.dump(eps_values, fp)
+            json.dump(eps_values, fp, indent=2)
 
     def cluster_image_id(self, img_id, msf=None, eps_values=None, image_name=None):
         """Interface function for users to cluster data for one P4 image_id.
@@ -632,4 +633,3 @@ class DBScanner:
                 return
             df.to_csv(str(outpath.with_suffix(".csv")), index=False)
             logger.debug("Wrote %s", str(outpath.with_suffix(".csv")))
-
