@@ -12,7 +12,7 @@ from pathlib import Path
 try:
     from kalasiris import campt ,cubenorm, getkey, handmos, hi2isis, histitch, spiceinit
     from kalasiris.pysis import ProcessError
-except ImportError:
+except (ImportError, KeyError):
     campt = cubenorm = getkey = handmos = hi2isis = histitch = spiceinit = None
     ProcessError = Exception
 import logging
@@ -30,7 +30,6 @@ except ImportError:
 
 #internal imports
 import p4tools.production.io as io
-
 
 
 # %% ../../notebooks/05d_production.projection.ipynb #d811b933
