@@ -396,8 +396,3 @@ def produce(
         f"Output: {rm.savefolder}",
         title="Done",
     ))
-
-# %% ../notebooks/06_clis.ipynb #cell-12
-#| eval: false
-if __name__ == "__main__":
-    app()
