@@ -247,12 +247,18 @@ def _display_inline_image(path: Path):
 @app.command()
 def cluster_tile(
     tile_id: str = typer.Argument(help="Planet Four tile image_id (e.g. APF00003qk)."),
-    db: str = typer.Option(..., "--db", help="Path to raw P4 Parquet database."),
+    db: Optional[str] = typer.Option(None, "--db", help="Path to raw P4 Parquet database. Reads from config if not given."),
     savedir: Optional[str] = typer.Option(None, "--savedir", help="Directory for clustering output. Defaults to data_root/clustering."),
     plot: bool = typer.Option(True, help="Show an inline plot of the clustered markings."),
 ):
     """Cluster a single Planet Four tile and display the results."""
     from p4tools.production import markings, dbscan
+
+    try:
+        db = io.resolve_dbname(db)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
 
     tile_id = io.check_and_pad_id(tile_id)
     console.print(f"Clustering tile [cyan]{tile_id}[/cyan] ...")
@@ -331,12 +337,18 @@ def cluster_tile(
 @app.command()
 def cluster_obsid(
     obsid: str = typer.Argument(help="HiRISE observation ID (image_name)."),
-    db: str = typer.Option(..., "--db", help="Path to raw P4 Parquet database."),
+    db: Optional[str] = typer.Option(None, "--db", help="Path to raw P4 Parquet database. Reads from config if not given."),
     savedir: Optional[str] = typer.Option(None, "--savedir", help="Output directory. Defaults to data_root/clustering."),
     fnotch: bool = typer.Option(False, "--fnotch/--no-fnotch", help="Also run fnotching after clustering."),
 ):
     """Cluster all tiles for a HiRISE observation ID."""
     from p4tools.production.catalog import cluster_obsid as _cluster_obsid, fnotch_obsid as _fnotch_obsid
+
+    try:
+        db = io.resolve_dbname(db)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
 
     effective_savedir = savedir or "clustering"
 
@@ -382,7 +394,7 @@ def _fnotch_single(obsid, savedir=None):
 @app.command()
 def produce(
     version: str = typer.Argument(help="Catalog version string (e.g. v1.0)."),
-    db: str = typer.Option(..., "--db", help="Path to raw P4 Parquet database."),
+    db: Optional[str] = typer.Option(None, "--db", help="Path to raw P4 Parquet database. Reads from config if not given."),
     workers: int = typer.Option(4, "--workers", "-w", help="Number of parallel workers."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without executing."),
 ):
@@ -391,6 +403,12 @@ def produce(
         ReleaseManager, get_L1A_paths, add_marking_ids,
         fan_id_generator, blotch_id_generator, create_roi_file,
     )
+
+    try:
+        db = io.resolve_dbname(db)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
 
     rm = ReleaseManager(version=version, dbname=db)
     rm.check_for_todo()
