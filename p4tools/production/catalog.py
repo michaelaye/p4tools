@@ -4,8 +4,8 @@
 
 # %% auto #0
 __all__ = ['LOGGER', 'MIN_CLUSTER_SIZE', 'execute_in_parallel', 'marking_id_generator', 'fan_id_generator', 'blotch_id_generator',
-           'cluster_obsid', 'fnotch_obsid', 'fnotch_obsid_parallel', 'cluster_obsid_parallel', 'add_marking_ids',
-           'create_roi_file', 'ReleaseManager', 'read_csvfiles_into_lists_of_frames']
+           'cluster_obsid', 'fnotch_obsid', 'fnotch_obsid_parallel', 'cluster_obsid_parallel', 'get_L1A_paths',
+           'add_marking_ids', 'create_roi_file', 'ReleaseManager', 'read_csvfiles_into_lists_of_frames']
 
 # %% ../../notebooks/05_production.catalog.ipynb #c36a9b5a
 # other imports
@@ -258,6 +258,25 @@ def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
     return execute_in_parallel(func, obsids, description="Clustering")
 
 # %% ../../notebooks/05_production.catalog.ipynb #8f19f302
+def get_L1A_paths(obsid, datapath):
+    """Return all L1A result directories for an obsid.
+
+    Parameters
+    ----------
+    obsid : str
+        HiRISE observation ID
+    datapath : str or pathlib.Path
+        Top-level catalog/clustering directory
+
+    Returns
+    -------
+    list of pathlib.Path
+        L1A directories for each tile within the obsid
+    """
+    pm = io.PathManager(obsid=obsid, datapath=datapath)
+    return pm.get_obsid_paths("L1A")
+
+
 def add_marking_ids(path, fan_id, blotch_id):
     """Add marking_ids for catalog to cluster results.
 

@@ -2,6 +2,12 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.15.1] — 2026-03-11
+
+### Fixed
+- Added missing `get_L1A_paths()` function to `production.catalog`, required by
+  `ReleaseManager` and the `produce` CLI command.
+
 ## [0.15.0] — 2026-03-11
 
 ### Changed
