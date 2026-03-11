@@ -12,6 +12,7 @@ import logging
 import matplotlib.pyplot as plt
 import itertools
 import pandas as pd
+import seaborn as sns
 
 
 LOGGER = logging.getLogger(__name__)
