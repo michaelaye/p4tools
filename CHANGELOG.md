@@ -2,6 +2,15 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.16.1] — 2026-03-11
+
+### Fixed
+- **Savedir path mismatch**: `produce` CLI wrote clustering output to `v3.1/` but
+  `ReleaseManager` reads from `P4_catalog_v3.1/`. Now uses `rm.catalog` as savedir
+  for all three phases (clustering, fnotching, post-processing).
+- `cluster-tile` and `cluster-obsid` standalone commands default to `clustering/`
+  savedir (unchanged); only the `produce` pipeline was affected.
+
 ## [0.16.0] — 2026-03-11
 
 ### Fixed

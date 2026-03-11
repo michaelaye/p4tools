@@ -433,12 +433,16 @@ def produce(
         console.print("[green]Nothing to do — all obsids already processed.[/green]")
         return
 
+    # Use rm.catalog (e.g. "P4_catalog_v3.1") as savedir for all phases,
+    # matching the convention used by ReleaseManager's own methods.
+    savedir = rm.catalog
+
     # --- Phase 1: Clustering (parallel) ---
     console.rule("[bold]Phase 1: Clustering[/bold]")
     _, cluster_errors = run_parallel_with_progress(
         _cluster_single, obsids, max_workers=workers,
         description="Clustering obsids",
-        func_kwargs={"savedir": version, "dbname": db},
+        func_kwargs={"savedir": savedir, "dbname": db},
     )
     if cluster_errors:
         console.print(f"[red]{len(cluster_errors)} obsids failed clustering.[/red]")
@@ -448,7 +452,7 @@ def produce(
     _, fnotch_errors = run_parallel_with_progress(
         _fnotch_single, obsids, max_workers=workers,
         description="Fnotching obsids",
-        func_kwargs={"savedir": version},
+        func_kwargs={"savedir": savedir},
     )
     if fnotch_errors:
         console.print(f"[red]{len(fnotch_errors)} obsids failed fnotching.[/red]")
@@ -457,7 +461,7 @@ def produce(
     console.rule("[bold]Phase 3: Post-processing[/bold]")
 
     with console.status("Creating L1C summary files ..."):
-        create_roi_file(rm.obsids, rm.catalog, version)
+        create_roi_file(rm.obsids, rm.catalog, savedir)
     console.print("  [green]L1C summary files created.[/green]")
 
     with console.status("Calculating tile coordinates ..."):
