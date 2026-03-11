@@ -676,7 +676,7 @@ class ReleaseManager:
             #This grouping by obsid and marking_id is necessary for the case that we do parallel processing which will create duplicate marking ids per obsid
             averaged = df.groupby(["obsid","marking_id"]).mean(numeric_only=True) 
             tmp = df.drop_duplicates(subset=["marking_id","obsid"]).set_index(["obsid","marking_id"])
-            averaged = averaged.join(tmp[["image_id"]],how="inner")
+            averaged = averaged.join(tmp[["tile_id"]],how="inner")
             out.append(averaged.reset_index())
 
         return out
@@ -748,7 +748,6 @@ class ReleaseManager:
         fans.version = fans.version.astype("int")
         fans.rename(
             {
-                "image_id": "tile_id",
                 "SOLAR_LONGITUDE": "l_s",
                 "PositiveEast360Longitude": "Longitude",
             },
@@ -763,7 +762,6 @@ class ReleaseManager:
         blotches["vote_ratio"] = blotches["vote_ratio"].fillna(1)
         blotches.rename(
             {
-                "image_id": "tile_id",
                 "SOLAR_LONGITUDE": "l_s",
                 "PositiveEast360Longitude": "Longitude",
             },

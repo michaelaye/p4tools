@@ -623,7 +623,7 @@ class DBScanner:
             df = outdata
             try:
                 df["n_votes"] = df["n_votes"].astype("int")
-                df["image_id"] = self.pm.id
+                df["tile_id"] = self.pm.id
                 df["image_name"] = self.pm.obsid
             # when df is just list of Nones, will create TypeError
             # for bad indexing into list.
