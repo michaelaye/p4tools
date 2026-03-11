@@ -5,6 +5,7 @@ __all__ = ['LOGGER', 'IMG_SHAPE', 'GOLD_MEMBERS', 'GOLD_PLOT_COLORS', 'TileID', 
 
 # %% ../../notebooks/05b_production.markings.ipynb #cbfee496
 from . import io
+from ..io import get_subframe
 from ..markings import Blotch, Fan, IMG_X_SIZE, IMG_Y_SIZE, set_subframe_size, calc_fig_size
 
 import logging
@@ -108,7 +109,7 @@ class TileID:
     def subframe(self):
         "np.array : Get tile url and return image tile using io funciton."
         url = self.data.iloc[0].image_url
-        return io.get_subframe(url)
+        return get_subframe(url)
 
     def filter_data(self, kind, user_name=None, without_users=None):
         """Filter and return data for kind, user, or without_users.
