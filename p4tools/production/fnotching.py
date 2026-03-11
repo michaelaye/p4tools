@@ -250,9 +250,18 @@ def write_l1c(kind, slashed, pm):
 
 
 # %% ../../notebooks/05f_production.fnotching.ipynb #e2b0c3ac
-#TODO probably combine
-def apply_cut_obsid(obsid, cut=0.5, savedir=None):
-    pm = io.PathManager(obsid=obsid, cut=cut, datapath=savedir)
+def _apply_cut_to_tile(pm, label=""):
+    """Apply the fnotch vote-ratio cut for a single tile managed by *pm*.
+
+    If no fnotch file exists, copies the reduced L1B files straight to L1C.
+
+    Parameters
+    ----------
+    pm : io.PathManager
+        PathManager already configured with obsid, id, cut, and datapath.
+    label : str
+        Label used in debug log messages (e.g. obsid or image_id).
+    """
     try:
         fnotches = pm.fnotchdf
     except FileNotFoundError:
@@ -260,10 +269,10 @@ def apply_cut_obsid(obsid, cut=0.5, savedir=None):
         # standard files to L1C folder
         pm.final_blotchfile.parent.mkdir(exist_ok=True)
         if pm.reduced_blotchfile.exists():
-            logger.debug("Writing final_blotchfile for %s", obsid)
+            logger.debug("Writing final_blotchfile for %s", label)
             pm.reduced_blotchdf.to_csv(pm.final_blotchfile, index=False)
         if pm.reduced_fanfile.exists():
-            logger.debug("Writing final_fanfile for %s", obsid)
+            logger.debug("Writing final_fanfile for %s", label)
             pm.reduced_fandf.to_csv(pm.final_fanfile, index=False)
     else:
         # apply cut
@@ -271,6 +280,10 @@ def apply_cut_obsid(obsid, cut=0.5, savedir=None):
         for kind in ["fan", "blotch"]:
             write_l1c(kind, slashed, pm)
 
+
+def apply_cut_obsid(obsid, cut=0.5, savedir=None):
+    pm = io.PathManager(obsid=obsid, cut=cut, datapath=savedir)
+    _apply_cut_to_tile(pm, label=obsid)
 
 # %% ../../notebooks/05f_production.fnotching.ipynb #8d9bc0c0
 def apply_cut(obsid, cut=0.5, savedir=None):
@@ -289,21 +302,4 @@ def apply_cut(obsid, cut=0.5, savedir=None):
         id_ = get_id_from_path(path)
         logger.debug("Slashing %s", id_)
         pm.id = id_
-        try:
-            fnotches = pm.fnotchdf
-        except FileNotFoundError:
-            # no fnotch df was found. Now need to copy over
-            # standard files to L1C folder
-            pm.final_blotchfile.parent.mkdir(exist_ok=True)
-            if pm.reduced_blotchfile.exists():
-                logger.debug("Writing final_blotchfile for %s", id_)
-                pm.reduced_blotchdf.to_csv(pm.final_blotchfile, index=False)
-            if pm.reduced_fanfile.exists():
-                logger.debug("Writing final_fanfile for %s", id_)
-                pm.reduced_fandf.to_csv(pm.final_fanfile, index=False)
-        else:
-            # apply cut
-            slashed = fnotches[fnotches.vote_ratio > pm.cut]
-            for kind in ["fan", "blotch"]:
-                write_l1c(kind, slashed, pm)
-
+        _apply_cut_to_tile(pm, label=id_)

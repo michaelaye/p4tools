@@ -25,7 +25,8 @@ from rich.progress import (
 import p4tools.production.io as io
 
 # %% auto #0
-__all__ = ['app', 'console', 'run_parallel_with_progress', 'setup', 'info', 'cluster_tile', 'cluster_obsid', 'produce']
+__all__ = ['app', 'console', 'run_parallel_with_progress', 'setup', 'info', 'db_stats', 'random_tile', 'cluster_tile',
+           'cluster_obsid', 'produce']
 
 # %% ../notebooks/06_clis.ipynb #cell-3
 app = typer.Typer(
@@ -145,6 +146,79 @@ def info():
         table.add_row("[yellow]Status[/yellow]", "[yellow]Not configured. Run 'p4 setup'.[/yellow]")
 
     console.print(table)
+
+# %% ../notebooks/06_clis.ipynb #sccdt1lp2vg
+@app.command()
+def db_stats(
+    db: Optional[str] = typer.Option(None, "--db", help="Path to raw P4 Parquet database. Reads from config if not given."),
+    top: int = typer.Option(10, "--top", "-n", help="Number of top tiles/obsids to show."),
+):
+    """Show database statistics and top tiles/obsids by marking count."""
+    try:
+        stats = io.get_db_stats(db=db, top=top)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"Reading [cyan]{io.resolve_dbname(db)}[/cyan] ...")
+
+    # --- Overview ---
+    overview = Table(title="Database Overview")
+    overview.add_column("Metric", style="cyan")
+    overview.add_column("Value", justify="right")
+    overview.add_row("Total markings", f"{stats['n_markings']:,}")
+    overview.add_row("Unique tiles (image_id)", f"{stats['n_tiles']:,}")
+    overview.add_row("Unique obsids (image_name)", f"{stats['n_obsids']:,}")
+    overview.add_row("Avg markings / tile", f"{stats['avg_per_tile']:.1f}")
+    overview.add_row("Avg markings / obsid", f"{stats['avg_per_obsid']:.1f}")
+
+    for mtype, count in stats["type_counts"].items():
+        overview.add_row(f"  {mtype}", f"{count:,}")
+
+    console.print(overview)
+
+    # --- Top tiles ---
+    tile_table = Table(title=f"Top {top} Tiles by Marking Count")
+    tile_table.add_column("#", style="dim", justify="right")
+    tile_table.add_column("image_id (tile)", style="cyan")
+    tile_table.add_column("image_name (obsid)", style="white")
+    tile_table.add_column("Markings", justify="right", style="green")
+
+    for rank, row in enumerate(stats["top_tiles"].itertuples(), 1):
+        tile_table.add_row(str(rank), row.image_id, row.image_name, f"{row.markings:,}")
+
+    console.print(tile_table)
+
+    # --- Top obsids ---
+    obsid_table = Table(title=f"Top {top} Obsids by Marking Count")
+    obsid_table.add_column("#", style="dim", justify="right")
+    obsid_table.add_column("image_name (obsid)", style="cyan")
+    obsid_table.add_column("Tiles", justify="right")
+    obsid_table.add_column("Markings", justify="right", style="green")
+
+    for rank, row in enumerate(stats["top_obsids"].itertuples(), 1):
+        obsid_table.add_row(str(rank), row.image_name, str(row.tiles), f"{row.markings:,}")
+
+    console.print(obsid_table)
+
+# %% ../notebooks/06_clis.ipynb #ynm78dvx91p
+@app.command()
+def random_tile(
+    db: Optional[str] = typer.Option(None, "--db", help="Path to raw P4 Parquet database. Reads from config if not given."),
+):
+    """Print a random tile ID with a near-average marking count."""
+    try:
+        result = io.get_random_tile(db=db)
+    except ValueError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+    console.print(
+        f"[cyan]{result['image_id']}[/cyan]  "
+        f"(obsid: {result['image_name']}, "
+        f"markings: {result['markings']}, "
+        f"avg: {result['avg']:.1f})"
+    )
 
 # %% ../notebooks/06_clis.ipynb #cell-7
 def _display_inline_image(path: Path):
