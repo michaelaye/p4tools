@@ -307,21 +307,25 @@ def cluster_tile(
             p4id.show_subframe(ax=axes[0])
             axes[0].set_title("Tile image")
 
-            # clustered fans
+            # clustered fans — L1A output uses image_id, markings expect tile_id
             p4id.show_subframe(ax=axes[1])
+            n_fans = 0
             if pm.fanfile.exists():
                 import pandas as pd
-                fan_df = pd.read_csv(pm.fanfile)
+                fan_df = pd.read_csv(pm.fanfile).rename(columns={"image_id": "tile_id"})
+                n_fans = len(fan_df)
                 p4id.plot_fans(data=fan_df, ax=axes[1], lw=1, with_center=True)
-            axes[1].set_title(f"Fans ({len(fan_df) if pm.fanfile.exists() else 0})")
+            axes[1].set_title(f"Fans ({n_fans})")
 
             # clustered blotches
             p4id.show_subframe(ax=axes[2])
+            n_blotches = 0
             if pm.blotchfile.exists():
                 import pandas as pd
-                blotch_df = pd.read_csv(pm.blotchfile)
+                blotch_df = pd.read_csv(pm.blotchfile).rename(columns={"image_id": "tile_id"})
+                n_blotches = len(blotch_df)
                 p4id.plot_blotches(data=blotch_df, ax=axes[2], lw=1, with_center=True)
-            axes[2].set_title(f"Blotches ({len(blotch_df) if pm.blotchfile.exists() else 0})")
+            axes[2].set_title(f"Blotches ({n_blotches})")
 
             fig.suptitle(f"{tile_id} — {obsid}", fontsize=14)
             fig.tight_layout()
