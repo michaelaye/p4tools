@@ -2,6 +2,18 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.16.0] — 2026-03-11
+
+### Fixed
+- **Cluster validation**: Multi-stage sub-clustering (XY → radii → angles) could
+  fragment clusters below `min_samples` members. The filter that was supposed to
+  catch this was broken (iterated over DataFrame columns instead of rows, and only
+  saw the last tile's data). Moved the `n_votes >= min_samples` filter into
+  `DBScanner.cluster_image_id` where it correctly applies per-tile after concat.
+- Removed broken `save_results=False` interception from `cluster_obsid`; validation
+  now happens at the source inside DBScanner.
+- Removed stale `min_cluster_size` parameter from `_cluster_single` CLI wrapper.
+
 ## [0.15.1] — 2026-03-11
 
 ### Fixed

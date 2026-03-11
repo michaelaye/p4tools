@@ -376,12 +376,11 @@ def cluster_obsid(
 # %% ../notebooks/06_clis.ipynb #cell-10
 # Top-level picklable wrappers for ProcessPoolExecutor
 
-def _cluster_single(obsid, savedir=None, dbname=None, min_cluster_size=3):
+def _cluster_single(obsid, savedir=None, dbname=None):
     """Picklable wrapper around catalog.cluster_obsid for parallel execution."""
     from p4tools.production.catalog import cluster_obsid as _cluster_obsid
     return _cluster_obsid(
         obsid=obsid, savedir=savedir, dbname=dbname,
-        min_cluster_size=min_cluster_size,
     )
 
 

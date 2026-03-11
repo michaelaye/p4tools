@@ -462,6 +462,19 @@ class DBScanner:
             except ValueError:
                 # i can just continue here, as I stored an empty list above already
                 continue
+            # Filter out clusters that fell below min_samples during multi-stage
+            # sub-clustering (XY → radii → angles can fragment clusters).
+            if len(self.reduced_data[kind]) > 0:
+                before = len(self.reduced_data[kind])
+                self.reduced_data[kind] = self.reduced_data[kind][
+                    self.reduced_data[kind]["n_votes"] >= self.min_samples
+                ]
+                rejected = before - len(self.reduced_data[kind])
+                if rejected > 0:
+                    logger.info(
+                        "Filtered %d %s cluster(s) with < %d votes for %s",
+                        rejected, kind, self.min_samples, img_id,
+                    )
 
         if self.save_results:
             self.store_clustered(self.reduced_data)
