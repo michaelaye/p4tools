@@ -41,8 +41,10 @@ from pandas import DataFrame
 LOGGER: Logger = logging.getLogger(__name__)
 
 # %% ../../notebooks/05_production.catalog.ipynb #1340ef35
-def execute_in_parallel(func : Callable, iterable : Iterable):
-    """Execute a function in parallel over an iterable using ProcessPoolExecutor.
+def execute_in_parallel(func : Callable, iterable : Iterable, max_workers : int | None = None, description : str = "Processing"):
+    """Execute a function in parallel over an iterable with per-item error handling.
+
+    Unlike pool.map, individual failures do not abort the entire batch.
 
     Parameters
     ----------
@@ -50,16 +52,32 @@ def execute_in_parallel(func : Callable, iterable : Iterable):
         The function to be executed for each element
     iterable : Iterable
         The iterable over which to execute the function
+    max_workers : int, optional
+        Number of parallel workers. Defaults to ProcessPoolExecutor default.
+    description : str, optional
+        Label for the tqdm progress bar.
 
     Returns
     -------
-    tuple
-        The results of the function applied to each element
+    results : list
+        Successful results in submission order (skipping failures).
+    errors : list[tuple]
+        ``(item, exception)`` pairs for items that raised.
     """
+    from concurrent.futures import as_completed
+
     items = list(iterable)
-    with ProcessPoolExecutor() as pool:
-        results = list(tqdm(pool.map(func, items), total=len(items), desc="Processing"))
-    return tuple(results)
+    results, errors = {}, []
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        future_to_item = {executor.submit(func, item): item for item in items}
+        for future in tqdm(as_completed(future_to_item), total=len(items), desc=description):
+            item = future_to_item[future]
+            try:
+                results[item] = future.result()
+            except Exception as e:
+                LOGGER.error("Failed %s: %s", item, e)
+                errors.append((item, e))
+    return [results[item] for item in items if item in results], errors
 
 # %% ../../notebooks/05_production.catalog.ipynb #28cfb711
 def marking_id_generator(prefix: str) -> Generator[str, Any, None]:
@@ -191,7 +209,9 @@ def fnotch_obsid(obsid=None, savedir=None, fnotch_via_obsid=False, imgid=None):
 
 
 def fnotch_obsid_parallel(obsids : list[str], savedir : str):
-    """Applies the fnotching for multiple obsid's in parallel
+    """Applies the fnotching for multiple obsid's in parallel.
+
+    Individual failures are logged and skipped instead of aborting the batch.
 
     Parameters
     ----------
@@ -199,33 +219,43 @@ def fnotch_obsid_parallel(obsids : list[str], savedir : str):
         List of the Obsids to fnotch
     savedir : str
         the directory path where to save
+
+    Returns
+    -------
+    results : list
+        Successful results.
+    errors : list[tuple]
+        ``(obsid, exception)`` pairs for failures.
     """
     from functools import partial
     func = partial(fnotch_obsid, savedir=savedir)
-    with ProcessPoolExecutor() as pool:
-        results = list(tqdm(pool.map(func, obsids), total=len(obsids), desc="Fnotching"))
-    return tuple(results)
+    return execute_in_parallel(func, obsids, description="Fnotching")
 
 
 def cluster_obsid_parallel(obsids : list[str], savedir : str, dbname : str):
     """Apply the Clustering Algorithm for multiple obsids in parallel.
+
+    Individual failures are logged and skipped instead of aborting the batch.
 
     Parameters
     ----------
     obsids : list[str]
         List of the obsids to cluster
     savedir : str
-        path to the save directory whihc will save the clustering results
+        path to the save directory which will save the clustering results
     dbname : str
-        The databasename 
+        The database name
+
+    Returns
+    -------
+    results : list
+        Successful results.
+    errors : list[tuple]
+        ``(obsid, exception)`` pairs for failures.
     """
     from functools import partial
     func = partial(cluster_obsid, savedir=savedir, dbname=dbname)
-    with ProcessPoolExecutor() as pool:
-        results = list(tqdm(pool.map(func, obsids), total=len(obsids), desc="Clustering"))
-    return tuple(results)
-
-
+    return execute_in_parallel(func, obsids, description="Clustering")
 
 # %% ../../notebooks/05_production.catalog.ipynb #8f19f302
 def add_marking_ids(path, fan_id, blotch_id):
