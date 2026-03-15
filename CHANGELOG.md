@@ -2,7 +2,7 @@
 
 All notable changes to p4tools are documented here.
 
-## [Unreleased]
+## [0.16.17] — 2026-03-16
 
 ### Added
 - **Catalog v3.1 via Zenodo**: `v3_1` pooch registry now fetches from
