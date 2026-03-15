@@ -26,7 +26,7 @@ import p4tools.production.io as io
 
 # %% auto #0
 __all__ = ['app', 'console', 'run_parallel_with_progress', 'setup', 'info', 'db_stats', 'random_tile', 'cluster_tile',
-           'cluster_obsid', 'produce']
+           'cluster_obsid', 'create_mosaic', 'produce']
 
 # %% ../notebooks/06_clis.ipynb #cell-3
 app = typer.Typer(
@@ -373,6 +373,23 @@ def cluster_obsid(
 
     console.print(table)
 
+# %% ../notebooks/06_clis.ipynb #2bf84eeb
+@app.command()
+def create_mosaic(
+    obsid: str = typer.Argument(help="HiRISE observation ID (e.g. ESP_011350_0945)."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Re-download and recreate even if mosaic exists."),
+):
+    """Create a RED45 mosaic cube for a single observation ID."""
+    from p4tools.production.projection import create_RED45_mosaic
+
+    console.print(f"Creating RED45 mosaic for [cyan]{obsid}[/cyan] ...")
+    try:
+        result = create_RED45_mosaic(obsid, overwrite=overwrite)
+        console.print(f"[green]Mosaic created:[/green] {result}")
+    except Exception as e:
+        console.print(f"[red]Failed: {e}[/red]")
+        raise typer.Exit(1)
+
 # %% ../notebooks/06_clis.ipynb #cell-10
 # Top-level picklable wrappers for ProcessPoolExecutor
 
@@ -389,6 +406,12 @@ def _fnotch_single(obsid, savedir=None):
     from p4tools.production.catalog import fnotch_obsid as _fnotch_obsid
     return _fnotch_obsid(obsid=obsid, savedir=savedir)
 
+
+def _create_mosaic_single(obsid):
+    """Picklable wrapper around create_RED45_mosaic for parallel execution."""
+    from p4tools.production.projection import create_RED45_mosaic
+    return create_RED45_mosaic(obsid)
+
 # %% ../notebooks/06_clis.ipynb #cell-11
 @app.command()
 def produce(
@@ -402,6 +425,7 @@ def produce(
         ReleaseManager, get_L1A_paths, add_marking_ids,
         fan_id_generator, blotch_id_generator, create_roi_file,
     )
+    from p4tools.production.projection import create_RED45_mosaic
 
     try:
         db = io.resolve_dbname(db)
@@ -429,33 +453,87 @@ def produce(
                 console.print(f"  {obs}")
         return
 
-    if len(obsids) == 0:
-        console.print("[green]Nothing to do — all obsids already processed.[/green]")
-        return
-
     # Use rm.catalog (e.g. "P4_catalog_v3.1") as savedir for all phases,
     # matching the convention used by ReleaseManager's own methods.
     savedir = rm.catalog
 
     # --- Phase 1: Clustering (parallel) ---
-    console.rule("[bold]Phase 1: Clustering[/bold]")
-    _, cluster_errors = run_parallel_with_progress(
-        _cluster_single, obsids, max_workers=workers,
-        description="Clustering obsids",
-        func_kwargs={"savedir": savedir, "dbname": db},
-    )
-    if cluster_errors:
-        console.print(f"[red]{len(cluster_errors)} obsids failed clustering.[/red]")
+    if len(obsids) == 0:
+        console.print("[green]Phase 1: All obsids already clustered — skipping.[/green]")
+    else:
+        console.rule("[bold]Phase 1: Clustering[/bold]")
+        _, cluster_errors = run_parallel_with_progress(
+            _cluster_single, obsids, max_workers=workers,
+            description="Clustering obsids",
+            func_kwargs={"savedir": savedir, "dbname": db},
+        )
+        if cluster_errors:
+            console.print(f"[red]{len(cluster_errors)} obsids failed clustering.[/red]")
+
+    # --- Phase 1b: Add marking IDs to L1A results ---
+    # get_L1A_paths returns directories; check CSV files inside for marking_id
+    all_l1a = []
+    for obs in rm.obsids:
+        all_l1a.extend(get_L1A_paths(obs, savedir))
+    needs_ids = []
+    for p in all_l1a:
+        image_id = p.parent.name
+        fan_csv = p / f"{image_id}_L1A_fans.csv"
+        blotch_csv = p / f"{image_id}_L1A_blotches.csv"
+        has_id = True
+        for csv in [fan_csv, blotch_csv]:
+            if csv.exists():
+                with open(csv) as f:
+                    header = f.readline()
+                if "marking_id" not in header:
+                    has_id = False
+                    break
+        if not has_id:
+            needs_ids.append(p)
+    if needs_ids:
+        console.print(f"  Adding marking IDs to {len(needs_ids)} L1A directories ...")
+        fan_id = fan_id_generator()
+        blotch_id = blotch_id_generator()
+        for p in needs_ids:
+            add_marking_ids(p, fan_id, blotch_id)
+        console.print("  [green]Marking IDs added.[/green]")
+    else:
+        console.print("[green]All L1A files already have marking IDs.[/green]")
 
     # --- Phase 2: Fnotching (parallel) ---
+    # Always run all obsids — per-tile .done sentinels handle skipping
+    # inside fnotch_image_ids / apply_cut.
     console.rule("[bold]Phase 2: Fnotching[/bold]")
+    console.print(f"  {len(rm.obsids)} obsids to fnotch")
     _, fnotch_errors = run_parallel_with_progress(
-        _fnotch_single, obsids, max_workers=workers,
+        _fnotch_single, rm.obsids, max_workers=workers,
         description="Fnotching obsids",
         func_kwargs={"savedir": savedir},
     )
     if fnotch_errors:
         console.print(f"[red]{len(fnotch_errors)} obsids failed fnotching.[/red]")
+
+    # --- Production report: collect failures across all phases ---
+    import json as _json
+    from datetime import datetime
+    report = {
+        "version": version,
+        "started": datetime.now().isoformat(),
+        "total_obsids": len(rm.obsids),
+        "failures": {},
+    }
+
+    # --- Phase 2.5: Create RED45 mosaics for ground projection ---
+    console.rule("[bold]Creating RED45 Mosaics[/bold]")
+    _, mosaic_errors = run_parallel_with_progress(
+        _create_mosaic_single, rm.obsids, max_workers=workers,
+        description="Creating RED45 mosaics",
+    )
+    if mosaic_errors:
+        console.print(f"[red]{len(mosaic_errors)} obsids failed mosaic creation.[/red]")
+        report["failures"]["mosaic_creation"] = [
+            {"obsid": obs, "reason": str(err)} for obs, err in mosaic_errors
+        ]
 
     # --- Phase 3: Post-processing (serial) ---
     console.rule("[bold]Phase 3: Post-processing[/bold]")
@@ -464,17 +542,36 @@ def produce(
         create_roi_file(rm.obsids, rm.catalog, savedir)
     console.print("  [green]L1C summary files created.[/green]")
 
-    with console.status("Calculating tile coordinates ..."):
-        rm.calc_tile_coordinates()
-    console.print("  [green]Tile coordinates calculated.[/green]")
+    console.print("  Calculating tile coordinates ...")
+    failed_campt, skipped_tiles = rm.calc_tile_coordinates()
+    console.print(f"  [green]Tile coordinates calculated.[/green]")
+    if failed_campt:
+        console.print(f"  [red]{len(failed_campt)} obsids failed campt.[/red]")
+        report["failures"]["tile_coords_campt"] = [
+            {"cubepath": p, "reason": "campt failed (missing SPICE data)"} for p in failed_campt
+        ]
+    if skipped_tiles:
+        report["failures"]["tile_coords_missing"] = [
+            {"cubepath": p, "reason": "no tile coord output file"} for p in skipped_tiles
+        ]
 
-    with console.status("Calculating marking coordinates ..."):
-        rm.calc_marking_coordinates()
-    console.print("  [green]Marking coordinates calculated.[/green]")
+    console.print("  Calculating marking coordinates ...")
+    failed_markings = rm.calc_marking_coordinates()
+    console.print(f"  [green]Marking coordinates calculated.[/green]")
+    if failed_markings:
+        console.print(f"  [red]{len(failed_markings)} obsids failed marking coord projection.[/red]")
+        report["failures"]["marking_coords"] = [
+            {"obsid": obs, "reason": "campt/spiceinit failed for mosaic"} for obs in failed_markings
+        ]
 
-    with console.status("Writing metadata ..."):
-        rm.calc_metadata()
+    console.print("  Writing metadata ...")
+    skipped_metadata = rm.calc_metadata()
     console.print("  [green]Metadata written.[/green]")
+    if skipped_metadata:
+        console.print(f"  [red]{len(skipped_metadata)} obsids missing north azimuth (no campt output).[/red]")
+        report["failures"]["metadata_north_azimuth"] = [
+            {"obsid": obs, "reason": "no campt_out.csv — cannot compute north azimuth"} for obs in skipped_metadata
+        ]
 
     with console.status("Merging all catalog data ..."):
         rm.merge_all()
@@ -486,8 +583,30 @@ def produce(
         rm.fix_marking_ids()
     console.print("  [green]Marking IDs assigned.[/green]")
 
+    # --- Write production report ---
+    report["finished"] = datetime.now().isoformat()
+    report_path = rm.savefolder / f"{rm.catalog}_production_report.json"
+    with open(report_path, "w") as f:
+        _json.dump(report, f, indent=2)
+
+    # Print summary
+    total_failures = sum(len(v) for v in report["failures"].values())
+    if total_failures > 0:
+        console.rule("[bold red]Production Report: Failures[/bold red]")
+        failed_obsids = set()
+        for phase, items in report["failures"].items():
+            for item in items:
+                obsid = item.get("obsid") or Path(item.get("cubepath", "")).stem.split("_mosaic")[0]
+                failed_obsids.add(obsid)
+                console.print(f"  [red]{phase}[/red]: {obsid} — {item['reason']}")
+        console.print(f"\n  [bold red]{len(failed_obsids)} unique obsid(s) with issues out of {len(rm.obsids)} total.[/bold red]")
+        console.print(f"  Full report: {report_path}")
+    else:
+        console.print(f"\n  [green]No failures — all {len(rm.obsids)} obsids processed successfully.[/green]")
+
     console.print(Panel(
         f"[green]Catalog production complete![/green]\n"
-        f"Output: {rm.savefolder}",
+        f"Output: {rm.savefolder}\n"
+        f"Report: {report_path}",
         title="Done",
     ))

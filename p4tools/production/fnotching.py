@@ -164,6 +164,13 @@ def fnotch_image_ids(obsid, eps=20, savedir=None, scope="hirise"):
     for path in paths:
         id_ = get_id_from_path(path)
         pm.id = id_
+
+        # Per-tile skip guard: if this tile was already fnotched, skip it.
+        done_sentinel = pm.reduced_fanfile.parent / ".done"
+        if done_sentinel.exists():
+            logger.debug("Skipping fnotching for %s — .done sentinel exists.", id_)
+            continue
+
         # make sure the L1B folder exists
         pm.reduced_fanfile.parent.mkdir(parents=True, exist_ok=True)
 
@@ -212,6 +219,9 @@ def fnotch_image_ids(obsid, eps=20, savedir=None, scope="hirise"):
                 blotches.to_csv(pm.reduced_blotchfile, index=False)
             if fans is not None:
                 fans.to_csv(pm.reduced_fanfile, index=False)
+
+        # Write sentinel after successful fnotching of this tile.
+        done_sentinel.touch()
 
 
 # %% ../../notebooks/05f_production.fnotching.ipynb #c32f6b21
@@ -262,6 +272,12 @@ def _apply_cut_to_tile(pm, label=""):
     label : str
         Label used in debug log messages (e.g. obsid or image_id).
     """
+    # Per-tile skip guard for L1C.
+    done_sentinel = pm.final_blotchfile.parent / ".done"
+    if done_sentinel.exists():
+        logger.debug("Skipping L1C cut for %s — .done sentinel exists.", label)
+        return
+
     try:
         fnotches = pm.fnotchdf
     except FileNotFoundError:
@@ -279,6 +295,10 @@ def _apply_cut_to_tile(pm, label=""):
         slashed = fnotches[fnotches.vote_ratio > pm.cut]
         for kind in ["fan", "blotch"]:
             write_l1c(kind, slashed, pm)
+
+    # Write sentinel after successful L1C cut.
+    done_sentinel.parent.mkdir(exist_ok=True, parents=True)
+    done_sentinel.touch()
 
 
 def apply_cut_obsid(obsid, cut=0.5, savedir=None):

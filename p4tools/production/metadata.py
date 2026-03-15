@@ -107,7 +107,15 @@ def get_north_azimuths_from_SPICE(obsids):
         The DataFrame has two columns: 'OBSERVATION_ID' and 'north_azimuth'.
     """
     NAs = []
+    valid_obsids = []
+    skipped = []
     for obsid in obsids:
         meta = MetadataReader(obsid)
+        if not meta.campt_out_path.exists():
+            logger.warning("No campt output for %s — skipping north azimuth", obsid)
+            skipped.append(obsid)
+            continue
         NAs.append(meta.campt_out_df['NorthAzimuth'].median())
-    return pd.DataFrame(dict(OBSERVATION_ID=obsids, north_azimuth=NAs))
+        valid_obsids.append(obsid)
+    df = pd.DataFrame(dict(OBSERVATION_ID=valid_obsids, north_azimuth=NAs))
+    return df, skipped

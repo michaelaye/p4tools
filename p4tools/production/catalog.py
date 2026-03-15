@@ -511,11 +511,11 @@ class ReleaseManager:
 
     def check_for_todo(self, overwrite=None):
         """
-        Check for TODO items based on the existence of "Done.txt" files.
+        Set self.todo to all obsids that need processing.
 
-        This method checks each observation ID (obsid) in the `self.obsids` list to determine if a "Done.txt" file exists
-        in the corresponding results save folder. If the file exists and `overwrite` is set to False, the obsid is skipped.
-        Otherwise, the obsid is added to the `self.todo` list.
+        Per-tile skip logic is handled by the ``.done`` sentinel inside
+        ``cluster_image_id`` — every obsid is always included so that
+        individual un-done tiles within it get processed.
 
         Parameters
         ----------
@@ -527,18 +527,7 @@ class ReleaseManager:
         self.todo : list
             A list of obsids that need to be processed.
         """
-
-        if overwrite is None:
-            overwrite = self.overwrite
-        bucket = []
-        for obsid in self.obsids:
-            pm = io.PathManager(obsid=obsid, datapath=self.savefolder)
-            path = pm.obsid_results_savefolder / obsid / "Done.txt"
-            if path.exists() and overwrite is False:
-                continue
-            else:
-                bucket.append(obsid)
-        self.todo = bucket
+        self.todo = list(self.obsids)
 
     def get_parallel_args(self):
         return [(i, self.catalog, self.dbname) for i in self.todo]
@@ -564,8 +553,9 @@ class ReleaseManager:
         return self.savefolder / f"{self.catalog}_EDRINDEX_metadata.csv"
 
     def calc_metadata(self):
+        skipped_metadata = []
         if not self.EDRINDEX_meta_path.exists():
-            NAs = p4meta.get_north_azimuths_from_SPICE(self.obsids)
+            NAs, skipped_metadata = p4meta.get_north_azimuths_from_SPICE(self.obsids)
             edrindex = get_index("mro.hirise", "edr")
             p4_edr = (
                 edrindex[edrindex.OBSERVATION_ID.isin(self.obsids)]
@@ -595,6 +585,7 @@ class ReleaseManager:
         metadata = p4_edr[cols]
         metadata.to_csv(self.metadata_path, index=False, float_format="%.7f")
         LOGGER.info("Wrote %s", str(self.metadata_path))
+        return skipped_metadata
 
     def calc_tile_coordinates(self):
         """
@@ -624,17 +615,30 @@ class ReleaseManager:
             tilecalc = TileCalculator(cubepath, dbname=self.dbname)
             tilecalc.calc_tile_coords()
 
+        failed_campt = []
         if not len(todo) == 0:
             for cubepath in tqdm(todo,desc="Calculating Tile Coords"):
-                _ = get_tile_coords(cubepath)
+                try:
+                    get_tile_coords(cubepath)
+                except RuntimeError as e:
+                    LOGGER.warning("Skipping %s: %s", cubepath, e)
+                    failed_campt.append(cubepath)
+        if failed_campt:
+            LOGGER.warning("campt failed for %d obsids: %s", len(failed_campt), failed_campt)
 
         bucket = []
+        skipped = []
         for cubepath in tqdm(cubepaths,desc="Creating Cubepath Bucket"):
             tc = TileCalculator(cubepath, read_data=False, dbname=self.dbname)
+            if not tc.final_path.exists():
+                LOGGER.warning("No tile coords for %s — skipping", cubepath)
+                skipped.append(str(cubepath))
+                continue
             bucket.append(tc.tile_coords_df)
         coords = pd.concat(bucket, ignore_index=True, sort=False)
         coords.to_csv(self.tile_coords_path, index=False, float_format="%.7f")
         LOGGER.info("Wrote %s", str(self.tile_coords_path))
+        return [str(p) for p in failed_campt], skipped
 
     @property
     def COLS_TO_MERGE(self):
@@ -799,10 +803,17 @@ class ReleaseManager:
             LOGGER.warn("The following obsids have no data from clustering")
             LOGGER.warn(missing)
 
+        failed_marking_coords = []
         for obsid in tqdm(obsids_with_data):
             data = combined[combined.image_name == obsid]
             xy = XY2LATLON(data, self.savefolder, overwrite=self.overwrite)
-            xy.process_inpath()
+            result = xy.process_inpath()
+            if result is False:
+                failed_marking_coords.append(obsid)
+        if failed_marking_coords:
+            LOGGER.warning("Marking coord projection failed for %d obsids: %s",
+                           len(failed_marking_coords), failed_marking_coords)
+        return failed_marking_coords
 
 
     def collect_marking_coordinates(self,obsids = None):
@@ -827,9 +838,16 @@ class ReleaseManager:
         else:
             working_obsids = self.obsids
             
+        skipped = []
         for obsid in working_obsids:
             xy = XY2LATLON(None, self.savefolder, obsid=obsid)
+            if not xy.savepath.exists():
+                LOGGER.warning("No marking coordinates for %s — skipping", obsid)
+                skipped.append(obsid)
+                continue
             bucket.append(pd.read_csv(xy.savepath).assign(obsid=obsid))
+        if skipped:
+            LOGGER.warning("Skipped %d obsids with missing campt output: %s", len(skipped), skipped)
 
         ground = pd.concat(bucket, sort=False).drop_duplicates()
         ground.rename(dict(Sample="image_x", Line="image_y"), axis=1, inplace=True)

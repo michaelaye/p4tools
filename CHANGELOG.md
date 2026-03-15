@@ -2,6 +2,81 @@
 
 All notable changes to p4tools are documented here.
 
+## [Unreleased]
+
+### Added
+- **Catalog v3.1 via Zenodo**: `v3_1` pooch registry now fetches from
+  `doi:10.5281/zenodo.19026723` with MD5 checksums and CSV→parquet
+  postprocessing, identical to the v1 Zenodo setup.
+- **`set_catalog_version(version)`**: Persistent session-wide default version
+  setter. `from p4tools import set_catalog_version; set_catalog_version('v3.1')`.
+- **`catalog_version(version)` context manager**: Scoped temporary version
+  override — restores the previous default on exit, even on exception.
+  `from p4tools import catalog_version`.
+- Both `set_catalog_version` and `catalog_version` re-exported from `p4tools`
+  top-level (`__init__.py`).
+- **Per-tile `.done` sentinel** in `cluster_image_id`, `fnotch_image_ids`,
+  and `_apply_cut_to_tile`: written after successful completion of each
+  pipeline stage. Checked at the start of each stage to skip already-done
+  tiles. Replaces the faulty obsid-level skip guards.
+
+### Changed
+- **Default catalog version is now `v3.1`** (was `v3`). All `io` functions
+  (`get_fan_catalog`, `get_blotch_catalog`, `get_tile_coords`, etc.) default
+  to v3.1 when no `version` argument is given.
+- Version string `"v3.1"` replaces the internal Python-identifier-style key
+  `v3_1` throughout — `fetchers` dict now uses `{"v3.1": v3_1.fetch}`.
+- All public `io` functions accept `version=None` (resolved via
+  `_resolve_version`) instead of a hardcoded `version="v3"` default.
+- **`check_for_todo`** no longer skips obsids — always includes all obsids
+  in `self.todo`. Per-tile `.done` sentinels handle skip logic.
+- **Fnotching skip guard removed** from `produce` CLI — was checking for
+  L1B directory existence at obsid level, now handled by per-tile sentinels.
+
+### Fixed
+- **Per-cluster user deduplication** in `get_average_objects`: each user now
+  contributes at most once per cluster (`drop_duplicates(subset=["user_name"])`).
+  Restores safeguard from the original `planet4/clustering.py` that was lost
+  during the port to p4tools. Without this, a single user marking the same
+  spot 3+ times could create a spurious cluster passing `min_samples`.
+- **Obsid-level skip guard caused permanently skipped tiles**: `check_for_todo`
+  checked for L1A directory existence (created before clustering runs by
+  `write_settings_file`). An interrupted run left empty L1A dirs that caused
+  the entire obsid (hundreds of tiles) to be skipped on re-runs. In v3.1,
+  this caused 892 tiles across 5 obsids to be permanently skipped.
+
+## [0.16.5] — 2026-03-12
+
+
+### Fixed
+- **`'TypeError' object has no attribute 'stdout'` crash**: When kalasiris
+  import fails (e.g. no `ISISROOT`), `ProcessError` falls back to `Exception`,
+  catching all errors including `TypeError` from `None`-valued ISIS functions.
+  Added early guard in `nocal_hi` to raise a clear `RuntimeError` when ISIS is
+  unavailable, and switched all `except ProcessError` blocks to use
+  `getattr(e, 'stdout', '')` for safety.
+
+## [0.16.4] — 2026-03-12
+
+### Added
+- **`p4 create-mosaic` CLI command**: Test RED45 mosaic creation for a single
+  obsid. Accepts `--overwrite` flag to force re-download and recreation.
+
+## [0.16.3] — 2026-03-12
+
+### Fixed
+- **Missing RED45 mosaic creation in `produce` CLI**: The `produce` command skipped
+  `create_RED45_mosaic()` between fnotching and post-processing, causing Phase 3 to
+  crash when cube files didn't exist. Added parallel mosaic creation as Phase 2.5.
+
+## [0.16.2] — 2026-03-12
+
+### Fixed
+- **Missing directory in Phase 3 post-processing**: `TileCalculator.calc_tile_coords()`
+  wrote a temp CSV to `cubepath.parent` without ensuring the directory exists. Added
+  `mkdir(parents=True, exist_ok=True)` before the `to_csv()` call. This fixes the
+  `OSError: Cannot save file into a non-existent directory` crash during `p4 produce`.
+
 ## [0.16.1] — 2026-03-11
 
 ### Fixed
@@ -74,3 +149,65 @@ All notable changes to p4tools are documented here.
   duplicated fan/blotch ID generator logic.
 - Extracted duplicated try/except/else block in `05f_production.fnotching`
   into `_apply_cut_to_tile()`.
+
+## [0.13.0] — 2026-02-24
+
+### Changed
+- Replaced `pyaml` with stdlib `json` for clustering settings output.
+
+### Fixed
+- Fixed `nbdev_preview` crashes caused by uncaught `kalasiris` `KeyError`;
+  added `# | eval: false` guard to CLI entry point cell.
+- Removed unnecessary `__main__` guard from CLI notebook.
+- Fixed outdated `settings.ini` reference in CLI docs (now `pyproject.toml`).
+- Cleaned up docs sidebar with consistent titles and section grouping.
+
+## [0.12.0] — 2026-02-23
+
+### Added
+- Production pipeline merged from Tom Ihro's fork (`p4tools_tihro`): full
+  L0→L1A→L1B→L1C pipeline via `p4 produce`, DBSCAN clustering, fnotching,
+  RED45 mosaic creation, coordinate projection.
+- Cluster size validation in `cluster_obsid()`.
+- `geopandas` added as dependency for stamp visualisation.
+
+### Changed
+- **nbdev 3.0 migration**: `settings.ini` → `pyproject.toml`; regenerated
+  cell IDs for all notebooks.
+- Replaced `dask` with stdlib `concurrent.futures` for parallel execution.
+- Moved `planetarypy` to optional `[pipeline]` extras; all ISIS/SPICE imports
+  are now conditional to allow lightweight installs.
+- `get_config()` returns `None` instead of raising when config file is missing.
+- Removed interactive `input()` prompts; replaced with logged warnings for
+  non-TTY environments.
+- All production notebooks (`05*.ipynb`) marked `skip_exec: true` to prevent
+  accidental execution during `nbdev_test` / docs build.
+- Fixed CI deploy workflow to use `nbdev 3.0` `quarto-ghp3` action.
+
+### Fixed
+- Fixed typo in `Blotch.is_equal`: was comparing `image_x` to `image_y`.
+- Removed accidentally committed ISIS `print.prt` artifact.
+
+## [0.11.0] — 2025-11-09
+
+### Added
+- `Fans` and `Blotches` container classes for working with collections of
+  fan/blotch markings.
+- Fixed v3 `tile_coords` hash in pooch registry.
+
+### Fixed
+- Various dependency and deploy workflow fixes.
+
+## [0.10.3] — 2025-03-25
+
+### Added
+- `get_url_for_tile_id()` and `get_subframe_by_tile_id()` for tile image access.
+- `normalize_tile_id()` for robust tile ID normalisation (handles short forms,
+  missing `APF` prefix, variable-length zero-padding).
+- `version` parameter added to `get_hirise_id_for_tile()`.
+
+### Changed
+- Plotting functions now warn (instead of silently returning) when no
+  blotches are found for a tile.
+- README converted to Markdown; updated with data sources and reference paper.
+- Minimum Python version set to 3.10; license updated to MIT.

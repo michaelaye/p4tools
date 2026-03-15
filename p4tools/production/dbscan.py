@@ -38,9 +38,17 @@ def get_average_objects(clusters, kind):
     """
     logger.debug("Averaging clusters with kind = %s.", kind)
     for cluster_df in clusters:
-        # first filter for outliers more than 1 std away
-        # for
-        # reduced = df[df.apply(lambda x: np.abs(x - x.mean()) / x.std() < 1).all(axis=1)]
+        # Each user should contribute at most once per cluster.
+        # A user marking the same spot multiple times with the same angle
+        # is not independent consensus — deduplicate before averaging.
+        if "user_name" in cluster_df.columns:
+            before = len(cluster_df)
+            cluster_df = cluster_df.drop_duplicates(subset=["user_name"])
+            if len(cluster_df) < before:
+                logger.debug(
+                    "User dedup: %d → %d members (removed %d same-user duplicates).",
+                    before, len(cluster_df), before - len(cluster_df),
+                )
         logger.debug("Averaging %i objects.", len(cluster_df))
         logger.debug("x.mean: %f", cluster_df.x.mean())
         logger.debug("y.mean: %f", cluster_df.y.mean())
@@ -414,6 +422,12 @@ class DBScanner:
         self.pm.obsid = self.p4id.image_name
         self.pm.id = img_id
 
+        # Per-tile skip guard: if this tile was already fully clustered, skip it.
+        done_sentinel = self.pm.blotchfile.parent / ".done"
+        if done_sentinel.exists():
+            logger.debug("Skipping %s — .done sentinel exists.", img_id)
+            return
+
         # this will setup the logfile if we have not been called via image_name
         # clustering already.
         self.setup_logfiles()
@@ -478,6 +492,11 @@ class DBScanner:
 
         if self.save_results:
             self.store_clustered(self.reduced_data)
+
+        # Write sentinel AFTER all output is successfully written.
+        # This ensures interrupted tiles get re-processed on the next run.
+        done_sentinel.parent.mkdir(exist_ok=True, parents=True)
+        done_sentinel.touch()
 
     def _setup_and_call_clustering(self, eps_values, dataset, kind, size):
         """setup helper for the clustering pipeline.
