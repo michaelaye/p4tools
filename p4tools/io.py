@@ -123,18 +123,18 @@ v3_1 = pooch.create(
     base_url="",
     version="v3.1",
     registry={
-        "fans":       "md5:0e354ab250018a94f7454a052111b4a5",
-        "blotches":   "md5:080ca3b1e472c1878caa0c557bc5e62c",
+        "fans":       "md5:2fc5ad525ad3ae4c583fe4baad6dbb44",
+        "blotches":   "md5:44ef0e3d27c8ac8c53d7a63aed211d26",
         "metafull":   "md5:de1f26c12bf3de2600b4f64eb96d15a6",
-        "tile_coords":"md5:2e206ba6bebf8d293c28bfc52886080c",
+        "tile_coords":"md5:fd8bbb86927c3838471182c890d7928a",
         "metadata":   "md5:0245c87ebfa6afc30e4dc826c3c468b0",
     },
     urls={
-        "fans":       "doi:10.5281/zenodo.19052818/P4_catalog_v3.1_L1C_cut_0.5_fan_meta_merged.csv",
-        "blotches":   "doi:10.5281/zenodo.19052818/P4_catalog_v3.1_L1C_cut_0.5_blotch_meta_merged.csv",
-        "metafull":   "doi:10.5281/zenodo.19052818/P4_catalog_v3.1_EDRINDEX_metadata.csv",
-        "tile_coords":"doi:10.5281/zenodo.19052818/P4_catalog_v3.1_tile_coords_final.csv",
-        "metadata":   "doi:10.5281/zenodo.19052818/P4_catalog_v3.1_metadata.csv",
+        "fans":       "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_L1C_cut_0.5_fan_meta_merged.csv",
+        "blotches":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_L1C_cut_0.5_blotch_meta_merged.csv",
+        "metafull":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_EDRINDEX_metadata.csv",
+        "tile_coords":"doi:10.5281/zenodo.19057090/P4_catalog_v3.1_tile_coords_final.csv",
+        "metadata":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_metadata.csv",
     },
 )
 
