@@ -2,6 +2,16 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.17.2] — 2026-03-16
+
+### Added
+- **`plot_raw_fans` / `plot_raw_blotches`**: Plot raw citizen science markings
+  from the classifications database. Auto-resolves DB path from config.
+
+### Fixed
+- **`Blotch.tile_id` / `Fan.tile_id`**: Fall back to `image_id` when
+  `tile_id` column is absent (raw classifications DB compatibility).
+
 ## [0.17.0] — 2026-03-16
 
 ### Fixed
