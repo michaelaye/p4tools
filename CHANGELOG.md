@@ -2,6 +2,13 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.16.21] — 2026-03-16
+
+### Fixed
+- **v3.1 catalog Zenodo DOI**: Updated to corrected upload
+  (`zenodo.org/records/19052818`) with complete catalog files.
+  Updated MD5 checksums for fans, blotches, and tile_coords.
+
 ## [0.16.17] — 2026-03-16
 
 ### Added
