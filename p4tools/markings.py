@@ -129,11 +129,14 @@ class Blotch(Ellipse):
 
     @property
     def tile_id(self):
-        return self.data.tile_id
+        try:
+            return self.data.tile_id
+        except AttributeError:
+            return self.data.image_id
 
     @property
     def subframe(self):
-        return io.get_subframe_by_tile_id(self.data.tile_id)
+        return io.get_subframe_by_tile_id(self.tile_id)
 
     def show_subframe(self, ax=None, aspect="auto"):
         if ax is None:
@@ -526,7 +529,10 @@ class Fan(lines.Line2D):
 
     @property
     def tile_id(self):
-        return self.data.tile_id
+        try:
+            return self.data.tile_id
+        except AttributeError:
+            return self.data.image_id
 
     @property
     def n_members(self):
