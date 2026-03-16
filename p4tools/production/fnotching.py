@@ -175,6 +175,11 @@ def fnotch_image_ids(obsid, eps=20, savedir=None, scope="hirise"):
         pm.reduced_fanfile.parent.mkdir(parents=True, exist_ok=True)
 
         fans, blotches = get_clusters_in_path(path)
+        # Treat empty DataFrames (header-only CSVs) as None
+        if fans is not None and len(fans) == 0:
+            fans = None
+        if blotches is not None and len(blotches) == 0:
+            blotches = None
         if fans is not None and len(fans) > 1:
             # clean up fans with opposite angles
             fans = remove_opposing_fans(fans)
