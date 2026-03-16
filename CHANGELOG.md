@@ -2,6 +2,13 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.17.0] — 2026-03-16
+
+### Fixed
+- **v3.1 catalog — user dedup re-clustering**: Re-clustered 10 obsids where
+  single-user duplicate fan markings created false clusters (12 fan entries
+  removed). Final Zenodo upload: `zenodo.org/records/19057090`.
+
 ## [0.16.21] — 2026-03-16
 
 ### Fixed
