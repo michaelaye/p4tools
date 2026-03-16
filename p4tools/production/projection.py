@@ -223,6 +223,11 @@ def get_RED45_mosaic_inputs(
 def create_RED45_mosaic(obsid, overwrite=False):
     """
     Create a RED45 mosaic from EDR data associated with a given observation ID (obsid).
+
+    If one CCD pair (RED4 or RED5) is unavailable (e.g. 404 from PDS), falls
+    back to a single-CCD cube. This still provides valid SPICE data for campt
+    coordinate projection.
+
     Parameters
     ----------
     obsid : str
@@ -232,26 +237,15 @@ def create_RED45_mosaic(obsid, overwrite=False):
     Returns
     -------
     tuple
-        A tuple containing the observation ID and a boolean indicating success (True) or failure (False).
-    Notes
-    -----
-    This function processes EDR data to create a RED45 mosaic. It performs the following steps:
-    1. Retrieves the list of RED_PRODUCTS associated with the given obsid.
-    2. Checks if the mosaic file already exists and if overwriting is allowed.
-    3. Downloads the RED_PRODUCTS and performs necessary preprocessing.
-    4. Normalizes and stitches the RED4 and RED5 channels.
-    5. Uses the `handmos` tool to create the mosaic, handling the overlap gap between RED4 and RED5.
-    6. Cleans up temporary files.
-    7. Atomically renames the temp file to final path to prevent partial mosaics.
-    Raises
-    ------
-    ProcessError
-        If there is an error during the `handmos` process, the error details are printed.
+        A tuple containing the observation ID and a boolean indicating success
+        (True) or failure (False).
     """
 
     logger.info("Processing the EDR data associated with " + obsid)
 
     products = get_RED45_mosaic_inputs(obsid)  # get list of RED_PRODUCTS
+    red4_products = products[:2]  # RED4_0, RED4_1
+    red5_products = products[2:]  # RED5_0, RED5_1
 
     mos_path = products[0].local_path.parent / f"{obsid}_mosaic_RED45.cub"
     tmp_path = mos_path.parent / f"{obsid}_mosaic_RED45_tmp.cub"
@@ -261,72 +255,93 @@ def create_RED45_mosaic(obsid, overwrite=False):
         print(f"{mos_path} already exists and I am not allowed to overwrite.")
         return obsid, True
 
-    for prod in products:
-        prod.download(overwrite = overwrite)  # the RED_PRODUCT knows how to download
-        ret = nocal_hi(prod)  # here the spiceinit happens
-        if not ret:
+    # Try downloading and calibrating each CCD pair independently.
+    # A pair is usable only if BOTH channels (0 and 1) succeed.
+    def try_ccd_pair(pair, label):
+        for prod in pair:
+            try:
+                prod.download(overwrite=overwrite)
+            except Exception as e:
+                logger.warning("Download failed for %s: %s", prod, e)
+                return False
+            if not nocal_hi(prod):
+                return False
+        return True
+
+    have_red4 = try_ccd_pair(red4_products, "RED4")
+    have_red5 = try_ccd_pair(red5_products, "RED5")
+
+    if not have_red4 and not have_red5:
+        logger.error("Both RED4 and RED5 unavailable for %s", obsid)
+        return obsid, False
+
+    # Stitch available CCDs
+    norm_paths = []
+    if have_red4:
+        norm_paths.append(("RED4", stitch_cubenorm(*red4_products)))
+    if have_red5:
+        norm_paths.append(("RED5", stitch_cubenorm(*red5_products)))
+
+    if len(norm_paths) == 2:
+        # Normal case: both CCDs available — create handmos mosaic
+        norm4 = norm_paths[0][1]
+        norm5 = norm_paths[1][1]
+        im0 = rasterio.open(norm4)
+        bin_ = int(
+            getkey(
+                from_=str(norm4),
+                objname="isiscube",
+                grpname="instrument",
+                keyword="summing",
+            ).stdout
+        )
+
+        try:
+            handmos(
+                from_=str(norm4),
+                mosaic=str(tmp_path),
+                nbands=1,
+                outline=1,
+                outband=1,
+                create="Y",
+                outsample=1,
+                nsamples=im0.width * 2 - 48 // bin_,
+                nlines=im0.height,
+            )
+        except ProcessError as e:
+            print("STDOUT:", getattr(e, 'stdout', ''))
+            print("STDERR:", getattr(e, 'stderr', ''))
+            tmp_path.unlink(missing_ok=True)
             return obsid, False
 
-    norm_paths = []
-    for channel_products in [products[:2], products[2:]]:
-        norm_paths.append(stitch_cubenorm(*channel_products))
+        im0 = rasterio.open(norm5)
+        try:
+            handmos(
+                from_=str(norm5),
+                mosaic=str(tmp_path),
+                outline=1,
+                outband=1,
+                create="N",
+                outsample=im0.width - 48 // bin_ + 1,
+            )
+        except ProcessError as e:
+            print("STDOUT:", getattr(e, 'stdout', ''))
+            print("STDERR:", getattr(e, 'stderr', ''))
+            tmp_path.unlink(missing_ok=True)
+            return obsid, False
 
-    # handmos part
-    norm4, norm5 = norm_paths
-    im0 = rasterio.open(norm4)  # use rasterio to get lines and samples
-    # get binning mode from label
-    bin_ = int(
-        getkey(
-            from_=str(norm4),
-            objname="isiscube",
-            grpname="instrument",
-            keyword="summing",
-        ).stdout
-    )
-
-    # Write to tmp_path first, rename to mos_path only when complete.
-    # This prevents partial mosaics from being treated as complete on restart.
-    try:
-        handmos(
-            from_=str(norm4),
-            mosaic=str(tmp_path),
-            nbands=1,
-            outline=1,
-            outband=1,
-            create="Y",
-            outsample=1,
-            nsamples=im0.width * 2 - 48 // bin_,
-            nlines=im0.height,
+        tmp_path.rename(mos_path)
+        for _, norm in norm_paths:
+            norm.unlink()
+    else:
+        # Fallback: only one CCD available — use it directly as the mosaic
+        ccd_label, norm_path = norm_paths[0]
+        logger.warning(
+            "Only %s available for %s — using single-CCD cube as mosaic",
+            ccd_label, obsid,
         )
-    except ProcessError as e:
-        print("STDOUT:", getattr(e, 'stdout', ''))
-        print("STDERR:", getattr(e, 'stderr', ''))
-        tmp_path.unlink(missing_ok=True)
-        return obsid, False
+        norm_path.rename(mos_path)
 
-    im0 = rasterio.open(norm5)  # use rasterio to get lines and samples
-
-    # deal with the overlap gap between RED4 & 5:
-    try:
-        handmos(
-            from_=str(norm5),
-            mosaic=str(tmp_path),
-            outline=1,
-            outband=1,
-            create="N",
-            outsample=im0.width - 48 // bin_ + 1,
-        )
-    except ProcessError as e:
-        print("STDOUT:", getattr(e, 'stdout', ''))
-        print("STDERR:", getattr(e, 'stderr', ''))
-        tmp_path.unlink(missing_ok=True)
-        return obsid, False
-
-    # Atomic rename: only a complete mosaic gets the final name
-    tmp_path.rename(mos_path)
-
-    for norm in [norm4, norm5]:
-        norm.unlink()
     return obsid, True
 
 # %% ../../notebooks/05d_production.projection.ipynb #a1488765
