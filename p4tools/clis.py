@@ -373,7 +373,7 @@ def cluster_obsid(
 
     console.print(table)
 
-# %% ../notebooks/06_clis.ipynb #2bf84eeb
+# %% ../notebooks/06_clis.ipynb #5b5f0d76
 @app.command()
 def create_mosaic(
     obsid: str = typer.Argument(help="HiRISE observation ID (e.g. ESP_011350_0945)."),
