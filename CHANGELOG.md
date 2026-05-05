@@ -2,6 +2,46 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.18.0] — 2026-05-05
+
+### Added — v4.0 raw-source ingest pipeline
+
+- **`p4tools.panoptes_extract`**: ingest `planet-four-classifications.csv` from
+  the Panoptes platform (workflow 12978) into a flat per-marking parquet,
+  enriched with metadata, tile coords, and image URLs.
+- **`p4tools.production.cleaning`**: pre-clustering canonicalisation extracted
+  from the legacy `planet4.reduction` CLI. Public API:
+  `filter_nan_required`, `filter_default_markings`, `filter_out_of_frame`,
+  `canonicalize_blotch_geometry`, `canonicalize_fan_angles`,
+  `compute_angle_components`, and a per-source `clean_classifications`
+  orchestrator (`source="panoptes" | "zooniverse_v1"`).
+- **Pipeline sequence (v4.0+)**: raw classifications now flow
+  `panoptes_extract → production.cleaning → production.{dbscan,fnotching,catalog}`.
+  See the *Raw classification → catalog pipeline* section in `index.ipynb`.
+
+### Added — analysis modules
+
+- **`p4tools.classify_by_activity`**: per-HiRISE-observation classification of
+  tile marking-count distributions into bimodal / unimodal-busy / unimodal-quiet
+  patterns, with per-tile `busy=True/False` labels.
+- **`p4tools.production.coverage`**: per-tile and per-obsid fractional dark-deposit
+  coverage from the union of fan + blotch polygons. Verbatim port of Tom Ihro's
+  legacy `Calculate_Coverage_v2.ipynb` (byte-equivalent on v3.1).
+- **`p4tools.egu26`**: reproducible plot functions for slides 5/6/7 of the
+  EGU26 oral talk.
+- **`p4tools.plotting`**: `apply_talk_context` (24 pt-minimum slide-deck rcParams),
+  `histogram_kde`, `kde_per_group`, `smallmult_highlight_grid`.
+- **`p4tools.io`**: `attach_my`, `attach_roi` for left-joining obsid-keyed
+  dataframes with metafull (MY, L_s) and region_names.
+
+### Changed
+
+- **Markings refactor**: `Blotch`, `Fan`, `Blotches`, `Fans` now share new
+  `MarkingMixin` and `MarkingCollection` base classes (deduplicates `tile_id`,
+  `n_members`, `is_equal`, `__init__`, `__repr__`). `TileBlotches` and
+  `TileFans` subclasses removed; replaced by `Blotches.from_tile_id` /
+  `Fans.from_tile_id` classmethods. Net 950-line reduction in `markings.py`.
+
 ## [0.17.2] — 2026-03-16
 
 ### Added
