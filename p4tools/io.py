@@ -7,7 +7,8 @@ __all__ = ['logger', 'v1', 'kwargs', 'v3', 'v3_1', 'fetchers', 'mars_years', 'po
            'catalog_version', 'get_metafull', 'get_blotch_catalog', 'get_fan_catalog', 'get_tile_coords',
            'get_meta_data', 'get_region_names', 'get_tile_urls', 'define_martian_year', 'normalize_tile_id',
            'get_subframe', 'get_url_for_tile_id', 'get_url_for_tile', 'get_subframe_by_tile_id',
-           'get_subframe_for_tile', 'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile']
+           'get_subframe_for_tile', 'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile', 'attach_my',
+           'attach_roi']
 
 # %% ../notebooks/00_io.ipynb #53d83d54
 from contextlib import contextmanager
@@ -394,3 +395,23 @@ def get_hirise_id_for_tile(tile_id, version=None):
             raise ValueError(f"No obsid found for tile {tile_id}")
     else:
         return obsid
+
+# %% ../notebooks/00_io.ipynb #a1892936
+def attach_my(df, *, obsid_col: str = "obsid", version: str = "v3.1"):
+    """Left-join ``df`` with metafull[OBSERVATION_ID, MY, SOLAR_LONGITUDE].
+
+    The metafull columns are renamed to ``obsid``, ``MY``, ``l_s``.
+    """
+    meta = (
+        get_metafull(version)[["OBSERVATION_ID", "MY", "SOLAR_LONGITUDE"]]
+        .rename(columns={"OBSERVATION_ID": obsid_col, "SOLAR_LONGITUDE": "l_s"})
+    )
+    return df.merge(meta, on=obsid_col, how="left")
+
+
+def attach_roi(df, *, obsid_col: str = "obsid"):
+    """Left-join ``df`` with `get_region_names()[obsid, roi_name]`."""
+    rn = get_region_names()[["obsid", "roi_name"]]
+    if obsid_col != "obsid":
+        rn = rn.rename(columns={"obsid": obsid_col})
+    return df.merge(rn, on=obsid_col, how="left")
