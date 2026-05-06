@@ -2,6 +2,15 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.18.2] — 2026-05-06
+
+### Fixed
+- **Docs build (round 2)**: 4 interactive exploration cells in
+  `07_panoptes_extract` referenced a local Dropbox path
+  (`/Users/maye/.../planet-four-classifications.csv`) and were running
+  during Quarto render, causing the GH Pages workflow to fail with
+  `FileNotFoundError`. Added `# | eval: false` to all four.
+
 ## [0.18.1] — 2026-05-06
 
 ### Fixed
