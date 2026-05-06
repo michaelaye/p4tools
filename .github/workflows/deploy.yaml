@@ -11,6 +11,12 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      # Opt into Node 24 for any Node 20 actions inside the upstream
+      # reusable workflow (e.g. actions/checkout@v3, actions/setup-python@v4,
+      # peaceiris/actions-gh-pages@v3). Removes the deprecation warning;
+      # Node 20 will be removed entirely on 2026-09-16.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - uses: answerdotai/workflows/quarto-ghp3@master
 #
