@@ -151,6 +151,7 @@ def plot_slide_7(
 
 
 # %% ../notebooks/08_egu26.ipynb #250a5183
+# | eval: false
 if __name__ == "__main__":
     plot_slide_5()
     plot_slide_6()

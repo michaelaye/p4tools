@@ -124,6 +124,7 @@ def compute_per_obsid_coverage(
 
 
 # %% ../../notebooks/05g_production.coverage.ipynb #e71b1630
+# | eval: false
 if __name__ == "__main__":
     df = compute_per_tile_coverage()
     print(df.head())

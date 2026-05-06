@@ -460,5 +460,6 @@ def main() -> None:  # pragma: no cover
         print(f"{k:32s} {v}")
 
 # %% ../notebooks/04_classify_by_activity.ipynb #6dcc0723
+#| eval: false
 if __name__ == "__main__":
     main()

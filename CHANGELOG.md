@@ -2,6 +2,18 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.18.1] — 2026-05-06
+
+### Fixed
+- **GitHub Pages docs build**: the `if __name__ == "__main__":` cells in
+  `04_classify_by_activity`, `05g_production.coverage`, and `08_egu26`
+  notebooks were being executed during Quarto rendering (because
+  `__name__ == "__main__"` is True in a Jupyter kernel), each triggering
+  a multi-minute `compute_per_tile_coverage()` Shapely union pass with
+  no cache on CI. The runner timed out at 56 min. Added `# | eval: false`
+  directives so the cells still export to the `.py` (preserving the
+  module-as-script entry points) but are skipped during notebook render.
+
 ## [0.18.0] — 2026-05-05
 
 ### Added — v4.0 raw-source ingest pipeline
