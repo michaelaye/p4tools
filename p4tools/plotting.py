@@ -467,17 +467,21 @@ TALK_MIN_FONT_PT = 24
 """Slide-deck guideline: every glyph at least this big."""
 
 
+# In seaborn's "talk" context (font_scale=1.0), the smallest text element
+# (tick labels) lands at ~16.5 pt. We scale by ``min_pt / 16.5`` so even the
+# smallest element meets the floor; all other proportions are seaborn's.
+_SNS_TALK_SMALLEST_BASELINE_PT = 16.5
+
+
 def apply_talk_context(min_pt: int = TALK_MIN_FONT_PT) -> None:
-    """Set matplotlib rcParams so every text element is at least ``min_pt``."""
-    plt.rcParams.update({
-        "font.size": min_pt,
-        "axes.titlesize": min_pt + 2,
-        "axes.labelsize": min_pt,
-        "xtick.labelsize": min_pt,
-        "ytick.labelsize": min_pt,
-        "legend.fontsize": min_pt,
-        "figure.titlesize": min_pt + 4,
-    })
+    """Apply seaborn's "talk" context, scaled so the smallest text element is
+    at least ``min_pt`` (default 24 — the EGU26 slide-deck guideline).
+
+    Thin wrapper over :func:`seaborn.set_context` — we delegate all element
+    proportions (titles vs axis labels vs ticks vs legend) to seaborn and
+    only choose the overall scaling factor.
+    """
+    _sns.set_context("talk", font_scale=min_pt / _SNS_TALK_SMALLEST_BASELINE_PT)
 
 
 def histogram_kde(

@@ -2,6 +2,16 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.19.1] — 2026-05-06
+
+### Changed
+- **`apply_talk_context` is now a thin wrapper over `seaborn.set_context("talk", ...)`** —
+  no more hand-maintained rcParams dict. Element proportions (titles vs axis labels
+  vs ticks vs legend) are now whatever seaborn's `talk` context provides; we only
+  choose the `font_scale` so the smallest baseline element (tick labels at ~16.5 pt)
+  meets `min_pt` (default 24). Visual output is essentially unchanged but maintenance
+  burden is gone.
+
 ## [0.19.0] — 2026-05-06
 
 ### Added — `p4tools.activity`
