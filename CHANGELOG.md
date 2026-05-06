@@ -2,6 +2,33 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.20.0] — 2026-05-06
+
+### Fixed — `region_names` now covers MY 33
+
+The v1 region_names dataset shipped with p4tools was missing 11 MY 33
+observations (5 Manhattan_Classic + 6 Ithaca), so any code calling
+`get_region_names()` or `attach_roi()` silently dropped MY 33 from
+ROI-matched analyses. The fix ships an updated CSV alongside the v3.1
+catalog and re-points the loader.
+
+- New file `P4_catalog_v3.1_region_names.csv` (465 rows; MD5
+  `b51e41b86afe2d53be5a2ee6d2504369`) released on Zenodo
+  [DOI 10.5281/zenodo.20054589](https://doi.org/10.5281/zenodo.20054589).
+  The 11 MY 33 entries' lat/lon come from `metafull.IMAGE_CENTER_*`
+  and timestamps from the `planetarypy.instruments.mro.hirise` RDR
+  index; ROI assignments verified by lat/lon proximity to existing
+  ROI centroids (Manhattan_Classic at -86.39°/99.0°, Ithaca at
+  -85.13°/180.7°).
+
+### Changed — `get_region_names` and `attach_roi` now version-aware
+
+- **`get_region_names(version=None)`** — defaults to ``"v3.1"``
+  (was implicitly v1). v1 still reachable via ``version="v1"`` for
+  historical reproduction.
+- **`attach_roi(df, *, obsid_col="obsid", version="v3.1")`** —
+  forwards the version through to the loader.
+
 ## [0.19.1] — 2026-05-06
 
 ### Changed

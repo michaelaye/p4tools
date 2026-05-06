@@ -129,6 +129,7 @@ v3_1 = pooch.create(
         "metafull":   "md5:de1f26c12bf3de2600b4f64eb96d15a6",
         "tile_coords":"md5:2e206ba6bebf8d293c28bfc52886080c",
         "metadata":   "md5:0245c87ebfa6afc30e4dc826c3c468b0",
+        "region_names": "md5:b51e41b86afe2d53be5a2ee6d2504369",
     },
     urls={
         "fans":       "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_L1C_cut_0.5_fan_meta_merged.csv",
@@ -136,6 +137,7 @@ v3_1 = pooch.create(
         "metafull":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_EDRINDEX_metadata.csv",
         "tile_coords":"doi:10.5281/zenodo.19057090/P4_catalog_v3.1_tile_coords_final.csv",
         "metadata":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_metadata.csv",
+        "region_names": "doi:10.5281/zenodo.20054589/P4_catalog_v3.1_region_names.csv",
     },
 )
 
@@ -225,9 +227,19 @@ def get_meta_data(version=None) -> pd.DataFrame:
     return pd.read_parquet(fetchers[version]("metadata", **kwargs))
 
 
-def get_region_names() -> pd.DataFrame:
-    "only v1 exists"
-    return pd.read_parquet(v1.fetch("region_names", **kwargs))
+def get_region_names(version=None) -> pd.DataFrame:
+    """Per-obsid ROI assignments.
+
+    v3.1 (default) includes the 11 MY-33 obsids that are missing from the
+    v1 mapping (5 Manhattan_Classic + 6 Ithaca). v1 is kept available for
+    historical reproduction.
+    """
+    version = _resolve_version(version) if version is not None else "v3.1"
+    if version in ("v3", "v3.1"):
+        return pd.read_parquet(fetchers["v3.1"]("region_names", **kwargs))
+    if version == "v1":
+        return pd.read_parquet(v1.fetch("region_names", **kwargs))
+    raise ValueError(f"region_names not available for version {version!r}")
 
 
 def get_tile_urls() -> pd.DataFrame:
@@ -409,9 +421,9 @@ def attach_my(df, *, obsid_col: str = "obsid", version: str = "v3.1"):
     return df.merge(meta, on=obsid_col, how="left")
 
 
-def attach_roi(df, *, obsid_col: str = "obsid"):
-    """Left-join ``df`` with `get_region_names()[obsid, roi_name]`."""
-    rn = get_region_names()[["obsid", "roi_name"]]
+def attach_roi(df, *, obsid_col: str = "obsid", version: str = "v3.1"):
+    """Left-join ``df`` with `get_region_names(version=...)[obsid, roi_name]`."""
+    rn = get_region_names(version=version)[["obsid", "roi_name"]]
     if obsid_col != "obsid":
         rn = rn.rename(columns={"obsid": obsid_col})
     return df.merge(rn, on=obsid_col, how="left")
