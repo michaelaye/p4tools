@@ -2,6 +2,32 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.19.0] — 2026-05-06
+
+### Added — `p4tools.activity`
+- **New top-level analysis module** for ground-area-aware activity metrics:
+  - `tile_ground_area_m2(obsids=None, version="v3.1")` — per-obsid tile
+    ground area in m² (840×648 × `map_scale`²; values land at 34 020 / 136 080
+    / 544 320 m² for the three v3.1 pixel scales 0.25 / 0.5 / 1.0 m/px).
+  - `per_tile_marking_density(version="v3.1", kind="all"|"fan"|"blotch")`
+    → `[obsid, tile_id, n_fans, n_blotches, n_markings, map_scale,
+    tile_ground_area_m2, density_per_m2]`. Combined fans + blotches by
+    default — both are markers of jet activity at the eruption-event
+    level; separating dilutes the signal.
+  - `per_marking_ground_area(version="v3.1", kind="both"|"fan"|"blotch")`
+    → per-marking polygon area in m² (caches as parquet next to the
+    coverage cache; ~135 s fresh compute on v3.1).
+
+### Changed — module relocation (deprecation, not breakage)
+- **`p4tools.coverage` is now the canonical location** for the coverage
+  module (was `p4tools.production.coverage`). Coverage is *analysis* of
+  the catalog, not part of producing the catalog, so it doesn't belong
+  under `production/`.
+- **`p4tools.production.coverage` kept as a deprecation shim** that
+  re-exports from the new location and emits a `DeprecationWarning`.
+  The shim will be removed in **v0.20**.
+- `p4tools.egu26` updated to import from the new path.
+
 ## [0.18.2] — 2026-05-06
 
 ### Fixed

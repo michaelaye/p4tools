@@ -13,7 +13,7 @@ Each function uses the generic plotting machinery from :mod:`p4tools.plotting`
 ``smallmult_highlight_grid``) plus the data joiners
 :func:`p4tools.io.attach_my` and :func:`p4tools.io.attach_roi`. The per-tile
 coverage input is computed on first call by
-:func:`p4tools.production.coverage.compute_per_tile_coverage`, then served
+:func:`p4tools.coverage.compute_per_tile_coverage`, then served
 from a parquet cache thereafter.
 """
 from pathlib import Path
@@ -29,7 +29,7 @@ from p4tools.plotting import (
     kde_per_group,
     smallmult_highlight_grid,
 )
-from .production.coverage import compute_per_tile_coverage
+from .coverage import compute_per_tile_coverage
 
 SLIDE7_ROIS = ("Inca_City", "Ithaca")
 
