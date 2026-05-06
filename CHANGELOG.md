@@ -2,6 +2,19 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.20.1] — 2026-05-06
+
+### Fixed
+- **`region_names` MY 33 mapping completed**: the 0.20.0 release shipped a
+  CSV with only 11 of the 13 MY 33 observations (the v1 baseline + the
+  fan-catalog-derived obsid list). Two MY 33 observations
+  (`ESP_048431_0950`, `ESP_048576_0950`) have only blotches, no fans, so
+  they were silently absent from the fan catalog and missed when I built
+  the obsid list. New file ships all 13 (5 Manhattan_Classic + 8 Ithaca),
+  derived from `metafull` directly. New Zenodo DOI:
+  [10.5281/zenodo.20054858](https://doi.org/10.5281/zenodo.20054858)
+  (MD5 `9090f80faeb215819215362d2800bec6`).
+
 ## [0.20.0] — 2026-05-06
 
 ### Fixed — `region_names` now covers MY 33

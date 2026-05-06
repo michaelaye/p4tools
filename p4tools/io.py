@@ -129,7 +129,7 @@ v3_1 = pooch.create(
         "metafull":   "md5:de1f26c12bf3de2600b4f64eb96d15a6",
         "tile_coords":"md5:2e206ba6bebf8d293c28bfc52886080c",
         "metadata":   "md5:0245c87ebfa6afc30e4dc826c3c468b0",
-        "region_names": "md5:b51e41b86afe2d53be5a2ee6d2504369",
+        "region_names": "md5:9090f80faeb215819215362d2800bec6",
     },
     urls={
         "fans":       "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_L1C_cut_0.5_fan_meta_merged.csv",
@@ -137,7 +137,7 @@ v3_1 = pooch.create(
         "metafull":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_EDRINDEX_metadata.csv",
         "tile_coords":"doi:10.5281/zenodo.19057090/P4_catalog_v3.1_tile_coords_final.csv",
         "metadata":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_metadata.csv",
-        "region_names": "doi:10.5281/zenodo.20054589/P4_catalog_v3.1_region_names.csv",
+        "region_names": "doi:10.5281/zenodo.20054858/P4_catalog_v3.1_region_names.csv",
     },
 )
 
