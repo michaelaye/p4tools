@@ -2,6 +2,42 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.21.0] — 2026-06-16
+
+### Added — map-projected marking overlays
+Plot fan/blotch markings on map-projected imagery/axes. Only marking *centroids*
+are ground-projected in the catalog (`Longitude`/`PlanetocentricLatitude` via ISIS
+`campt`); the shape (`angle`, `distance`, `spread`, `radius_1/2`) stays in image
+pixels. These helpers rebuild the full outline in ground coordinates using the
+calibrated `north_azimuth`/`map_scale` transform plus `planetarypy.crs` geodesy.
+
+- **`Fan.to_shapely_ground(crs=None)` / `Blotch.to_shapely_ground(...)`** (on
+  `MarkingMixin`) — exact outline (reuses `to_shapely()`) reprojected into any
+  pyproj/rasterio/cartopy CRS, or lon/lat if `crs` is None. Raises `KeyError`
+  if the data lacks the projection columns.
+- **`markings.markings_to_geoseries(df, kind, crs=None, ...)`** — fast vectorized
+  approximate outlines (sector for fans, ellipse for blotches) as a `GeoSeries`.
+- **`plotting.add_fans` / `plotting.add_blotches`** — overlay on a cartopy axis
+  (`src_crs=`) or in a projected raster's own CRS (`target_crs=`).
+- **`plotting.overlay_obsid(obsid, image_path)`** — show a map-projected raster
+  and overlay that obsid's fans + blotches, aligned in the image CRS.
+
+`planetarypy` and `rasterio` are imported lazily (optional `[pipeline]` extras).
+
+### Fixed
+- **`plot_fans_for_tile`** no longer passes `with_center` to `Fan` (only `Blotch`
+  accepts it), which raised `AttributeError: Fan.set() got an unexpected keyword
+  argument 'with_center'`.
+
+### Known issues
+- ⚠️ **Tile image download is currently not working.** The stored tile subject
+  URLs point to `http://www.planetfour.org/subjects/standard/<id>.jpg`, and that
+  host is no longer reachable. Any function that fetches the tile PNG —
+  `io.get_subframe`, `io.get_subframe_by_tile_id`/`get_subframe_for_tile`, and
+  anything that draws on the tile image (e.g. `plot_raw_fans`,
+  `TileID.show_subframe`) — will time out. Catalog/data access and the new
+  map-projected overlays (which take a local `image_path`) are unaffected.
+
 ## [0.20.1] — 2026-05-06
 
 ### Fixed

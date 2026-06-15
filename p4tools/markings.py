@@ -4,7 +4,7 @@
 
 # %% auto #0
 __all__ = ['IMG_X_SIZE', 'IMG_Y_SIZE', 'calc_fig_size', 'show_subframe', 'set_subframe_size', 'MarkingMixin', 'Blotch',
-           'MarkingCollection', 'Blotches', 'rotate_vector', 'Fan', 'Fans']
+           'MarkingCollection', 'Blotches', 'rotate_vector', 'Fan', 'Fans', 'markings_to_geoseries']
 
 # %% ../notebooks/01_markings.ipynb #ecd67213
 import math
@@ -115,6 +115,32 @@ class MarkingMixin:
             getattr(self.data, f) == getattr(other.data, f)
             for f in self.to_average
         )
+
+    def to_shapely_ground(self, crs=None, body="mars", system="ocentric"):
+        """Exact ``to_shapely()`` outline projected to ground coordinates.
+
+        Returns the marking outline as a shapely polygon in ``crs`` (any
+        pyproj/rasterio/cartopy CRS) or, if ``crs`` is None, in body geographic
+        lon/lat. Requires the catalog projection columns ``Longitude``,
+        ``PlanetocentricLatitude``, ``north_azimuth`` and ``map_scale``.
+        """
+        d = self.data
+        try:
+            lon0, lat0 = d.Longitude, d.PlanetocentricLatitude
+            na, ms = d.north_azimuth, d.map_scale
+        except AttributeError as e:
+            raise KeyError(
+                "marking data lacks projection columns (Longitude, "
+                "PlanetocentricLatitude, north_azimuth, map_scale); build the "
+                "marking from a published catalog row"
+            ) from e
+        sx, sy = ("x", "y") if self.scope == "planet4" else ("image_x", "image_y")
+        poly = np.asarray(self.to_shapely().exterior.coords)
+        lon, lat = _pixel_offsets_to_lonlat(
+            poly[:, 0] - getattr(d, sx), poly[:, 1] - getattr(d, sy),
+            lon0, lat0, na, ms, _body_crs(body, system).get_geod())
+        return geom.Polygon(_to_target(np.column_stack([lon, lat]), crs, body, system))
+
 
 # %% ../notebooks/01_markings.ipynb #83e236ef
 class Blotch(MarkingMixin, Ellipse):
@@ -657,3 +683,86 @@ class Fans(MarkingCollection):
         set_subframe_size(ax)
         self._last_collection = lc
         return lc
+
+# %% ../notebooks/01_markings.ipynb #8469563a
+from functools import lru_cache
+
+import geopandas as gpd
+from pyproj import CRS, Transformer
+
+
+@lru_cache(maxsize=8)
+def _body_crs(body="mars", system="ocentric"):
+    "IAU geographic CRS for `body` (via planetarypy.crs; lazy import)."
+    from planetarypy.crs import body_crs
+    return body_crs(body, system)
+
+
+def _pixel_offsets_to_lonlat(dx, dy, lon0, lat0, north_azimuth, map_scale, geod):
+    """Image-pixel outline offsets -> lon/lat.
+
+    Empirically calibrated: east/north (m) =
+    map_scale * [[-sin NA, cos NA], [cos NA, sin NA]] @ [dx, dy], then placed on
+    the body with ``geod.fwd``. Reproduces ground_azimuth = (angle - north_azimuth)
+    and length = px * map_scale.
+    """
+    na = np.deg2rad(north_azimuth)
+    east = map_scale * (-np.sin(na) * dx + np.cos(na) * dy)
+    north = map_scale * (np.cos(na) * dx + np.sin(na) * dy)
+    dist = np.hypot(east, north)
+    az = np.degrees(np.arctan2(east, north))
+    lon, lat, _ = geod.fwd(np.full(dist.shape, lon0), np.full(dist.shape, lat0), az, dist)
+    return lon, lat
+
+
+def _to_target(lonlat, crs, body="mars", system="ocentric"):
+    "Reproject an (N,2) lon/lat array into `crs` (pass through if crs is None)."
+    if crs is None:
+        return lonlat
+    tr = Transformer.from_crs(_body_crs(body, system), CRS.from_user_input(crs),
+                              always_xy=True)
+    x, y = tr.transform(lonlat[:, 0], lonlat[:, 1])
+    return np.column_stack([x, y])
+
+
+def _fan_offsets(row, n_arc):
+    "Approximate fan outline (apex + spread arc) as image-pixel offsets."
+    ang = np.deg2rad(row.angle)
+    half = np.deg2rad(row.spread) / 2.0
+    L = row.distance
+    phi = np.linspace(ang - half, ang + half, n_arc)
+    return np.r_[0.0, L * np.cos(phi)], np.r_[0.0, L * np.sin(phi)]
+
+
+def _blotch_offsets(row, n_ell):
+    "Approximate blotch outline (ellipse) as image-pixel offsets."
+    t = np.linspace(0, 2 * pi, n_ell, endpoint=False)
+    ang = np.deg2rad(row.angle)
+    ex = row.radius_1 * np.cos(t)
+    ey = row.radius_2 * np.sin(t)
+    return ex * np.cos(ang) - ey * np.sin(ang), ex * np.sin(ang) + ey * np.cos(ang)
+
+
+def markings_to_geoseries(df, kind, crs=None, body="mars", system="ocentric",
+                          n_arc=16, n_ell=48):
+    """Approximate ground outlines for many markings as a GeoSeries.
+
+    Fast, vectorized per marking (sector for fans, ellipse for blotches). Pass
+    ``crs`` = a projected image's CRS to overlay on that raster, else lon/lat.
+    For the exact outline of a single marking use ``Fan/Blotch.to_shapely_ground``.
+    """
+    if kind not in ("fan", "blotch"):
+        raise ValueError("kind must be 'fan' or 'blotch'")
+    geod = _body_crs(body, system).get_geod()
+    offsets = _fan_offsets if kind == "fan" else _blotch_offsets
+    n = n_arc if kind == "fan" else n_ell
+    polys = []
+    for _, row in df.iterrows():
+        dx, dy = offsets(row, n)
+        lon, lat = _pixel_offsets_to_lonlat(dx, dy, row.Longitude,
+                                            row.PlanetocentricLatitude,
+                                            row.north_azimuth, row.map_scale, geod)
+        polys.append(geom.Polygon(_to_target(np.column_stack([lon, lat]), crs, body, system)))
+    out_crs = CRS.from_user_input(crs) if crs is not None else _body_crs(body, system)
+    return gpd.GeoSeries(polys, crs=out_crs)
+

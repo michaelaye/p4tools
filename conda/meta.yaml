@@ -1,0 +1,65 @@
+{% set version = "0.21.0" %}
+
+package:
+  name: p4tools
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/p/p4tools/p4tools-{{ version }}.tar.gz
+  # sha256 of the PyPI sdist; refresh on every version bump:
+  #   curl -s https://pypi.org/pypi/p4tools/{{ version }}/json \
+  #     | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256'
+  sha256: 0000000000000000000000000000000000000000000000000000000000000000
+
+build:
+  entry_points:
+    - p = p4tools.clis:app
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.10
+    - setuptools >=64
+    - pip
+  run:
+    - python >=3.10
+    - pandas
+    - pooch
+    - numpy
+    - matplotlib-base
+    - shapely
+    - tqdm
+    - pyarrow
+    - typer
+    - rich
+    - geopandas
+    - scikit-learn
+    - scipy
+    - seaborn
+    # Optional [pipeline] extras (planetarypy, kalasiris, rasterio, rioxarray) are
+    # NOT bundled — install them separately for catalog production / map projection.
+
+test:
+  imports:
+    - p4tools
+    - p4tools.io
+    - p4tools.markings
+    - p4tools.plotting
+  commands:
+    - pip check
+    - p --help
+  requires:
+    - pip
+    - python
+
+about:
+  home: https://github.com/michaelaye/p4tools
+  summary: Tools for working with data from the Planet Four Zooniverse project.
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - michaelaye

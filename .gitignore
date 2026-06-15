@@ -75,4 +75,8 @@ notebooks/images
 notebooks/catalogs
 
 #ISIS files
-.prt
+*.prt
+
+# test / build artifacts
+junit.xml
+notebooks/.quarto/

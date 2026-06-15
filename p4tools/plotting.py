@@ -7,7 +7,7 @@ __all__ = ['TALK_MIN_FONT_PT', 'plot_blotches_for_tile', 'plot_raw_fans', 'plot_
            'plot_original_tile', 'plot_original_and_fans', 'plot_original_and_blotches', 'plot_original_fans_blotches',
            'plot_x_random_tiles_with_n_fans', 'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale',
            'histogram_polar', 'histogram_cartesian', 'show_stamps', 'apply_talk_context', 'histogram_kde',
-           'kde_per_group', 'smallmult_highlight_grid']
+           'kde_per_group', 'smallmult_highlight_grid', 'add_fans', 'add_blotches', 'overlay_obsid']
 
 # %% ../notebooks/02_plotting.ipynb #afa123a5
 from matplotlib import pyplot as plt
@@ -80,7 +80,7 @@ def plot_fans_for_tile(tile_id, ax=None, **plot_kwargs):
     if ax is None:
         _, ax = plt.subplots()
     for _, fan in tile_fans.iterrows():
-        m = markings.Fan(fan, with_center=False)
+        m = markings.Fan(fan)
         m.plot(ax=ax, **plot_kwargs)
 
 # %% ../notebooks/02_plotting.ipynb #e1e53674
@@ -615,3 +615,58 @@ def smallmult_highlight_grid(
         ax.set_visible(False)
     fig.tight_layout()
     return fig
+
+# %% ../notebooks/02_plotting.ipynb #9704f14b
+def _add_marking_geoseries(ax, gs, src_crs, target_crs, style):
+    if target_crs is not None:
+        gs.plot(ax=ax, **style)                                   # already in image CRS
+    elif src_crs is not None:
+        ax.add_geometries(list(gs.geometry), crs=src_crs, **style)  # cartopy reprojects
+    else:
+        raise ValueError("pass src_crs (cartopy GeoAxes) or target_crs (raster CRS)")
+    return gs
+
+
+def add_fans(ax, fans, src_crs=None, target_crs=None, n_arc=16,
+             facecolor="none", edgecolor="red", linewidth=0.6, **kw):
+    "Overlay fans on a cartopy axis (`src_crs`) or a projected raster (`target_crs`)."
+    gs = markings.markings_to_geoseries(fans, "fan", crs=target_crs, n_arc=n_arc)
+    style = dict(facecolor=facecolor, edgecolor=edgecolor, linewidth=linewidth, **kw)
+    return _add_marking_geoseries(ax, gs, src_crs, target_crs, style)
+
+
+def add_blotches(ax, blotches, src_crs=None, target_crs=None, n_ell=48,
+                 facecolor="none", edgecolor="deepskyblue", linewidth=0.6, **kw):
+    "Overlay blotches on a cartopy axis (`src_crs`) or a projected raster (`target_crs`)."
+    gs = markings.markings_to_geoseries(blotches, "blotch", crs=target_crs, n_ell=n_ell)
+    style = dict(facecolor=facecolor, edgecolor=edgecolor, linewidth=linewidth, **kw)
+    return _add_marking_geoseries(ax, gs, src_crs, target_crs, style)
+
+
+def overlay_obsid(obsid, image_path, ax=None, version=None, fan_kw=None, blotch_kw=None):
+    """Show a map-projected raster and overlay that obsid's fans + blotches in its CRS.
+
+    ``image_path`` is any rasterio-readable map-projected image (ISIS cube / GeoTIFF);
+    markings are reprojected into its CRS so the overlay is pixel-aligned.
+    """
+    import rasterio
+    from rasterio.plot import show
+    try:
+        fcat = io.get_fan_catalog(version) if version else io.get_fan_catalog()
+        bcat = io.get_blotch_catalog(version) if version else io.get_blotch_catalog()
+    except TypeError:
+        fcat, bcat = io.get_fan_catalog(), io.get_blotch_catalog()
+    fans = fcat[fcat.obsid == obsid]
+    blotches = bcat[bcat.obsid == obsid]
+    with rasterio.open(image_path) as src:
+        crs = src.crs
+        if ax is None:
+            _, ax = plt.subplots()
+        show(src, ax=ax)
+        if len(fans):
+            add_fans(ax, fans, target_crs=crs, **(fan_kw or {}))
+        if len(blotches):
+            add_blotches(ax, blotches, target_crs=crs, **(blotch_kw or {}))
+    ax.set_title(f"{obsid}: {len(fans)} fans, {len(blotches)} blotches")
+    return ax
+

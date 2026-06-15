@@ -39,3 +39,25 @@ include = ["p4tools"]
 nbs_path = 'notebooks'
 jupyter_hooks = true
 custom_sidebar = false
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["docs", "tests", "conda.recipe", "benchmarks", ".asv"]
+
+[tool.ruff.lint]
+# Carried over from the old flake8 config. Under ruff's default rule set
+# (E4/E7/E9/F) only these two were actually being silenced; the former
+# E122/E123/E126/E128 ignores were flake8-only continuation-line checks that
+# ruff does not run by default, so they're dropped.
+ignore = ["E731", "E722"]
+
+[tool.pytest.ini_options]
+norecursedirs = [".*", "*.egg*", "build", "dist", "conda.recipe"]
+addopts = [
+    "--junitxml=junit.xml",
+    "--cov-report=term-missing",
+    "--tb=native",
+    "--strict-markers",
+    "--durations=20",
+]
+markers = ["serial: execute test serially (to avoid race conditions)"]
