@@ -684,7 +684,7 @@ class Fans(MarkingCollection):
         self._last_collection = lc
         return lc
 
-# %% ../notebooks/01_markings.ipynb #8469563a
+# %% ../notebooks/01_markings.ipynb #e26ead5f
 from functools import lru_cache
 
 import geopandas as gpd
