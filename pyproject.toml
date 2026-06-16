@@ -33,7 +33,7 @@ p4 = "p4tools.clis:app"
 version = {attr = "p4tools.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["p4tools"]
+include = ["p4tools*"]
 
 [tool.nbdev]
 nbs_path = 'notebooks'

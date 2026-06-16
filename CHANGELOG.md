@@ -2,6 +2,15 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.21.1] — 2026-06-16
+
+### Fixed
+- **Packaging now ships the `p4tools.production` subpackage.**
+  `[tool.setuptools.packages.find]` used `include = ["p4tools"]`, which matches
+  only the top-level package — so `p4tools.production.*` (and therefore the `p`
+  CLI, which imports it) was missing from the installed wheel/conda package in
+  0.21.0 and every earlier release. Changed to `include = ["p4tools*"]`.
+
 ## [0.21.0] — 2026-06-16
 
 ### Added — map-projected marking overlays
