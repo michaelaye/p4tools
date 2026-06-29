@@ -2,6 +2,19 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.21.2] — 2026-06-29
+
+### Fixed
+- **`with_center` no longer leaks into `Fan` in the production plotting path.**
+  `TileID.plot_markings` (used by `plot_raw_fans`/`plot_raw_blotches` via the
+  production `TileID`) passed `with_center` to whichever marking class it built.
+  `Blotch` accepts that keyword, but `Fan` forwards unknown kwargs to
+  `matplotlib.lines.Line2D`, so `plot_raw_fans(...)` raised
+  `AttributeError: Fan.set() got an unexpected keyword argument 'with_center'`.
+  `with_center` is now only passed when building blotches. The earlier 0.21.0
+  fix only covered the analogous case in `plotting.plot_fans_for_tile`; this
+  closes the same bug in the production `markings` module.
+
 ## [0.21.1] — 2026-06-16
 
 ### Fixed

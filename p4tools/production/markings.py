@@ -223,7 +223,9 @@ class TileID:
             data = self.filter_data(kind, user_name, without_users)
         markingClass = Blotch if kind == 'blotch' else Fan
         if type(data) == pd.core.frame.DataFrame:
-            data = [markingClass(i, self.scope, with_center=with_center, lw=lw)
+            # with_center is only a Blotch keyword; Fan would leak it into Line2D.set()
+            extra = {'with_center': with_center} if kind == 'blotch' else {}
+            data = [markingClass(i, self.scope, lw=lw, **extra)
                     for _, i in data.iterrows()]
         self.plot_objects(data, **kwargs)
 
