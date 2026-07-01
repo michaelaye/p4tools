@@ -6,12 +6,13 @@
 __all__ = ['logger', 'v1', 'kwargs', 'v3', 'v3_1', 'fetchers', 'mars_years', 'postprocessor', 'set_catalog_version',
            'catalog_version', 'get_metafull', 'get_blotch_catalog', 'get_fan_catalog', 'get_tile_coords',
            'get_meta_data', 'get_region_names', 'get_tile_urls', 'define_martian_year', 'normalize_tile_id',
-           'get_subframe', 'get_url_for_tile_id', 'get_url_for_tile', 'get_subframe_by_tile_id',
-           'get_subframe_for_tile', 'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile', 'attach_my',
+           'get_subframe', 'get_url_for_tile_id', 'get_url_for_tile', 'is_tile_cached', 'get_subframe_by_tile_id',
+           'get_subframe_for_tile', 'get_cached_tile_ids', 'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile', 'attach_my',
            'attach_roi']
 
 # %% ../notebooks/00_io.ipynb #53d83d54
 from contextlib import contextmanager
+from functools import cache
 from pathlib import Path
 import warnings
 
@@ -334,31 +335,112 @@ def normalize_tile_id(tile_id: str) -> str:
     return f"APF{padded_id}"
 
 # %% ../notebooks/00_io.ipynb #51bf8f13
-def get_subframe(url):
+@cache
+def _tile_url_series():
+    """Cached ``tile_id -> tile_url`` mapping, built once per process.
+
+    Call ``_tile_url_series.cache_clear()`` to refresh after the tile_urls
+    table changes.
+    """
+    return get_tile_urls().set_index("tile_id")["tile_url"]
+
+
+def _cache_path_for_url(url):
+    "Path where pooch stores (or would store) the subframe image for `url`."
+    from pooch import utils
+
+    return Path(pooch.os_cache("p4tools/tiles")) / utils.unique_file_name(url)
+
+
+def get_subframe(url, download=True):
+    """Load a subframe image for `url` from the local pooch cache.
+
+    Parameters
+    ----------
+    url : str
+        Full subframe image URL.
+    download : bool, default True
+        If False and the image is not already cached, raise instead of
+        attempting a network download (the origin host is offline).
+    """
+    path = _cache_path_for_url(url)
+    if not download and not path.exists():
+        raise FileNotFoundError(f"Subframe not cached and download disabled: {url}")
     targetpath = pooch.retrieve(
-        url, path=pooch.os_cache("p4tools/tiles"), known_hash=None, progressbar=True
+        url, path=path.parent, known_hash=None, progressbar=True
     )
-    im = mplimg.imread(targetpath)
-    return im
+    return mplimg.imread(targetpath)
 
 # %% ../notebooks/00_io.ipynb #6c73fc78
 def get_url_for_tile_id(tile_id):
-    return get_tile_urls().set_index("tile_id").squeeze().at[normalize_tile_id(tile_id)]
+    "Return the subframe image URL for `tile_id`."
+    tid = normalize_tile_id(tile_id)
+    try:
+        return _tile_url_series().at[tid]
+    except KeyError:
+        raise KeyError(
+            f"No subframe URL for tile_id {tid!r} in the tile_urls table."
+        ) from None
 
 
 def get_url_for_tile(tile_id):
-    # alias for get_url_for_tile_id
+    "Deprecated alias for `get_url_for_tile_id`."
+    warnings.warn(
+        "get_url_for_tile is deprecated; use get_url_for_tile_id.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return get_url_for_tile_id(tile_id)
 
+
+def is_tile_cached(tile_id):
+    "True if the subframe image for `tile_id` is already in the local cache."
+    return _cache_path_for_url(get_url_for_tile_id(tile_id)).exists()
+
 # %% ../notebooks/00_io.ipynb #fe2ef8be
-def get_subframe_by_tile_id(tile_id):
+def get_subframe_by_tile_id(tile_id, download=True):
+    "Load the subframe image for `tile_id` from the local cache."
     url = get_url_for_tile_id(tile_id)
-    return get_subframe(url)
+    return get_subframe(url, download=download)
 
 
 def get_subframe_for_tile(tile_id):
-    # alias for get_subframe_by_tile_id for consistency
+    "Deprecated alias for `get_subframe_by_tile_id`."
+    warnings.warn(
+        "get_subframe_for_tile is deprecated; use get_subframe_by_tile_id.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return get_subframe_by_tile_id(tile_id)
+
+# %% ../notebooks/00_io.ipynb #c9f4d1e7
+def get_cached_tile_ids():
+    """Reverse-map the local subframe cache to the tile_ids available offline.
+
+    Scans the pooch tiles cache (``pooch.os_cache("p4tools/tiles")``), where each
+    file is named ``<md5(url)>-<subject>.jpg``, and maps it back to its tile_id via
+    `get_tile_urls`. Only files whose name matches ``pooch.utils.unique_file_name``
+    of the looked-up URL are counted, so stray files are ignored.
+
+    Returns
+    -------
+    list of str
+        Sorted tile_ids whose subframe image is present in the local cache.
+    """
+    cache_dir = Path(pooch.os_cache("p4tools/tiles"))
+    if not cache_dir.exists():
+        return []
+    urls = _tile_url_series()
+    # subject-basename -> tile_id; basenames are unique in the table
+    base2tid = {u.rsplit("/", 1)[-1]: tid for tid, u in urls.items()}
+    found = []
+    for f in cache_dir.iterdir():
+        if not f.is_file() or "-" not in f.name:
+            continue
+        tid = base2tid.get(f.name.split("-", 1)[1])
+        if tid is not None and f == _cache_path_for_url(urls.at[tid]):
+            found.append(tid)
+    return sorted(found)
 
 # %% ../notebooks/00_io.ipynb #c8dfc110
 def get_fans_for_tile(tile_id, version=None):
