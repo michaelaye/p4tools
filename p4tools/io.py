@@ -235,6 +235,9 @@ def get_region_names(version=None) -> pd.DataFrame:
     v1 mapping (5 Manhattan_Classic + 6 Ithaca). v1 is kept available for
     historical reproduction.
     """
+    # region_names deliberately defaults to v3.1 for ALL versions (best ROI mapping),
+    # so version=None resolves to v3.1 here, NOT the session default. Explicit
+    # version="v1" still serves the v1 file for historical reproduction.
     version = _resolve_version(version) if version is not None else "v3.1"
     if version in ("v3", "v3.1"):
         return pd.read_parquet(fetchers["v3.1"]("region_names", **kwargs))
