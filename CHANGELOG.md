@@ -2,6 +2,43 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.22.0] — 2026-07-01
+
+### Added — offline subframe cache access
+- **`get_cached_tile_ids()`** returns the sorted list of tile IDs whose subframe
+  image is already present in the local pooch cache, by reverse-mapping each
+  cached `<md5(url)>-<subject>.jpg` file back to its tile ID via `get_tile_urls`.
+- **`is_tile_cached(tile_id)`** reports whether a tile's subframe is cached.
+- **`get_subframe(..., download=False)`** and
+  **`get_subframe_by_tile_id(..., download=False)`** raise `FileNotFoundError`
+  when the image is not cached instead of attempting a network fetch — useful now
+  that the original `www.planetfour.org` subject host is offline.
+
+### Changed
+- **`get_url_for_tile_id` is memoized.** It previously re-read the 114k-row
+  `tile_urls` table and rebuilt its index on every call (~10 ms); it now uses a
+  process-cached `tile_id → url` Series (microseconds per lookup), a large speedup
+  on any loop over tiles. Call `io._tile_url_series.cache_clear()` to refresh after
+  the table changes.
+
+### Deprecated
+- **`get_url_for_tile`** and **`get_subframe_for_tile`** now emit a
+  `DeprecationWarning`; use `get_url_for_tile_id` and `get_subframe_by_tile_id`.
+
+### Fixed
+- **`markings.Fan` now accepts `with_center` instead of leaking it into matplotlib.**
+  `Fan` forwarded unknown constructor kwargs to `matplotlib.lines.Line2D`, so
+  `Fan(data, with_center=...)` raised `AttributeError: Fan.set() got an unexpected
+  keyword argument 'with_center'`. 0.21.0 and 0.21.2 worked around this by stripping
+  `with_center` at specific call sites; this release fixes the root cause — `Fan`
+  absorbs `with_center` as a no-op (fans have no center) — and
+  `plotting.plot_fans_for_tile` now threads it through like `plot_blotches_for_tile`.
+
+### Removed
+- Deleted the orphaned, empty `p4tools/data_extract.py` stub (its notebook was
+  parked as `notebooks/_data_extract.ipynb`, excluded from export). No public API
+  change — the module exported nothing — and this unblocks `nbdev_update`.
+
 ## [0.21.2] — 2026-06-29
 
 ### Fixed

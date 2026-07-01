@@ -74,6 +74,9 @@ notebooks/plots
 notebooks/images
 notebooks/catalogs
 
+# generated figures (scratch output; copied into talks/ as needed)
+figures/
+
 #ISIS files
 *.prt
 

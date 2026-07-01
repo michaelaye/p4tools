@@ -7,8 +7,8 @@ __all__ = ['logger', 'v1', 'kwargs', 'v3', 'v3_1', 'fetchers', 'mars_years', 'po
            'catalog_version', 'get_metafull', 'get_blotch_catalog', 'get_fan_catalog', 'get_tile_coords',
            'get_meta_data', 'get_region_names', 'get_tile_urls', 'define_martian_year', 'normalize_tile_id',
            'get_subframe', 'get_url_for_tile_id', 'get_url_for_tile', 'is_tile_cached', 'get_subframe_by_tile_id',
-           'get_subframe_for_tile', 'get_cached_tile_ids', 'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile', 'attach_my',
-           'attach_roi']
+           'get_subframe_for_tile', 'get_cached_tile_ids', 'get_fans_for_tile', 'get_blotches_for_tile',
+           'get_hirise_id_for_tile', 'attach_my', 'attach_roi']
 
 # %% ../notebooks/00_io.ipynb #53d83d54
 from contextlib import contextmanager
