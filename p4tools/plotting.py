@@ -79,8 +79,9 @@ def plot_fans_for_tile(tile_id, ax=None, **plot_kwargs):
         print("Warning: No fans found.")
     if ax is None:
         _, ax = plt.subplots()
+    with_center = plot_kwargs.pop("with_center", False)
     for _, fan in tile_fans.iterrows():
-        m = markings.Fan(fan)
+        m = markings.Fan(fan, with_center=with_center)
         m.plot(ax=ax, **plot_kwargs)
 
 # %% ../notebooks/02_plotting.ipynb #e1e53674

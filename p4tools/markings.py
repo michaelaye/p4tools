@@ -428,6 +428,7 @@ class Fan(MarkingMixin, lines.Line2D):
         self,
         data,  # object with fan data attributes: x, y, angle, spread, distance
         scope="planet4",  # "planet4" or "hirise",
+        with_center=False,  # accepted for API symmetry with Blotch; fans have no center, so ignored
         **kwargs,
     ):
         """
