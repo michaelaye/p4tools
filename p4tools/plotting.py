@@ -617,7 +617,7 @@ def smallmult_highlight_grid(
     fig.tight_layout()
     return fig
 
-# %% ../notebooks/02_plotting.ipynb #3cbd5ade
+# %% ../notebooks/02_plotting.ipynb #4830fd25
 def _add_marking_geoseries(ax, gs, src_crs, target_crs, style):
     if target_crs is not None:
         gs.plot(ax=ax, **style)                                   # already in image CRS
