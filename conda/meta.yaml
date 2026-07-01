@@ -1,4 +1,4 @@
-{% set version = "0.21.2" %}
+{% set version = "0.22.0" %}
 
 package:
   name: p4tools
@@ -9,7 +9,7 @@ source:
   # sha256 of the PyPI sdist; refresh on every version bump:
   #   curl -s https://pypi.org/pypi/p4tools/{{ version }}/json \
   #     | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256'
-  sha256: 763e64d7199ebf18fa4a5f7dcc3e58912e6adc15d4f13a120672e726beee0b22
+  sha256: 7cd7a56ee5dcb49a81acd324200a7057de8f9df6df405512b4a18d1343c685e1
 
 build:
   entry_points:
