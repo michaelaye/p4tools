@@ -2,6 +2,53 @@
 
 All notable changes to p4tools are documented here.
 
+## [0.23.0] — 2026-08-13
+
+### Added — per-tile quality (uncertainty) API
+- **`stats.add_uncertainty_columns(df, *, min_votes=5, circular_ratio_limit=0.8)`**
+  enriches a fan or blotch catalog (kind inferred from its columns) with four
+  per-marking columns derived from the cluster standard deviations: `pos_std`
+  (`hypot(x_std, y_std)`), `size_cv` (a mean relative std — `distance`/`spread`
+  for fans, `radius_1`/`radius_2` for blotches), `angle_usable` (False for
+  near-circular blotches, where orientation is ill-defined) and `scatter_ok`
+  (the `n_votes >= min_votes` gate).
+- **`stats.tile_quality(kind="both", version=None, *, min_votes=5, agg="median",
+  ranks=True)`** aggregates to one row per `tile_id` with the **support** and
+  **scatter** column groups kept strictly separate: scatter (`angle_scatter`,
+  `pos_scatter`, `size_scatter`) is computed only from markings that pass the
+  vote gate, so weak support can never masquerade as disagreement, and vote
+  counts never divide the scatter numbers (no SEM). Optional cap-wide
+  percentile `support_rank`/`scatter_rank` make the incommensurate units
+  combinable.
+- **`stats.classify_tile_quality(tq, *, support_thresh=50, scatter_thresh=50)`**
+  labels tiles `consistent` / `contested` / `sparse` / `noisy` from the two rank
+  axes; tiles with no gated marking (hence no scatter estimate) are left `<NA>`
+  rather than guessed.
+- New tutorial **`03a_tile_quality`** introduces the API with live v3.1
+  examples; tests in `tests/test_stats.ipynb`.
+
+### Added — coverage & plotting helpers
+- **`coverage.pct_summary(coverage, pcts=...)`** returns a percent-scaled
+  percentile+mean summary; **`coverage.attach_tile_metadata(per_tile, *,
+  version="v3.1")`** adds `roi_name`/`Ls`/`MY` per obsid.
+- **`plotting.plot_random_tiles_with_min_fans`** and
+  **`plot_random_tiles_with_min_blotches`** sample and plot random tiles meeting
+  a minimum marking count.
+
+### Changed — v3.1 catalog re-published with per-marking cluster std columns
+- The v3.1 fan/blotch catalogs are re-published as Zenodo **v3.1.1**
+  (`doi:10.5281/zenodo.21917907`), adding the seven per-marking cluster standard
+  deviations (`x_std`, `y_std`, `angle_std`, plus `distance_std`/`spread_std`
+  for fans and `radius1_std`/`radius2_std` for blotches) that feed the new
+  uncertainty API. The change is **strictly additive** — every pre-existing
+  column and value is byte-identical — so `get_fan_catalog("v3.1")` /
+  `get_blotch_catalog("v3.1")` transparently gain the columns with no break to
+  existing code. The `io` v3.1 registry is repointed and all v3.1 files unified
+  onto the single new DOI.
+- **`ReleaseManager.FAN_COLUMNS_AS_PUBLISHED` / `BLOTCH_COLUMNS_AS_PUBLISHED`**
+  now retain the std columns, so future catalog production carries them through
+  `merge_all` rather than dropping them at publish.
+
 ## [0.22.0] — 2026-07-01
 
 ### Added — offline subframe cache access

@@ -1,0 +1,176 @@
+---
+title: "Per-Tile Quality API Proposal"
+subtitle: "Separating marking scatter from vote support in p4tools"
+author: "Planet Four Team"
+date: "2026-08-05"
+format:
+  html:
+    toc: true
+    number-sections: true
+    embed-resources: true
+---
+
+## Motivation
+
+The v3.1 L1C catalogs carry, for every marking, the standard deviations of the
+citizen-science markings that were averaged into the cluster mean —
+`angle_std`, `x_std`, `y_std`, plus `distance_std`/`spread_std` (fans) and
+`radius1_std`/`radius2_std` (blotches) — together with the cluster size
+`n_votes`. These are the raw material for a per-tile quality-control
+("uncertainty") measure.
+
+::: {.callout-important}
+
+## Design principle
+
+A raw standard deviation conflates two different causes of unreliability:
+**marker disagreement** (scattered votes) and **weak support** (few votes).
+This API keeps the two on separate, never-mixed axes. Vote counts never divide
+the scatter numbers — SEM-style quantities are deliberately excluded from the
+tile-level scatter axis.
+
+:::
+
+## Architecture
+
+Three functions in `p4tools.stats` (nbdev home: `notebooks/03_stats.ipynb`):
+
+```{mermaid}
+flowchart LR
+    CAT[v3.1 L1C catalogs<br/>per-marking *_std, n_votes] --> L1[add_uncertainty_columns<br/>per marking]
+    L1 --> L2[tile_quality<br/>per tile, two column groups]
+    L2 --> L3[classify_tile_quality<br/>opt-in quadrant labels]
+    L2 -->|"support columns"| S[pure counts]
+    L2 -->|"scatter columns"| D[pure dispersion]
+```
+
+## Layer 1 — per-marking enrichment
+
+```python
+#| export
+def add_uncertainty_columns(
+    df,                                # fan or blotch catalog frame; kind inferred from columns
+    *,
+    min_votes: int = 5,                # below this a marking's std is deemed too noisy to use
+    circular_ratio_limit: float = 0.8, # blotches with radius_2/radius_1 above this: angle ignored
+):
+    "Add derived per-marking uncertainty columns; returns a copy."
+```
+
+Added columns:
+
+| column | unit | meaning |
+|---|---|---|
+| `pos_std` | px | `hypot(x_std, y_std)` — positional scatter of the cluster |
+| `size_cv` | — | mean relative std: fans `distance_std/distance`, `spread_std/spread`; blotches `radius1_std/radius_1`, `radius2_std/radius_2` |
+| `angle_usable` | bool | always true for fans; false for near-circular blotches (`radius_2/radius_1 > circular_ratio_limit`), where orientation is physically ill-defined |
+| `scatter_ok` | bool | `n_votes >= min_votes` — a std estimated from 3 markings is itself noise |
+
+## Layer 2 — per-tile aggregation
+
+The output has one row per `tile_id`, and its columns are organised into named **groups** —
+`support`, `scatter`, and (optionally) `ranks`. The grouping is not cosmetic: it makes the API's
+core principle structural, so a support quantity and a scatter quantity can never be read as the
+same thing.
+
+- **`support`** — *how much evidence backs this tile*: marking counts and the per-marking vote
+  statistics. Pure vote axis; nothing here is turned into a scatter number.
+- **`scatter`** — *how much the citizen markers disagreed*: the tile-level dispersion of the
+  marking geometry (angle, position, size). Computed only from markings that pass the vote
+  **gate** (below), so weak support can never leak in as apparent disagreement.
+- **`ranks`** (when `ranks=True`) — each raw metric expressed as its cap-wide percentile position
+  (0–100: 50 = median tile, 90 = worse than 90 % of tiles), so the incommensurate units
+  (deg, px, dimensionless) become comparable and combinable. `scatter_rank` is the **median** of the
+  three per-metric ranks — median rather than mean so one extreme axis cannot dominate.
+  *Example:* a tile with `angle_scatter` 15° (p80), `pos_scatter` 3 px (p40), `size_scatter` 0.10
+  (p55) gets `scatter_rank = median(80, 40, 55) = 55` — slightly worse than the median tile; another
+  at (p20, p95, p92) gets `median = 92` — very scattered, but driven by position and size while its
+  angles agree. Raw units could not be combined this way (`(15 + 3 + 0.10)/3` is meaningless).
+  `support_rank` is the same construction on the vote axis. Ranks are **relative to the current
+  catalog** — self-calibrating, but not portable across catalog versions.
+
+**The gate.** A marking contributes to the `scatter` group only if it passes `scatter_ok`
+(`n_votes >= min_votes`) — a standard deviation estimated from a handful of votes is itself mostly
+noise, so such markings are excluded from every scatter estimate (but still counted in `support`).
+`angle_scatter` applies a second gate, `angle_usable`, dropping near-circular blotches whose
+orientation is physically ill-defined. `n_scatter_markings` reports how many markings survived; if
+none do, the tile's scatter values are `NaN`.
+
+```python
+#| export
+def tile_quality(
+    kind: str = "both",        # "fan" | "blotch" | "both"
+    version: str | None = None,# catalog version, defaults to session version (v3.1)
+    *,
+    min_votes: int = 5,
+    agg: str = "median",       # tile-level aggregator: "median" (robust) or "mean"
+    ranks: bool = True,        # append cap-wide percentile-rank columns
+):
+    "One row per tile_id with separate support and scatter column groups."
+```
+
+Returned frame, indexed by `tile_id`:
+
+| group | column | unit | meaning |
+|---|---|---|---|
+| support | `n_markings`, `n_fans`, `n_blotches` | count | catalog entries in tile |
+| support | `votes_median`, `votes_min`, `votes_total` | count | per-marking `n_votes` statistics — pure vote axis |
+| scatter | `angle_scatter` | deg | `agg` of `angle_std` over usable, gated markings |
+| scatter | `pos_scatter` | px | `agg` of `pos_std` (absolute is fine — uniform 840×648 grid) |
+| scatter | `size_scatter` | — | `agg` of `size_cv` — pure dispersion, never divided by √n |
+| scatter | `n_scatter_markings` | count | markings passing the vote gate (`n_votes ≥ min_votes`); scatter is `NaN` if 0 |
+| ranks | `support_rank`, `scatter_rank` | 0–100 | percentile ranks; `scatter_rank` = median of the three metrics' individual ranks (scale-free combination of deg/px/—) |
+
+::: {.callout-note}
+
+Markings failing the `min_votes` gate still count fully in the support group —
+they just cannot pollute the scatter estimates. That is the mechanism that
+keeps "few votes" from masquerading as "scattered votes".
+
+In `kind="both"` there is no column collision because `size_cv` and `pos_std`
+are unified, dimension-compatible metrics; `angle_scatter` draws from fans
+plus orientation-meaningful blotches only.
+
+:::
+
+## Layer 3 — opt-in classification
+
+```python
+#| export
+def classify_tile_quality(
+    tq,
+    *,
+    support_thresh: float = 50.0,  # percentile-rank threshold
+    scatter_thresh: float = 50.0,
+):
+    "Add quality_class from the two rank axes."
+```
+
+| `quality_class` | support | scatter | reading |
+|---|---|---|---|
+| `consistent` | high | low | reliable — best QC tier |
+| `contested` | high | high | many votes, genuine disagreement — scientifically interesting; exactly the class a conflated single score would hide |
+| `sparse` | low | low | few votes, but they agree |
+| `noisy` | low | high | least reliable |
+
+## Usage
+
+```python
+from p4tools import stats, io
+
+tq = stats.tile_quality(version="v3.1")
+tq = stats.classify_tile_quality(tq)
+tq.quality_class.value_counts()
+
+# weight coverage-paper numbers by tile reliability:
+cov = io.get_tile_coords().merge(tq, on="tile_id")
+```
+
+## Implementation notes
+
+- Cost: a `groupby("tile_id")` over verified-existing catalog columns; no
+  pipeline rerun required.
+- nbdev: edit `notebooks/03_stats.ipynb`, `nbdev_export`, commit `_modidx.py`
+  alongside (new API surface).
+- Semver: **minor** bump; can ride with the pending sampling helpers into
+  v0.23.0.

@@ -6,6 +6,7 @@ website:
       - 01_markings.ipynb
       - 02_plotting.ipynb
       - 03_stats.ipynb
+      - 03a_tile_quality.ipynb
       - 05_production.catalog.ipynb
       - 05a_production.io.ipynb
       - 05b_production.markings.ipynb
