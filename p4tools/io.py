@@ -7,8 +7,8 @@ __all__ = ['logger', 'v1', 'kwargs', 'v3', 'v3_1', 'fetchers', 'mars_years', 'po
            'catalog_version', 'get_metafull', 'get_blotch_catalog', 'get_fan_catalog', 'get_tile_coords',
            'get_meta_data', 'get_region_names', 'get_tile_urls', 'define_martian_year', 'normalize_tile_id',
            'get_subframe', 'get_url_for_tile_id', 'get_url_for_tile', 'is_tile_cached', 'get_subframe_by_tile_id',
-           'get_subframe_for_tile', 'get_cached_tile_ids', 'get_fans_for_tile', 'get_blotches_for_tile',
-           'get_hirise_id_for_tile', 'attach_my', 'attach_roi']
+           'get_subframe_for_tile', 'get_cached_tile_ids', 'cached_tile_ids_with_markings', 'sample_cached_tile_ids',
+           'get_fans_for_tile', 'get_blotches_for_tile', 'get_hirise_id_for_tile', 'attach_my', 'attach_roi']
 
 # %% ../notebooks/00_io.ipynb #53d83d54
 from contextlib import contextmanager
@@ -125,20 +125,20 @@ v3_1 = pooch.create(
     base_url="",
     version="v3.1",
     registry={
-        "fans":       "md5:2fc5ad525ad3ae4c583fe4baad6dbb44",
-        "blotches":   "md5:44ef0e3d27c8ac8c53d7a63aed211d26",
+        "fans":       "md5:a8c4b19b3e3a3b5899bf55bc597ac5d6",
+        "blotches":   "md5:2d6bd5d833244a224e3bc8f73aa5d6e0",
         "metafull":   "md5:de1f26c12bf3de2600b4f64eb96d15a6",
         "tile_coords":"md5:2e206ba6bebf8d293c28bfc52886080c",
         "metadata":   "md5:0245c87ebfa6afc30e4dc826c3c468b0",
         "region_names": "md5:9090f80faeb215819215362d2800bec6",
     },
     urls={
-        "fans":       "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_L1C_cut_0.5_fan_meta_merged.csv",
-        "blotches":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_L1C_cut_0.5_blotch_meta_merged.csv",
-        "metafull":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_EDRINDEX_metadata.csv",
-        "tile_coords":"doi:10.5281/zenodo.19057090/P4_catalog_v3.1_tile_coords_final.csv",
-        "metadata":   "doi:10.5281/zenodo.19057090/P4_catalog_v3.1_metadata.csv",
-        "region_names": "doi:10.5281/zenodo.20054858/P4_catalog_v3.1_region_names.csv",
+        "fans":       "doi:10.5281/zenodo.21917907/P4_catalog_v3.1_L1C_cut_0.5_fan_meta_merged.csv",
+        "blotches":   "doi:10.5281/zenodo.21917907/P4_catalog_v3.1_L1C_cut_0.5_blotch_meta_merged.csv",
+        "metafull":   "doi:10.5281/zenodo.21917907/P4_catalog_v3.1_EDRINDEX_metadata.csv",
+        "tile_coords":"doi:10.5281/zenodo.21917907/P4_catalog_v3.1_tile_coords_final.csv",
+        "metadata":   "doi:10.5281/zenodo.21917907/P4_catalog_v3.1_metadata.csv",
+        "region_names": "doi:10.5281/zenodo.21917907/P4_catalog_v3.1_region_names.csv",
     },
 )
 
@@ -445,6 +445,71 @@ def get_cached_tile_ids():
             found.append(tid)
     return sorted(found)
 
+# %% ../notebooks/00_io.ipynb #e9dd0d0f
+def cached_tile_ids_with_markings(kind="any", version=None):
+    """Cached tile_ids that have fan and/or blotch markings in the catalog.
+
+    Parameters
+    ----------
+    kind : {"fan", "blotch", "any", "both"}
+        "fan"/"blotch": tiles with at least one fan / blotch.
+        "any": tiles with at least one fan OR blotch (default).
+        "both": tiles with at least one fan AND at least one blotch.
+    version : str, optional
+        Catalog version to check against (defaults to the session version).
+
+    Returns
+    -------
+    list of str
+        Sorted cached tile_ids that satisfy `kind`.
+    """
+    if kind not in ("fan", "blotch", "any", "both"):
+        raise ValueError(f"kind must be one of 'fan', 'blotch', 'any', 'both'; got {kind!r}")
+    cached = set(get_cached_tile_ids())
+    fan_tiles = set(get_fan_catalog(version)["tile_id"].unique()) if kind in ("fan", "any", "both") else set()
+    blotch_tiles = set(get_blotch_catalog(version)["tile_id"].unique()) if kind in ("blotch", "any", "both") else set()
+    marked = {
+        "fan": fan_tiles,
+        "blotch": blotch_tiles,
+        "any": fan_tiles | blotch_tiles,
+        "both": fan_tiles & blotch_tiles,
+    }[kind]
+    return sorted(cached & marked)
+
+# %% ../notebooks/00_io.ipynb #f9707e0b
+def sample_cached_tile_ids(n=1, kind=None, seed=None, version=None):
+    """Random sample of tile_ids whose subframe image is locally cached.
+
+    Parameters
+    ----------
+    n : int
+        Number of tile_ids to draw (without replacement).
+    kind : {None, "fan", "blotch", "any", "both"}, optional
+        If given, restrict to cached tiles that have those markings (see
+        `cached_tile_ids_with_markings`). None (default) samples any cached tile.
+    seed : int, optional
+        Seed for reproducible sampling.
+    version : str, optional
+        Catalog version for the `kind` filter (defaults to the session version).
+
+    Returns
+    -------
+    list of str
+        `n` tile_ids randomly drawn from the (optionally filtered) cached set.
+    """
+    import random
+
+    cached = (
+        get_cached_tile_ids() if kind is None
+        else cached_tile_ids_with_markings(kind, version)
+    )
+    if n > len(cached):
+        raise ValueError(
+            f"Requested {n} tiles but only {len(cached)} are available"
+            + (f" with kind={kind!r}." if kind is not None else " (cached).")
+        )
+    return random.Random(seed).sample(cached, n)
+
 # %% ../notebooks/00_io.ipynb #c8dfc110
 def get_fans_for_tile(tile_id, version=None):
     version = _resolve_version(version)
@@ -490,8 +555,7 @@ def get_hirise_id_for_tile(tile_id, version=None):
             )
         except IndexError:
             raise ValueError(f"No obsid found for tile {tile_id}")
-    else:
-        return obsid
+    return obsid
 
 # %% ../notebooks/00_io.ipynb #a1892936
 def attach_my(df, *, obsid_col: str = "obsid", version: str = "v3.1"):

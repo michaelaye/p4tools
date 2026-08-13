@@ -372,6 +372,12 @@ class ReleaseManager:
         "PlanetocentricLatitude",
         "PlanetographicLatitude",
         "Longitude",
+        # per-marking cluster dispersion (uncertainty API inputs)
+        "x_std",
+        "y_std",
+        "angle_std",
+        "distance_std",
+        "spread_std",
     ]
     BLOTCH_COLUMNS_AS_PUBLISHED: list[str] = [
         "marking_id",
@@ -397,6 +403,12 @@ class ReleaseManager:
         "PlanetocentricLatitude",
         "PlanetographicLatitude",
         "Longitude",
+        # per-marking cluster dispersion (uncertainty API inputs)
+        "x_std",
+        "y_std",
+        "angle_std",
+        "radius1_std",
+        "radius2_std",
     ]
 
     def __init__(self, version, obsids=None, overwrite=False, dbname=None):
