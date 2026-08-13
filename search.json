@@ -1,0 +1,872 @@
+[
+  {
+    "objectID": "activity.html",
+    "href": "activity.html",
+    "title": "Activity analysis",
+    "section": "",
+    "text": "source\n\n\ndef tile_ground_area_m2(\n    obsids:NoneType=None, # If given, restrict to this iterable of obsid strings; otherwise\n    # return for all obsids in the catalog version.\n    version:str='v3.1'\n)-&gt;Series:\nTile ground area in m² per obsid.\nEach P4 tile is 840×648 pixels; ground area = 840 * 648 * map_scale**2. For v3.1 map_scale is one of {0.25, 0.5, 1.0} m/px, giving tile ground areas of {34 020, 136 080, 544 320} m² respectively.",
+    "crumbs": [
+      "Activity analysis"
+    ]
+  },
+  {
+    "objectID": "activity.html#tile-ground-area",
+    "href": "activity.html#tile-ground-area",
+    "title": "Activity analysis",
+    "section": "",
+    "text": "source\n\n\ndef tile_ground_area_m2(\n    obsids:NoneType=None, # If given, restrict to this iterable of obsid strings; otherwise\n    # return for all obsids in the catalog version.\n    version:str='v3.1'\n)-&gt;Series:\nTile ground area in m² per obsid.\nEach P4 tile is 840×648 pixels; ground area = 840 * 648 * map_scale**2. For v3.1 map_scale is one of {0.25, 0.5, 1.0} m/px, giving tile ground areas of {34 020, 136 080, 544 320} m² respectively.",
+    "crumbs": [
+      "Activity analysis"
+    ]
+  },
+  {
+    "objectID": "activity.html#per-tile-marking-density",
+    "href": "activity.html#per-tile-marking-density",
+    "title": "Activity analysis",
+    "section": "Per-tile marking density",
+    "text": "Per-tile marking density\n\nsource\n\nper_tile_marking_density\ndef per_tile_marking_density(\n    version:str='v3.1', kind:str='all', # Which markings to count for ``density_per_m2``. ``\"all\"`` (default)\n    # is fan + blotch, the recommended activity proxy. The per-kind counts\n    # ``n_fans`` / ``n_blotches`` are always present.\n)-&gt;DataFrame:\nPer-tile counts and marking density (markings per m² of ground area).\nReturned columns: [obsid, tile_id, n_fans, n_blotches, n_markings, map_scale,    tile_ground_area_m2, density_per_m2].",
+    "crumbs": [
+      "Activity analysis"
+    ]
+  },
+  {
+    "objectID": "activity.html#per-marking-ground-area",
+    "href": "activity.html#per-marking-ground-area",
+    "title": "Activity analysis",
+    "section": "Per-marking ground area",
+    "text": "Per-marking ground area\n\nsource\n\nper_marking_ground_area\ndef per_marking_ground_area(\n    version:str='v3.1', kind:str='both', # Which catalog(s) to process. Default ``\"both\"``.\n    cache:bool=True, cache_dir:pathlib.Path | None=None\n)-&gt;DataFrame:\nPer-marking polygon area in m².\nComputes Shapely polygons for every fan / blotch using markings.{Fan,Blotch}.to_shapely (HiRISE pixel scope), takes polygon.area in pixel², and converts to m² via per-obsid map_scale. Result is cached as parquet next to the coverage cache.",
+    "crumbs": [
+      "Activity analysis"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html",
+    "href": "production.cleaning.html",
+    "title": "Pre-clustering classification cleaning",
+    "section": "",
+    "text": "source\n\n\ndef filter_nan_required(\n    df:DataFrame\n)-&gt;DataFrame:\nDrop fans/blotches missing any required column.\nRequired cols: fans need x, y, distance, angle, spread; blotches need x, y, radius_1, radius_2. Rows with marking != fan|blotch pass through untouched.",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#nan-sweep-drop-incomplete-markings",
+    "href": "production.cleaning.html#nan-sweep-drop-incomplete-markings",
+    "title": "Pre-clustering classification cleaning",
+    "section": "",
+    "text": "source\n\n\ndef filter_nan_required(\n    df:DataFrame\n)-&gt;DataFrame:\nDrop fans/blotches missing any required column.\nRequired cols: fans need x, y, distance, angle, spread; blotches need x, y, radius_1, radius_2. Rows with marking != fan|blotch pass through untouched.",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#default-marking-filter-zooniverse-v1-only",
+    "href": "production.cleaning.html#default-marking-filter-zooniverse-v1-only",
+    "title": "Pre-clustering classification cleaning",
+    "section": "Default-marking filter (Zooniverse v1 only)",
+    "text": "Default-marking filter (Zooniverse v1 only)\n\nsource\n\nfilter_default_markings\ndef filter_default_markings(\n    df:DataFrame\n)-&gt;DataFrame:\nDrop the legacy Zooniverse-v1 auto-spawned default markings.\nVerbatim port of legacy planet4.reduction.filter_data steps 2-5:\n\nOrigin-pinned default fan: |x|&lt;eps & |y|&lt;eps & |angle|&lt;eps & distance~10.\nSecond-default fan: |angle|~90 & spread~2.017450 & distance~10.\nOrigin-pinned 10x10 default ellipse blotch: |x|&lt;eps & |y|&lt;eps & r1~10 & r2~10.\nOrigin-pinned none row.\n\nEmpirically a no-op for Panoptes-12978 data (the new UI does not auto-spawn these defaults on click-without-drag); kept available for legacy reprocessing.",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#out-of-frame-filter-drop-markings-far-outside-tile",
+    "href": "production.cleaning.html#out-of-frame-filter-drop-markings-far-outside-tile",
+    "title": "Pre-clustering classification cleaning",
+    "section": "Out-of-frame filter — drop markings far outside tile",
+    "text": "Out-of-frame filter — drop markings far outside tile\n\nsource\n\nfilter_out_of_frame\ndef filter_out_of_frame(\n    df:DataFrame, tolerance_px:int=25\n)-&gt;DataFrame:\nDrop markings whose centre falls more than tolerance_px outside the 840x648 tile. marking == \"none\" rows are exempted (they record ‘volunteer saw nothing’ and have meaningless coords).",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#blotch-geometry-canonicalisation",
+    "href": "production.cleaning.html#blotch-geometry-canonicalisation",
+    "title": "Pre-clustering classification cleaning",
+    "section": "Blotch geometry canonicalisation",
+    "text": "Blotch geometry canonicalisation\n\nsource\n\ncanonicalize_blotch_geometry\ndef canonicalize_blotch_geometry(\n    df:DataFrame\n)-&gt;DataFrame:\nMake blotch ellipses canonical: radius_1 &gt;= radius_2, angle in [0, 180).\nVerbatim port of legacy planet4.reduction.convert_ellipse_angles: where radius_1 &lt; radius_2 we swap the radii and add 90 deg to the angle, then take angle % 180 (ellipse symmetry).\nModifies the dataframe in place and returns it.",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#fan-angle-canonicalisation",
+    "href": "production.cleaning.html#fan-angle-canonicalisation",
+    "title": "Pre-clustering classification cleaning",
+    "section": "Fan angle canonicalisation",
+    "text": "Fan angle canonicalisation\n\nsource\n\ncanonicalize_fan_angles\ndef canonicalize_fan_angles(\n    df:DataFrame\n)-&gt;DataFrame:\nFold fan angles into [0, 360).\nVerbatim port of legacy planet4.reduction.normalize_fan_angles. Empirically a no-op for Panoptes-12978 (the UI already produces fan angles in [0, 360)); kept for legacy reprocessing.",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#angular-components-for-clustering",
+    "href": "production.cleaning.html#angular-components-for-clustering",
+    "title": "Pre-clustering classification cleaning",
+    "section": "Angular components for clustering",
+    "text": "Angular components for clustering\n\nsource\n\ncompute_angle_components\ndef compute_angle_components(\n    df:DataFrame\n)-&gt;DataFrame:\nAdd x_angle = cos(deg2rad(angle)) and y_angle = sin(deg2rad(angle)).\nThese are the angular features the catalog reduction (clustering) reads directly: production.dbscan clusters fans on (x_angle, y_angle) and blotches on y_angle. Must run after the blotch and fan angle canonicalisations so the components reflect the canonical-quadrant angle.",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "production.cleaning.html#orchestrator-dispatch-per-raw-source",
+    "href": "production.cleaning.html#orchestrator-dispatch-per-raw-source",
+    "title": "Pre-clustering classification cleaning",
+    "section": "Orchestrator — dispatch per raw source",
+    "text": "Orchestrator — dispatch per raw source\n\nsource\n\nclean_classifications\ndef clean_classifications(\n    df:DataFrame, source:Literal='panoptes', out_of_frame_tolerance_px:int=25\n)-&gt;DataFrame:\nTop-level orchestrator. Dispatches the right cleanup steps per raw source.\nSteps run, in order:\n\n[filter_nan_required](https://michaelaye.github.io/p4tools/production.cleaning.html#filter_nan_required) (always)\n[filter_default_markings](https://michaelaye.github.io/p4tools/production.cleaning.html#filter_default_markings) (zooniverse_v1 only)\n[filter_out_of_frame](https://michaelaye.github.io/p4tools/production.cleaning.html#filter_out_of_frame) (always)\n[canonicalize_blotch_geometry](https://michaelaye.github.io/p4tools/production.cleaning.html#canonicalize_blotch_geometry) (always)\n[canonicalize_fan_angles](https://michaelaye.github.io/p4tools/production.cleaning.html#canonicalize_fan_angles) (zooniverse_v1 only — Panoptes already canonical)\n[compute_angle_components](https://michaelaye.github.io/p4tools/production.cleaning.html#compute_angle_components) (always)",
+    "crumbs": [
+      "Pre-clustering classification cleaning"
+    ]
+  },
+  {
+    "objectID": "markings.html",
+    "href": "markings.html",
+    "title": "Markings",
+    "section": "",
+    "text": "source\n\ncalc_fig_size\ndef calc_fig_size(\n    width\n):\nCalc figure height in ratio of subframes.\n\nsource\n\n\nshow_subframe\ndef show_subframe(\n    tile_id, ax:NoneType=None, aspect:str='auto'\n):\nCall self as a function.\n\nsource\n\n\nset_subframe_size\ndef set_subframe_size(\n    ax\n):\nSet plot view limit on Planet 4 subframe size.\n\nsource\n\n\nMarkingMixin\ndef MarkingMixin(\n    *args, **kwargs\n):\nShared behavior for Blotch and Fan single-marking classes.\nSubclasses must define: - to_average: list of field names - _catalog_getter: staticmethod returning catalog DataFrame - data: backing pandas Series\n\nsource\n\n\nBlotch\ndef Blotch(\n    data, # object with blotch data attributes: x, y, radius_1, radius_2, angle\n    scope:str='planet4', # \"planet4\" or \"hirise\",\n    with_center:bool=False, # if True, plot the center of the blotch,\n    url_db:str='', # path to the url database,\n    **kwargs\n):\nShared behavior for Blotch and Fan single-marking classes.\nSubclasses must define: - to_average: list of field names - _catalog_getter: staticmethod returning catalog DataFrame - data: backing pandas Series\n\ntile_with_blotches = \"APF0000004\"\n\n\nb = Blotch.from_tile_id(tile_with_blotches)\n\n\nb\n\nBlotch.from_marking_id('B010c77')  # tile_id='APF0000004', area=571.2238541501484\n\n\n\nb.plot()\n\n\n\n\n\n\n\n\n\nsource\n\n\nMarkingCollection\ndef MarkingCollection(\n    df, color:str='green', **build_kwargs\n):\nBase class for Blotches and Fans containers.\n\nsource\n\n\nBlotches\ndef Blotches(\n    df, with_center:bool=False, color:str='red'\n):\nContainer for Blotch objects with idempotent plotting.\n\ntb = Blotches.from_tile_id(tile_with_blotches)\n\n\ntb.plot()\n\n\n\n\n\n\n\n\n\nsource\n\n\nrotate_vector\ndef rotate_vector(\n    v, # Vector to be rotated\n    angle, # Angle in degrees\n):\nRotate vector by angle given in degrees.\n\nsource\n\n\nFan\ndef Fan(\n    data, # object with fan data attributes: x, y, angle, spread, distance\n    scope:str='planet4', # \"planet4\" or \"hirise\",\n    with_center:bool=False, # accepted for API symmetry with Blotch; fans have no center, so ignored\n    **kwargs\n):\nShared behavior for Blotch and Fan single-marking classes.\nSubclasses must define: - to_average: list of field names - _catalog_getter: staticmethod returning catalog DataFrame - data: backing pandas Series\n\ntile_with_fans = \"APF000000c\"\n\n\nf = Fan.from_tile_id(tile_with_fans, 1)\n\n\nf\n\nFan.from_marking_id('F00b604')  # tile_id='APF000000c', area=834.5280047852875\n\n\n\nf.plot('red')\n\n\n\n\n\n\n\n\n\nsource\n\n\nFans\ndef Fans(\n    df, scope:str='planet4', color:str='green', **kwargs\n):\nContainer for Fan objects backed by a LineCollection for plotting.\n\nfans = io.get_fans_for_tile('c')\n\n\nfans = Fans(io.get_fans_for_tile('c'))\n\n\nfans.plot()\n\n\n\n\n\n\n\n\n\nFans.from_tile_id('c').plot()\n\n\nsource\n\n\nmarkings_to_geoseries\ndef markings_to_geoseries(\n    df, kind, crs:NoneType=None, body:str='mars', system:str='ocentric', n_arc:int=16, n_ell:int=48\n):\nApproximate ground outlines for many markings as a GeoSeries.\nFast, vectorized per marking (sector for fans, ellipse for blotches). Pass crs = a projected image’s CRS to overlay on that raster, else lon/lat. For the exact outline of a single marking use Fan/Blotch.to_shapely_ground.",
+    "crumbs": [
+      "Markings"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html",
+    "href": "07_panoptes_extract.html",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "",
+    "text": "The Planet Four citizen science project migrated from the original Zooniverse/Ouroboros platform to the newer Panoptes system. The Panoptes data export format differs significantly from the original: classifications are stored as nested JSON within a flat CSV, rather than the pre-flattened format the existing planet4 catalog production pipeline expects.\nThis notebook implements and documents the extraction pipeline that converts Panoptes exports into the flat per-marking format required by planet4.reduction. It also serves as a record of the data characteristics and caveats discovered during development.\n\n\n\nplanet-four-classifications.csv (1.6 GB, 801,430 classifications)\nplanet-four-subjects.csv (subject metadata and image URLs)\n\n\n\n\n\nOne parquet file per workflow with one row per marking (fan, blotch, or none), matching the analysis_cols schema in planet4.reduction.",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html#overview",
+    "href": "07_panoptes_extract.html#overview",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "",
+    "text": "The Planet Four citizen science project migrated from the original Zooniverse/Ouroboros platform to the newer Panoptes system. The Panoptes data export format differs significantly from the original: classifications are stored as nested JSON within a flat CSV, rather than the pre-flattened format the existing planet4 catalog production pipeline expects.\nThis notebook implements and documents the extraction pipeline that converts Panoptes exports into the flat per-marking format required by planet4.reduction. It also serves as a record of the data characteristics and caveats discovered during development.\n\n\n\nplanet-four-classifications.csv (1.6 GB, 801,430 classifications)\nplanet-four-subjects.csv (subject metadata and image URLs)\n\n\n\n\n\nOne parquet file per workflow with one row per marking (fan, blotch, or none), matching the analysis_cols schema in planet4.reduction.",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html#raw-data-structure",
+    "href": "07_panoptes_extract.html#raw-data-structure",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "2 Raw Data Structure",
+    "text": "2 Raw Data Structure\n\n2.1 Workflows\nThe Panoptes export contains classifications from three workflows:\n\n\n\nWorkflow ID\nName\nClassifications\nShare\n\n\n\n\n12978\nP4 Main Workflow\n798,313\n99.6%\n\n\n11388\nP4 Workflow Version 1 (Question + Drawing)\n1,806\n0.2%\n\n\n6321\nP4 Workflow Version 2 (Drawing Tasks)\n1,311\n0.2%\n\n\n\nOnly workflow 12978 is processed. The older workflows (6321, 11388) lack sufficient metadata for reliable tile identification and represent negligible data volume.\n\n\n2.2 Annotations JSON\nWorkflow 12978 classifications contain two tasks in their annotations JSON:\n\nT1 (yes/no question): \"Are there seasonal fans and/or blotches visible?\" — value is a string (\"Yes\" / \"No\")\nT0 (drawing task): \"Please mark all the seasonal fans and blotches\" — value is a list of marking objects\n\nEach marking object contains:\n\nFan (tool=0): x, y, radius (fan length), rotation (direction), spread (opening angle)\nBlotch (tool=1): x, y, rx, ry (ellipse radii), angle (orientation)\n\n\n\n2.3 Subject Metadata\nThe subject_data JSON embedded in each classification contains tile identification metadata. Two schemas exist:\nRich metadata (21,941 unique tiles): Contains !old_planet_four_id (tile ID), !hirise_image_id (obsid), !x_tile, !y_tile, and !filename. Note that some keys have leading spaces (e.g., \" !y_tile\").\nSparse metadata (95 tiles from an early upload batch): Contains only !P4_subject_id (tile ID) and !filename. Missing fields are resolved via p4tools.io.get_tile_coords() from the published v3.1 catalog.\n\n\n2.4 Column Mapping\nThe extraction maps Panoptes fields to the planet4 pipeline’s analysis_cols schema:\n\n\n\n\n\n\n\nOutput Column\nPanoptes Source\n\n\n\n\nclassification_id\nDirect from CSV\n\n\ncreated_at\nDirect from CSV\n\n\nimage_id\nsubject_data → !old_planet_four_id or !P4_subject_id\n\n\nimage_name\nsubject_data → !hirise_image_id (or via tile_coords fallback)\n\n\nimage_url\nsubjects.csv → locations[\"0\"] (Panoptes CDN URL)\n\n\nuser_name\nDirect from CSV\n\n\nmarking\n\"fan\" / \"blotch\" / \"none\" from annotation tool field\n\n\nx_tile, y_tile\nsubject_data → !x_tile, !y_tile (or via tile_coords)\n\n\nacquisition_date\nJoined via obsid from p4tools.io.get_meta_data().START_TIME\n\n\nlocal_mars_time\nNaN (requires SPICE computation, out of scope)\n\n\nx, y\nAnnotation marking coordinates (tile scope, pixels)\n\n\nimage_x, image_y\nComputed: x + 740*(x_tile-1), y + 548*(y_tile-1)\n\n\nradius_1, radius_2\nBlotch: rx, ry. Fan: NaN\n\n\ndistance\nFan: radius. Blotch: NaN\n\n\nangle\nFan: rotation. Blotch: angle\n\n\nspread\nFan: spread. Blotch: 0\n\n\nversion\nworkflow_version from CSV",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html#implementation",
+    "href": "07_panoptes_extract.html#implementation",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "3 Implementation",
+    "text": "3 Implementation\n\nsource\n\n3.1 parse_subject_data\ndef parse_subject_data(\n    subject_data_str:str\n)-&gt;dict:\nParse the nested subject_data JSON and extract metadata fields.\nThe subject_data JSON has structure: {“”: {key: val, …}}. Keys may have leading spaces or ‘!’ prefixes that need stripping.\nReturns dict with keys: subject_id, tile_id, obsid, x_tile, y_tile, filename.\n\nsource\n\n\n3.2 parse_annotations\ndef parse_annotations(\n    annotations_str:str\n)-&gt;list[dict]:\nParse the annotations JSON into a list of marking dicts.\nWorkflow 12978 has two tasks: T1 (yes/no question) and T0 (drawing). We find the drawing task by looking for the first task whose value is a list. Returns one dict per marking. Empty value → [{“marking”: “none”}].\nFan (tool=0): x, y, distance (from radius), angle (from rotation), spread. Blotch (tool=1): x, y, radius_1 (from rx), radius_2 (from ry), angle.\n\nsource\n\n\n3.3 process_chunk\ndef process_chunk(\n    chunk:pd.DataFrame\n)-&gt;pd.DataFrame:\nProcess one chunk of the classifications CSV into flat marking rows.\nParses annotations and subject_data, then explodes so each marking becomes its own row.\n\nsource\n\n\n3.4 compute_image_coordinates\ndef compute_image_coordinates(\n    df:pd.DataFrame\n)-&gt;pd.DataFrame:\nAdd image_x and image_y from tile-scope x, y and tile indices.\nimage_x = x + 740 * (x_tile - 1) image_y = y + 548 * (y_tile - 1)\n\nsource\n\n\n3.5 load_subjects_urls\ndef load_subjects_urls(\n    subjects_csv:str | Path\n)-&gt;pd.DataFrame:\nLoad subjects CSV and extract image URLs from the locations JSON.\nReturns DataFrame with columns: subject_id (int), image_url (str).\n\nsource\n\n\n3.6 enrich_with_metadata\ndef enrich_with_metadata(\n    df:pd.DataFrame, metadata:pd.DataFrame | None=None, tile_coords:pd.DataFrame | None=None\n)-&gt;pd.DataFrame:\nJoin external metadata: fill missing tile coords, obsid, and acquisition_date.\nSome subjects in workflow 12978 have tile_id but no x_tile/y_tile/obsid. These are filled from tile_coords. acquisition_date comes from START_TIME. local_mars_time is set to NaN (requires SPICE computation).\n\nsource\n\n\n3.7 extract_panoptes_classifications\ndef extract_panoptes_classifications(\n    classifications_csv:str | Path, subjects_csv:str | Path | None=None, output_dir:str | Path | None=None,\n    chunksize:int=50000\n)-&gt;Path:\nExtract Panoptes classifications CSV into a flat marking parquet file.\nOnly processes the main workflow (12978). Old workflows (6321, 11388) are skipped with a warning.",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html#dataset-comparison-panoptes-vs-v3.1-catalog",
+    "href": "07_panoptes_extract.html#dataset-comparison-panoptes-vs-v3.1-catalog",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "4 Dataset Comparison: Panoptes vs v3.1 Catalog",
+    "text": "4 Dataset Comparison: Panoptes vs v3.1 Catalog\nAn important finding during development: the Panoptes data is not a subset of the published v3.1 catalog. The two datasets partially overlap but each contains unique observations.\n\n\nShow code\nimport json\nimport pandas as pd\nfrom p4tools import io\nfrom pathlib import Path\n\nDATA_DIR = Path('/Users/maye/Dropbox/Documents/01_projects/planet4/data/raw/p4_original_zooniverse')\n\n# Scan all workflow 12978 classifications for obsids and tile_ids\nreader = pd.read_csv(DATA_DIR / 'planet-four-classifications.csv', chunksize=50000)\n\npanoptes_obsids = set()\npanoptes_tiles = set()\ntiles_with_full_meta = 0\ntiles_with_sparse_meta = 0\n\nfor chunk in reader:\n    main = chunk[chunk.workflow_id == 12978]\n    for sd_str in main.subject_data:\n        raw = json.loads(sd_str)\n        sid = list(raw.keys())[0]\n        inner = raw[sid]\n        cleaned = {k.strip().lstrip('!'): v for k, v in inner.items()}\n        \n        obsid = cleaned.get('hirise_image_id')\n        tile_id = cleaned.get('old_planet_four_id') or cleaned.get('P4_subject_id')\n        \n        if obsid:\n            panoptes_obsids.add(obsid)\n        if tile_id:\n            panoptes_tiles.add(tile_id)\n        if cleaned.get('x_tile') is not None:\n            tiles_with_full_meta += 1\n        else:\n            tiles_with_sparse_meta += 1\n\ntc = io.get_tile_coords()\ncatalog_obsids = set(tc.obsid.unique())\ncatalog_tiles = set(tc.tile_id.unique())\n\nshared_obsids = panoptes_obsids & catalog_obsids\nnew_obsids = panoptes_obsids - catalog_obsids\nonly_catalog_obsids = catalog_obsids - panoptes_obsids\n\nshared_tiles = panoptes_tiles & catalog_tiles\nnew_tiles = panoptes_tiles - catalog_tiles\n\nprint(\"=== Observation-level (obsid) comparison ===\")\nprint(f\"  Panoptes obsids:          {len(panoptes_obsids):&gt;5}\")\nprint(f\"  v3.1 catalog obsids:      {len(catalog_obsids):&gt;5}\")\nprint(f\"  Shared:                   {len(shared_obsids):&gt;5}\")\nprint(f\"  NEW in Panoptes only:     {len(new_obsids):&gt;5}\")\nprint(f\"  Only in v3.1 catalog:     {len(only_catalog_obsids):&gt;5}\")\nprint()\nprint(\"=== Tile-level comparison ===\")\nprint(f\"  Panoptes tiles:           {len(panoptes_tiles):&gt;5}\")\nprint(f\"  v3.1 catalog tiles:       {len(catalog_tiles):&gt;5}\")\nprint(f\"  Shared:                   {len(shared_tiles):&gt;5}\")\nprint(f\"  NEW in Panoptes only:     {len(new_tiles):&gt;5}\")\nprint()\nprint(\"=== Subject metadata completeness ===\")\nprint(f\"  Full metadata (x_tile, y_tile, obsid): {tiles_with_full_meta}\")\nprint(f\"  Sparse metadata (tile_id only):        {tiles_with_sparse_meta}\")\n\n\n\n\nShow code\nprint(\"=== NEW HiRISE observations in Panoptes (not in v3.1 catalog) ===\")\nprint(f\"These {len(new_obsids)} obsids represent newer HiRISE data acquired after the v3.1 catalog was built:\\n\")\nfor obsid in sorted(new_obsids):\n    print(f\"  {obsid}\")\n\n\n\n4.1 Interpretation\nThe Panoptes dataset contains 44 HiRISE observations not present in the v3.1 catalog. These are newer observations (ESP numbers in the 046xxx–067xxx range) acquired after catalog v3.1 was produced. They represent new science data that will be included in the next catalog release.\nConversely, 410 obsids from the v3.1 catalog are not in the Panoptes export — these were classified on the original Ouroboros platform and were never re-uploaded to Panoptes.\nThe 94 tiles with sparse metadata (tile_id only, no x_tile/y_tile/obsid in subject_data) all belong to the 59 shared obsids. They were from an early Panoptes upload batch before the richer metadata convention was adopted. All but one could be resolved via the v3.1 tile_coords lookup.\nThe 628 tiles unique to Panoptes (not in v3.1 tile_coords) all have full metadata in subject_data, so they are self-contained and require no external lookups.\n\n\n4.2 Implications for Catalog Production\n\nThe Panoptes extraction output can be fed directly into the existing planet4 clustering pipeline\nNew obsids will need HiRISE metadata (ground projection, SPICE) before full catalog integration\nThe combined dataset (v3.1 + Panoptes new data) would span a wider temporal range than either alone",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html#validation",
+    "href": "07_panoptes_extract.html#validation",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "5 Validation",
+    "text": "5 Validation\nQuick verification of the parsing functions on a small sample.\n\n\nShow code\n# Load a sample with actual markings\nreader = pd.read_csv(DATA_DIR / 'planet-four-classifications.csv', chunksize=50000)\nchunks = []\nfor chunk in reader:\n    main = chunk[chunk.workflow_id == 12978]\n    if len(main) &gt; 0:\n        chunks.append(main.head(25))\n    if len(chunks) &gt;= 3:\n        break\nmain_sample = pd.concat(chunks).reset_index(drop=True)\nprint(f'Sample size: {len(main_sample)} classifications')\n\n\n\n\nShow code\n# Test full pipeline on sample\nresult = process_chunk(main_sample)\nprint(f'Input: {len(main_sample)} classifications → Output: {len(result)} marking rows')\nprint(f'Marking types: {result.marking.value_counts().to_dict()}')\n\n# Enrich metadata\nmetadata = io.get_meta_data()\ntile_coords = io.get_tile_coords()\nresult = enrich_with_metadata(result, metadata, tile_coords)\nprint(f'\\nAfter metadata enrichment:')\nprint(f'  Missing x_tile: {result.x_tile.isna().sum()}')\nprint(f'  Missing image_name: {result.image_name.isna().sum()}')\nprint(f'  Has acquisition_date: {result.acquisition_date.notna().sum()}/{len(result)}')\n\n# Compute coordinates\nresult = compute_image_coordinates(result)\nfans = result[result.marking == 'fan']\nif len(fans) &gt; 0:\n    print(f'\\nSample fan with coordinates:')\n    print(fans[['image_id', 'image_name', 'x', 'y', 'x_tile', 'y_tile', 'image_x', 'image_y']].head(3).to_string())\n\n# Verify tile_id format\nvalid = result[result.image_id.notna()].image_id.str.startswith('APF').all()\nprint(f'\\nAll tile_ids valid APF format: {valid}')",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "07_panoptes_extract.html#usage",
+    "href": "07_panoptes_extract.html#usage",
+    "title": "Planet Four: Panoptes Data Extraction Pipeline",
+    "section": "6 Usage",
+    "text": "6 Usage\nTo run the full extraction (processes 1.6 GB, takes a few minutes):\nfrom p4tools.panoptes_extract import extract_panoptes_classifications\n\noutpath = extract_panoptes_classifications(\n    'data/raw/p4_original_zooniverse/planet-four-classifications.csv',\n    subjects_csv='data/raw/p4_original_zooniverse/planet-four-subjects.csv',\n)\nThe output parquet file can be read directly by planet4.io.DBManager for clustering and catalog production.",
+    "crumbs": [
+      "Planet Four: Panoptes Data Extraction Pipeline"
+    ]
+  },
+  {
+    "objectID": "regions.html",
+    "href": "regions.html",
+    "title": "Regions",
+    "section": "",
+    "text": "import p4tools as p4t\n\n\nfrom p4tools.io import get_region_names\nfrom matplotlib import pyplot as plt, rcParams\n\n\nrcParams['image.origin'] = 'lower'\n\n\nregions = get_region_names()\n\n\nsorted(regions.roi_name.unique())\n\n['Albany',\n 'Atka',\n 'Bilbao',\n 'Binghamton',\n 'BuenosAires',\n 'Caterpillar',\n 'Cortland',\n 'Geneseo',\n 'Giza',\n 'Halifax',\n 'Inca_City',\n 'Inca_City_Ridges',\n 'Ithaca',\n 'Macclesfield',\n 'Manhattan2',\n 'Manhattan_Classic',\n 'Manhattan_Cracks',\n 'Manhattan_Frontinella',\n 'Oswego_Edge',\n 'Pisaq',\n 'Portsmouth',\n 'Potsdam',\n 'Rochester',\n 'Schenectady',\n 'Starburst',\n 'Troy',\n 'Wellington',\n 'unknown']\n\n\n\nregions.query(\"roi_name=='Manhattan_Cracks'\").describe().loc['mean', 'lat_IND':'lon_IND'].values\n\narray([-86.25696154,  98.77399231])\n\n\n\nregions.query(\"roi_name=='Halifax'\").describe()\n\n\n\n\n\n\n\n\nlat_IND\nlon_IND\nminimal_distance\nlat_WORD\nlon_WORD\nMY\n\n\n\n\ncount\n3.000000\n3.000000\n3.000000\n3.0\n3.0\n3.0\n\n\nmean\n-87.042933\n72.417667\n4.849353\n-87.0\n72.3\n29.0\n\n\nstd\n0.001858\n0.054604\n0.245513\n0.0\n0.0\n0.0\n\n\nmin\n-87.044200\n72.356400\n4.568739\n-87.0\n72.3\n29.0\n\n\n25%\n-87.044000\n72.395900\n4.761747\n-87.0\n72.3\n29.0\n\n\n50%\n-87.043800\n72.435400\n4.954755\n-87.0\n72.3\n29.0\n\n\n75%\n-87.042300\n72.448300\n4.989660\n-87.0\n72.3\n29.0\n\n\nmax\n-87.040800\n72.461200\n5.024566\n-87.0\n72.3\n29.0\n\n\n\n\n\n\n\n\nlon = 103.901\nlat = -85.401\n\n\nwest = lon - 2\neast = lon + 2\n\n\nnorth = lat + 0.1\nsouth = lat - 0.1\n\n\nimport math\n\n\nimage_size = (600, 800, 3)\n\n\nlat, lon\n\n(-85.401, 103.901)\n\n\n\nimport folium\n\ntiles='https://astro.arcgis.com/arcgis/rest/services/OnMars/MColorDEM/MapServer/tile/{z}/{y}/{x}'\n\ncrs = 'EPSG3857'\n# crs = 'Simple'\n# crs = 'EPSG3031'\nm = folium.Map(location=[lat, lon], zoom_start=3, tiles=tiles, attr='usgs/esri', crs=crs)\n\nm\n\nMake this Notebook Trusted to load map: File -&gt; Trust Notebook",
+    "crumbs": [
+      "Regions"
+    ]
+  },
+  {
+    "objectID": "production.dbscan.html",
+    "href": "production.dbscan.html",
+    "title": "DBSCAN Clustering",
+    "section": "",
+    "text": "source\n\nplot_results\ndef plot_results(\n    p4id, labels, data:NoneType=None, kind:NoneType=None, reduced_data:NoneType=None, ax:NoneType=None\n):\nPlots the results of a clustering algorithm. Parameters ———- p4id : object An object that contains methods for plotting and showing subframes. labels : array-like Cluster labels for each point in the dataset. data : pandas.DataFrame, optional The original data points with ‘x’ and ‘y’ coordinates. Default is None. kind : str, optional The type of marking to plot (e.g., ‘blotch’, ‘fan’). Default is None. reduced_data : pandas.DataFrame, optional The reduced data points to be plotted. Default is None. ax : matplotlib.axes.Axes, optional The axes on which to plot. If None, a new figure and axes are created. Default is None. Returns ——- None\n\nsource\n\n\nget_average_objects\ndef get_average_objects(\n    clusters, # table with rows of markings (fans or blotches) to be averaged\n    kind, # Switch to control the circularity for the average angle calculation.\n):\nCreate the average object out of a sequence of clusters.\n\nsource\n\n\nDBScanner\ndef DBScanner(\n    msf:float=0.13, savedir:NoneType=None, with_angles:bool=True, with_radii:bool=True, do_large_run:bool=True,\n    save_results:bool=True, only_core_samples:bool=False, data:NoneType=None, dbname:NoneType=None\n):",
+    "crumbs": [
+      "DBSCAN Clustering"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html",
+    "href": "classify_by_activity.html",
+    "title": "Tile-activity classification",
+    "section": "",
+    "text": "source",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html#data-loading",
+    "href": "classify_by_activity.html#data-loading",
+    "title": "Tile-activity classification",
+    "section": "Data loading",
+    "text": "Data loading\nDefaults to the public v3.1 fan/blotch parquets via p4tools.io. The per-tile coverage CSV is external and supplied as an explicit path.\n\nsource\n\nload_v3p1_data\ndef load_v3p1_data(\n    coverage_csv:str | pathlib.Path, # Path to a CSV with columns ``[obsid, tile_id, Coverage]``\n    # (e.g. ``FnotchCoverage_Full_v3.1.csv``).\n    version:str='v3.1', # Catalog version forwarded to ``p4tools.io.get_*_catalog``.\n    fan:pandas.DataFrame | None=None, blotch:pandas.DataFrame | None=None\n)-&gt;P4Data:\nLoad the v3.1 fan, blotch, and per-tile coverage frames.\n\nsource\n\n\nP4Data\ndef P4Data(\n    fan:DataFrame, blotch:DataFrame, coverage:DataFrame\n)-&gt;None:\nContainer for the three v3.1 dataframes used by this module.",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html#per-tile-marking-counts",
+    "href": "classify_by_activity.html#per-tile-marking-counts",
+    "title": "Tile-activity classification",
+    "section": "Per-tile marking counts",
+    "text": "Per-tile marking counts\n\nsource\n\ncount_markings_per_tile\ndef count_markings_per_tile(\n    data:P4Data\n)-&gt;DataFrame:\nOne row per (obsid, tile_id) with total marking counts.\nTiles present in data.coverage but absent from the catalogs appear with n_markings = 0. Returned columns: [obsid, tile_id, n_fans, n_blotches, n_markings, Coverage].",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html#per-obsid-classification",
+    "href": "classify_by_activity.html#per-obsid-classification",
+    "title": "Tile-activity classification",
+    "section": "Per-obsid classification",
+    "text": "Per-obsid classification\n\nsource\n\nclassify_obsid\ndef classify_obsid(\n    counts:ndarray, obsid:str='',\n    config:ClassifyConfig=ClassifyConfig(delta_bic=10.0, min_tiles=20, frac_zero_high=0.85, frac_zero_low=0.15, random_state=42, global_threshold=None),\n    global_threshold:float | None=None\n)-&gt;ObsidClassification:\nClassify one obsid’s tile-count distribution.\nglobal_threshold overrides config.global_threshold for the forced-unimodal small-obsid path.\n\nsource\n\n\nObsidClassification\ndef ObsidClassification(\n    obsid:str, pattern:Pattern, n_tiles:int, frac_zero:float, mean_count:float, bic1:float, bic2:float,\n    cluster_means:tuple[float, float] | None, busy_mask:ndarray\n)-&gt;None:\nResult of classifying a single HiRISE observation’s tile distribution.",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html#all-obsid-classification",
+    "href": "classify_by_activity.html#all-obsid-classification",
+    "title": "Tile-activity classification",
+    "section": "All-obsid classification",
+    "text": "All-obsid classification\nFirst pass: classify every obsid; gather bimodal split-points to learn the global threshold T. Second pass: only the small-obsid forced-unimodal entries are re-classified with T.\n\nsource\n\nclassify_all\ndef classify_all(\n    tile_counts:DataFrame,\n    config:ClassifyConfig=ClassifyConfig(delta_bic=10.0, min_tiles=20, frac_zero_high=0.85, frac_zero_low=0.15, random_state=42, global_threshold=None)\n)-&gt;tuple: # ``[obsid, tile_id, n_fans, n_blotches, n_markings, Coverage,\npattern, busy]``.\nClassify every obsid and label every tile.",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html#coverage-on-busy-tiles",
+    "href": "classify_by_activity.html#coverage-on-busy-tiles",
+    "title": "Tile-activity classification",
+    "section": "Coverage on busy tiles",
+    "text": "Coverage on busy tiles\nVectorised aggregation across the cap (no Python-level loop over obsids).\n\nsource\n\nsummary\ndef summary(\n    labeled:DataFrame, params:dict\n)-&gt;dict:\nCap-wide one-line summary suitable for printing or logging.\n\nsource\n\n\ncoverage_on_busy\ndef coverage_on_busy(\n    labeled:DataFrame\n)-&gt;DataFrame:\nPer-obsid coverage statistics, split by busy/quiet.",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "classify_by_activity.html#cli",
+    "href": "classify_by_activity.html#cli",
+    "title": "Tile-activity classification",
+    "section": "CLI",
+    "text": "CLI\nEnd-to-end pipeline writing per-tile labels and per-obsid summary CSVs.\n\nsource\n\nmain\ndef main()-&gt;None: # pragma: no cover\nCLI entry; prints the cap-wide summary.\n\nsource\n\n\nrun_pipeline\ndef run_pipeline(\n    coverage_csv:str | pathlib.Path, out_dir:str | pathlib.Path='outputs',\n    config:ClassifyConfig=ClassifyConfig(delta_bic=10.0, min_tiles=20, frac_zero_high=0.85, frac_zero_low=0.15, random_state=42, global_threshold=None),\n    version:str='v3.1'\n)-&gt;dict:\nRun the full classification pipeline and write CSVs to out_dir.\n\nManual entry point so python -m p4tools.classify_by_activity --coverage-csv ... works:",
+    "crumbs": [
+      "Tile-activity classification"
+    ]
+  },
+  {
+    "objectID": "examples.html",
+    "href": "examples.html",
+    "title": "Examples",
+    "section": "",
+    "text": "import pandas as pd\nfrom p4tools.io import (\n    get_blotch_catalog,\n    get_blotches_for_tile,\n    get_fan_catalog,\n    get_fans_for_tile,\n    get_region_names,\n)\nfrom p4tools.plotting import plot_blotches_for_tile, plot_fans_for_tile\nfrom p4tools.markings import Fan, Blotch\n\n\nblotches = get_blotch_catalog('v1')\nfans = get_fans_for_tile('80s', 'v1')  # v3 for this\n\n\nget_blotches_for_tile('80s', 'v3')\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ntile_id\nimage_x\nimage_y\nn_votes\nradius_1\nradius_2\nvote_ratio\n...\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n9380\nESP_011448_0950\nB0024a4\n26.06\nAPF000080s\n369.5\n18362.0\n4.0\n512.08\n384.06\n1.0\n...\n185.552\n1.0\n138.82556\n127.680593\n279.889716\n-3367.51901\n-84.780277\n-84.84121\n65.478392\n29\n\n\n\n\n1 rows × 24 columns\n\n\n\n\nfans.head()\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ndistance\ntile_id\nimage_x\nimage_y\nn_votes\nspread\nversion\n...\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n137158\nESP_011448_0950\nF025909\n84.48\n168.80\nAPF000080s\n26.91\n18140.73\n18\n20.93\n1\n...\n185.552\n1.0\n138.825539\n127.358295\n280.193080\n-3367.505762\n-84.777851\n-84.838813\n65.556417\n29\n\n\n137159\nESP_011448_0950\nF02590a\n85.14\n97.54\nAPF000080s\n49.08\n18258.54\n6\n25.92\n1\n...\n185.552\n1.0\n138.825539\n127.482002\n280.203359\n-3367.496453\n-84.776815\n-84.837788\n65.536248\n29\n\n\n137160\nESP_011448_0950\nF02590b\n82.90\n58.67\nAPF000080s\n111.50\n18205.77\n18\n28.49\n1\n...\n185.552\n1.0\n138.825539\n127.447992\n280.122584\n-3367.504162\n-84.778305\n-84.839261\n65.535784\n29\n\n\n137161\nESP_011448_0950\nF02590c\n79.00\n83.67\nAPF000080s\n139.47\n18145.31\n10\n17.41\n1\n...\n185.552\n1.0\n138.825539\n127.396216\n280.075757\n-3367.511393\n-84.779397\n-84.840341\n65.540949\n29\n\n\n137162\nESP_011448_0950\nF02590d\n75.80\n70.94\nAPF000080s\n169.71\n18280.73\n13\n21.39\n1\n...\n185.552\n1.0\n138.825539\n127.540728\n280.080872\n-3367.507926\n-84.778303\n-84.839259\n65.516853\n29\n\n\n\n\n5 rows × 25 columns\n\n\n\n\nBlotch.from_marking_id(\"B0024a4\").plot()\n\n\n\n\n\n\n\n\n\nfans['area'] = [Fan(row).area for _, row in fans.iterrows()]\n\n\nfans.query(\"marking_id == 'F025910'\").squeeze()\n\nobsid                     ESP_011448_0950\nmarking_id                        F025910\nangle                               84.78\ndistance                           227.48\ntile_id                        APF000080s\nimage_x                            673.95\nimage_y                          18328.19\nn_votes                                20\nspread                              22.13\nversion                                 1\nvote_ratio                            1.0\nx                                  673.95\ny                                  244.19\nx_angle                              0.09\ny_angle                               1.0\nl_s                               185.552\nmap_scale                             1.0\nnorth_azimuth                  138.825539\nBodyFixedCoordinateX           127.739446\nBodyFixedCoordinateY           279.560121\nBodyFixedCoordinateZ         -3367.544491\nPlanetocentricLatitude         -84.784963\nPlanetographicLatitude         -84.845842\nLongitude                        65.44291\nMY                                     29\narea                          9254.575622\nName: 137165, dtype: object\n\n\n\nfan = Fan.from_marking_id(\"F025910\", version='v1')  # don't forget to use version here, if you need to get to old catalog!\nfan\n\nFan.from_marking_id('F025910')  # tile_id='APF000080s', area=9254.575622432452\n\n\n\nfan.area\n\nnp.float64(9254.575622432452)\n\n\n\nfan.plot()\n\n\n\n\n\n\n\n\n\nfan.to_shapely().area  # using the shapely object's area calculation\n\n9254.1279\n\n\n\nfan.radius\n\nnp.float64(37.20899726662801)\n\n\n\nareas = [Fan(row).area for _, row in fans.iterrows()]\n\n\npd.Series(areas).sort_values(ascending=False).head(10)\n\n7     9254.575622\n48    6580.655978\n0     4837.742642\n8     4388.099137\n11    3676.285708\n21    3333.388541\n6     3310.657326\n15    2426.634151\n10    2373.369482\n5     2258.073369\ndtype: float64\n\n\n\nplot_fans_for_tile('80s')\n\n\n\n\n\n\n\n\n\npd.options.display.max_columns = None\n\n\nblotches.head()\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ntile_id\nimage_x\nimage_y\nn_votes\nradius_1\nradius_2\nvote_ratio\nx\ny\nx_angle\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n0\nESP_012079_0945\nB000000\n2.28\nAPF0000cia\n3330.27\n5573.00\n4\n22.13\n15.78\n1.00\n370.27\n93.00\n0.50\n0.10\n214.785\n0.25\n126.856883\n-67.239204\n257.001479\n-3370.630963\n-85.493625\n-85.546304\n104.661641\n29\n\n\n1\nESP_012079_0945\nB000001\n1.38\nAPF0000cia\n3593.60\n5706.40\n5\n25.55\n15.73\n0.55\n633.60\n226.40\n0.20\n0.05\n214.785\n0.25\n126.856883\n-67.166591\n257.008699\n-3370.633997\n-85.493821\n-85.546498\n104.646095\n29\n\n\n2\nESP_012079_0945\nB000004\n7.16\nAPF0000cic\n98.10\n34394.70\n10\n84.54\n48.33\n1.00\n98.10\n418.70\n0.58\n0.18\n214.785\n0.25\n126.856883\n-65.402430\n263.908435\n-3370.353989\n-85.387847\n-85.441752\n103.918757\n29\n\n\n3\nESP_012079_0945\nB000005\n81.00\nAPF0000cic\n825.58\n34203.38\n8\n51.92\n35.12\n1.00\n825.58\n227.38\n0.16\n0.97\n214.785\n0.25\n126.856883\n-65.252200\n263.799557\n-3370.366323\n-85.390259\n-85.444136\n103.893535\n29\n\n\n4\nESP_012079_0945\nB000006\n14.66\nAPF0000cic\n152.67\n34155.33\n3\n184.94\n71.25\n1.00\n152.67\n179.33\n0.93\n0.25\n214.785\n0.25\n126.856883\n-65.411364\n263.848867\n-3370.358955\n-85.388794\n-85.442688\n103.923605\n29\n\n\n\n\n\n\n\n\ndef get_area_m2(row):\n    \"\"\"Compute area in square meters for a blotch row.\"\"\"\n    return Blotch(row).area * (row['map_scale'] ** 2)\n\n\nblotches['area_m2'] = blotches.apply(get_area_m2, axis=1)\n\n\nblotches.sort_values(by='area_m2', ascending=False).head(5).T\n\n\n\n\n\n\n\n\n247015\n151122\n213497\n247017\n217096\n\n\n\n\nobsid\nESP_011420_0930\nESP_020568_0950\nESP_020049_0985\nESP_011420_0930\nESP_020321_0935\n\n\nmarking_id\nB044091\nB02b30d\nB03aeca\nB044093\nB03bda7\n\n\nangle\n0.65\n176.24\n17.56\n90.89\n169.78\n\n\ntile_id\nAPF0000ftb\nAPF0000pqj\nAPF0000jcv\nAPF0000ftb\nAPF0000tde\n\n\nimage_x\n445.72\n406.17\n656.06\n287.17\n444.79\n\n\nimage_y\n12310.0\n28843.33\n7894.17\n12381.33\n16118.0\n\n\nn_votes\n3\n3\n13\n3\n4\n\n\nradius_1\n307.83\n450.63\n190.52\n165.95\n335.92\n\n\nradius_2\n231.66\n356.56\n144.14\n133.42\n251.94\n\n\nvote_ratio\n1.0\n1.0\n1.0\n1.0\n1.0\n\n\nx\n445.72\n406.17\n656.06\n287.17\n444.79\n\n\ny\n254.0\n347.33\n222.17\n325.33\n226.0\n\n\nx_angle\n0.33\n-0.33\n0.94\n0.07\n-0.98\n\n\ny_angle\n0.03\n0.39\n0.3\n0.84\n0.18\n\n\nl_s\n184.304\n199.362\n176.075\n184.304\n188.091\n\n\nmap_scale\n1.0\n0.5\n1.0\n1.0\n0.5\n\n\nnorth_azimuth\n157.311404\n122.217013\n107.843834\n157.311404\n136.913825\n\n\nBodyFixedCoordinateX\n-108.319074\n-292.548434\n218.993402\n-108.419596\n-33.483452\n\n\nBodyFixedCoordinateY\n138.086757\n-0.475303\n-451.601655\n138.223638\n210.518459\n\n\nBodyFixedCoordinateZ\n-3377.673253\n-3368.925447\n-3343.091928\n-3377.663493\n-3374.783449\n\n\nPlanetocentricLatitude\n-87.025617\n-85.037032\n-81.461947\n-87.022737\n-86.385774\n\n\nPlanetographicLatitude\n-87.060467\n-85.094998\n-81.56071\n-87.057621\n-86.428085\n\n\nLongitude\n128.111619\n180.093088\n295.869955\n128.109861\n99.037327\n\n\nMY\n29\n30\n30\n29\n30\n\n\narea_m2\n224032.934242\n126195.132302\n86273.012533\n69558.156881\n66469.569807\n\n\n\n\n\n\n\n\nBlotch.from_marking_id(\"B0024a4\", with_center=True, color='green').plot()\n\n\n\n\n\n\n\n\n\nget_blotches_for_tile(\"80s\", version='v1')\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ntile_id\nimage_x\nimage_y\nn_votes\nradius_1\nradius_2\nvote_ratio\nx\ny\nx_angle\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n177822\nESP_011448_0950\nB031fa6\n0.0\nAPF000080s\n146.33\n18533.0\n3\n10.0\n10.0\n1.0\n146.33\n449.0\n0.67\n0.33\n185.552\n1.0\n138.825539\n127.786289\n280.175948\n-3367.493077\n-84.775102\n-84.836095\n65.482603\n29\n\n\n\n\n\n\n\n\nblotches = get_blotches_for_tile('ftb')\n\n\ncollection = [\n            Blotch(blotch, with_center=False, color='green')\n            for _, blotch in blotches.iterrows()\n        ]\n\n\n[b.area for b in collection]\n\n[8527.599417483081,\n 462.9796509521814,\n 1351.0356374909834,\n 454.60353661918026,\n 555.9104749194903,\n 588.2757907553031,\n 1078.194598712017,\n 1524.9139944077483,\n 410.4179784242359,\n 383.47379487145776,\n 338.12584739468514,\n 314.1592653589793,\n 558.7388507855172,\n 566.640270468561,\n 882.7341285836209,\n 356.0115626901025,\n 347.2741652019387,\n 538.3323215448594,\n 659.3624926836716,\n 394.86803726676254,\n 461.63819088909855,\n 381.75440121214797,\n 364.82373008342194,\n 366.42028746997624,\n 344.0043955680823,\n 370.0698756556515,\n 1961.7226077592,\n 4867.553812341817,\n 1799.3597587141685,\n 655.2074222400337,\n 320.7566099315179,\n 530.0466850802817,\n 394.1206523744735,\n 1049.0955967581415,\n 806.0723563321919,\n 373.86931781090294,\n 314.1592653589793,\n 341.80528071056955,\n 404.7250983766658,\n 621.4598056366414,\n 727.8630355396049,\n 384.4351222234562,\n 590.7601622257619,\n 453.9500853472336,\n 69558.15688117163,\n 3649.2749688876993,\n 3076.005623760799,\n 224032.93424202612]\n\n\n\nrois = get_region_names()\n\n\nrois.roi_name.unique()\n\narray(['Macclesfield', 'unknown', 'Starburst', 'Manhattan_Classic',\n       'Wellington', 'Albany', 'Bilbao', 'Ithaca', 'Portsmouth', 'Pisaq',\n       'Manhattan_Frontinella', 'BuenosAires', 'Inca_City_Ridges',\n       'Inca_City', 'Giza', 'Potsdam', 'Troy', 'Oswego_Edge', 'Halifax',\n       'Caterpillar', 'Rochester', 'Manhattan_Cracks', 'Schenectady',\n       'Binghamton', 'Atka', 'Cortland', 'Geneseo', 'Manhattan2'],\n      dtype=object)\n\n\n\nrois.query(\"roi_name=='Giza'\").describe()\n\n\n\n\n\n\n\n\nlat_IND\nlon_IND\nminimal_distance\nlat_WORD\nlon_WORD\nMY\n\n\n\n\ncount\n35.000000\n35.000000\n35.000000\n3.500000e+01\n3.500000e+01\n35.000000\n\n\nmean\n-84.829069\n66.071666\n6.318094\n-8.482000e+01\n6.570000e+01\n29.057143\n\n\nstd\n0.066423\n0.991527\n11.242504\n2.883665e-14\n1.441832e-14\n1.027357\n\n\nmin\n-84.979100\n65.637800\n0.720371\n-8.482000e+01\n6.570000e+01\n28.000000\n\n\n25%\n-84.834950\n65.736450\n1.254355\n-8.482000e+01\n6.570000e+01\n28.000000\n\n\n50%\n-84.812200\n65.774200\n1.487853\n-8.482000e+01\n6.570000e+01\n29.000000\n\n\n75%\n-84.809350\n65.799750\n4.005964\n-8.482000e+01\n6.570000e+01\n30.000000\n\n\nmax\n-84.581900\n69.890400\n44.631912\n-8.482000e+01\n6.570000e+01\n31.000000\n\n\n\n\n\n\n\n\nfans = get_fan_catalog()\nblotches = get_blotch_catalog()\n\n\nfansperobsid = fans.groupby(\"obsid\").size()\n\n\nfansperobsid.head()\n\nobsid\nESP_011296_0975    4500\nESP_011341_0980     457\nESP_011348_0950       6\nESP_011350_0945    1108\nESP_011351_0945    1643\ndtype: int64\n\n\n\nblotchesperobsid = blotches.groupby(\"obsid\").size()\nblotchesperobsid.head()\n\nobsid\nESP_011296_0975    1012\nESP_011341_0980     281\nESP_011348_0950     198\nESP_011350_0945     626\nESP_011351_0945    1279\ndtype: int64\n\n\n\ndf = fansperobsid.to_frame()\n\n\ndf[\"blotches counts\"] = blotchesperobsid\n\n\ndf.columns = [\"fan_count_per_obsid\", \"blotch_count_per_obsid\"]\ndf.head()\n\n\n\n\n\n\n\n\nfan_count_per_obsid\nblotch_count_per_obsid\n\n\nobsid\n\n\n\n\n\n\nESP_011296_0975\n4500\n1012.0\n\n\nESP_011341_0980\n457\n281.0\n\n\nESP_011348_0950\n6\n198.0\n\n\nESP_011350_0945\n1108\n626.0\n\n\nESP_011351_0945\n1643\n1279.0\n\n\n\n\n\n\n\n\nfan_counts_per_tile = fans.groupby(\"tile_id\").size()\nfan_counts_per_tile.head()\n\ntile_id\nAPF0000001    3\nAPF0000006    4\nAPF0000009    1\nAPF000000c    4\nAPF000000f    1\ndtype: int64\n\n\n\nblotch_counts_per_tile = blotches.groupby(\"tile_id\").size()\nblotch_counts_per_tile.head()\n\ntile_id\nAPF0000001    1\nAPF0000002    2\nAPF0000004    4\nAPF0000005    5\nAPF0000006    7\ndtype: int64\n\n\n\nfan_counts_per_tile.name = \"fans\"\n\n\nblotch_counts_per_tile.name = \"blotches\"\n\n\ndf = pd.DataFrame(fan_counts_per_tile)\n\n\ndf[\"blotches\"] = blotch_counts_per_tile\ndf.head()\n\n\n\n\n\n\n\n\nfans\nblotches\n\n\ntile_id\n\n\n\n\n\n\nAPF0000001\n3\n1.0\n\n\nAPF0000006\n4\n7.0\n\n\nAPF0000009\n1\n26.0\n\n\nAPF000000c\n4\n3.0\n\n\nAPF000000f\n1\n32.0\n\n\n\n\n\n\n\n\ndf[(df.fans + df.blotches) &gt; 100].head()\n\n\n\n\n\n\n\n\nfans\nblotches\n\n\ntile_id\n\n\n\n\n\n\nAPF00002zj\n99\n4.0\n\n\nAPF000061m\n133\n52.0\n\n\nAPF00006mg\n98\n7.0\n\n\nAPF00006mt\n118\n2.0\n\n\nAPF00006mv\n95\n19.0\n\n\n\n\n\n\n\n\nThe input data products for the P4 project are the `COLOR products one can find on the uahirise.org website!\n\nbuffalo = \"ESP_011486_0980_COLOR ESP_011987_0975_COLOR ESP_012198_0975_COLOR ESP_012277_0975_COLOR ESP_012620_0975_COLOR\".split()\n\n\nbuffalo = [i.rstrip(\"_COLOR\") for i in buffalo]\n\n\np4_buffalo = fans[fans.obsid.isin(buffalo)].obsid.unique()\n\n\nfans[fans.obsid.isin(p4_buffalo)].groupby(\"obsid\").size()\n\nobsid\nESP_011486_0980    261\nESP_012277_0975     20\nESP_012620_0975     30\ndtype: int64\n\n\n\nfans[fans.obsid.isin(p4_buffalo)][[\"l_s\", \"obsid\"]].drop_duplicates()\n\n\n\n\n\n\n\n\nl_s\nobsid\n\n\n\n\n15583\n187.254\nESP_011486_0980\n\n\n48242\n224.333\nESP_012277_0975\n\n\n85398\n241.144\nESP_012620_0975\n\n\n\n\n\n\n\n\nfans[fans.tile_id.str.contains(\"r8y\")]\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ndistance\ntile_id\nimage_x\nimage_y\nn_votes\nspread\nversion\nvote_ratio\nx\ny\nx_angle\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n106534\nESP_020242_0945\nF01a026\n34.16\n171.27\nAPF0000r8y\n505.45\n13038.68\n19.0\n41.85\n1\n1.0\n505.45\n434.68\n0.82\n0.56\n184.557\n1.0\n143.67511\n-63.562264\n265.129449\n-3370.242420\n-85.375019\n-85.429073\n103.481673\n30\n\n\n106535\nESP_020242_0945\nF01a027\n33.30\n90.38\nAPF0000r8y\n249.21\n12781.71\n14.0\n25.57\n1\n1.0\n249.21\n177.71\n0.83\n0.55\n184.557\n1.0\n143.67511\n-63.936682\n265.103685\n-3370.250040\n-85.373975\n-85.428040\n103.559434\n30\n\n\n106536\nESP_020242_0945\nF01a028\n38.19\n86.92\nAPF0000r8y\n387.19\n12617.75\n16.0\n33.44\n1\n1.0\n387.19\n13.75\n0.78\n0.62\n184.557\n1.0\n143.67511\n-63.932326\n264.882174\n-3370.272468\n-85.377659\n-85.431682\n103.569463\n30\n\n\n106537\nESP_020242_0945\nF01a029\n39.19\n54.32\nAPF0000r8y\n73.62\n13114.42\n12.0\n30.04\n1\n1.0\n73.62\n510.42\n0.77\n0.63\n184.557\n1.0\n143.67511\n-63.860251\n265.482502\n-3370.212467\n-85.368005\n-85.422140\n103.525207\n30\n\n\n106538\nESP_020242_0945\nF01a02a\n36.11\n106.09\nAPF0000r8y\n30.86\n13128.72\n18.0\n36.90\n1\n1.0\n30.86\n524.72\n0.81\n0.59\n184.557\n1.0\n143.67511\n-63.885407\n265.522804\n-3370.208488\n-85.367238\n-85.421382\n103.528361\n30\n\n\n106539\nESP_020242_0945\nF01a02b\n76.52\n63.91\nAPF0000r8y\n32.33\n13128.33\n3.0\n46.96\n1\n1.0\n32.33\n524.33\n0.23\n0.96\n184.557\n1.0\n143.67511\n-63.884475\n265.521496\n-3370.208625\n-85.367264\n-85.421407\n103.528235\n30\n\n\n106540\nESP_020242_0945\nF01a02c\n32.72\n77.35\nAPF0000r8y\n204.00\n13205.53\n15.0\n36.85\n1\n1.0\n204.00\n601.53\n0.84\n0.54\n184.557\n1.0\n143.67511\n-63.695785\n265.464328\n-3370.212856\n-85.368953\n-85.423077\n103.492539\n30\n\n\n\n\n\n\n\n\nplot_fans_for_tile(\"r8y\")\n\n\n\n\n\n\n\n\n\nblotches = get_blotches_for_tile(\"ftb\")  # no blotches, that's why below plot is empty\n\n\nblotches.head()\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ntile_id\nimage_x\nimage_y\nn_votes\nradius_1\nradius_2\nvote_ratio\nx\ny\nx_angle\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n7600\nESP_011420_0930\nB001db0\n65.97\nAPF0000ftb\n694.83\n12074.33\n3.0\n60.16\n45.12\n1.00\n694.83\n18.33\n0.34\n0.84\n184.304\n1.0\n157.311464\n-108.219785\n137.763762\n-3377.691341\n-87.030969\n-87.065756\n128.151268\n29\n\n\n7601\nESP_011420_0930\nB001db1\n76.61\nAPF0000ftb\n495.83\n12276.83\n6.0\n12.95\n11.38\n1.00\n495.83\n220.83\n0.40\n0.63\n184.304\n1.0\n157.311464\n-108.291561\n138.031307\n-3377.676832\n-87.026646\n-87.061484\n128.115726\n29\n\n\n7602\nESP_011420_0930\nB001db2\n50.11\nAPF0000ftb\n284.75\n12448.50\n4.0\n24.16\n17.80\n1.00\n284.75\n392.50\n0.60\n0.64\n184.304\n1.0\n157.311464\n-108.388342\n138.278643\n-3377.662577\n-87.022330\n-87.057219\n128.090771\n29\n\n\n7603\nESP_011420_0930\nB001db3\n39.37\nAPF0000ftb\n236.70\n12400.62\n8.0\n13.06\n11.08\n1.00\n236.70\n344.62\n0.63\n0.53\n184.304\n1.0\n157.311464\n-108.452364\n138.261137\n-3377.660639\n-87.021893\n-87.056787\n128.110721\n29\n\n\n7604\nESP_011420_0930\nB001db4\n51.89\nAPF0000ftb\n214.67\n12296.33\n6.0\n14.54\n12.17\n0.66\n214.67\n240.33\n0.57\n0.60\n184.304\n1.0\n157.311464\n-108.521524\n138.183271\n-3377.662441\n-87.022209\n-87.057098\n128.144138\n29\n\n\n\n\n\n\n\n\nplot_blotches_for_tile(\"ftb\")\n\n\n\n\n\n\n\n\n\nget_fans_for_tile(\"APF0000r8y\")\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ndistance\ntile_id\nimage_x\nimage_y\nn_votes\nspread\nversion\nvote_ratio\nx\ny\nx_angle\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n106534\nESP_020242_0945\nF01a026\n34.16\n171.27\nAPF0000r8y\n505.45\n13038.68\n19.0\n41.85\n1\n1.0\n505.45\n434.68\n0.82\n0.56\n184.557\n1.0\n143.67511\n-63.562264\n265.129449\n-3370.242420\n-85.375019\n-85.429073\n103.481673\n30\n\n\n106535\nESP_020242_0945\nF01a027\n33.30\n90.38\nAPF0000r8y\n249.21\n12781.71\n14.0\n25.57\n1\n1.0\n249.21\n177.71\n0.83\n0.55\n184.557\n1.0\n143.67511\n-63.936682\n265.103685\n-3370.250040\n-85.373975\n-85.428040\n103.559434\n30\n\n\n106536\nESP_020242_0945\nF01a028\n38.19\n86.92\nAPF0000r8y\n387.19\n12617.75\n16.0\n33.44\n1\n1.0\n387.19\n13.75\n0.78\n0.62\n184.557\n1.0\n143.67511\n-63.932326\n264.882174\n-3370.272468\n-85.377659\n-85.431682\n103.569463\n30\n\n\n106537\nESP_020242_0945\nF01a029\n39.19\n54.32\nAPF0000r8y\n73.62\n13114.42\n12.0\n30.04\n1\n1.0\n73.62\n510.42\n0.77\n0.63\n184.557\n1.0\n143.67511\n-63.860251\n265.482502\n-3370.212467\n-85.368005\n-85.422140\n103.525207\n30\n\n\n106538\nESP_020242_0945\nF01a02a\n36.11\n106.09\nAPF0000r8y\n30.86\n13128.72\n18.0\n36.90\n1\n1.0\n30.86\n524.72\n0.81\n0.59\n184.557\n1.0\n143.67511\n-63.885407\n265.522804\n-3370.208488\n-85.367238\n-85.421382\n103.528361\n30\n\n\n106539\nESP_020242_0945\nF01a02b\n76.52\n63.91\nAPF0000r8y\n32.33\n13128.33\n3.0\n46.96\n1\n1.0\n32.33\n524.33\n0.23\n0.96\n184.557\n1.0\n143.67511\n-63.884475\n265.521496\n-3370.208625\n-85.367264\n-85.421407\n103.528235\n30\n\n\n106540\nESP_020242_0945\nF01a02c\n32.72\n77.35\nAPF0000r8y\n204.00\n13205.53\n15.0\n36.85\n1\n1.0\n204.00\n601.53\n0.84\n0.54\n184.557\n1.0\n143.67511\n-63.695785\n265.464328\n-3370.212856\n-85.368953\n-85.423077\n103.492539\n30\n\n\n\n\n\n\n\n\nget_blotches_for_tile(\"5g\")\n\n\n\n\n\n\n\n\nobsid\nmarking_id\nangle\ntile_id\nimage_x\nimage_y\nn_votes\nradius_1\nradius_2\nvote_ratio\nx\ny\nx_angle\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\nMY\n\n\n\n\n69911\nESP_012254_1065\nB011117\n37.88\nAPF000005g\n407.47\n26519.18\n61.0\n21.72\n16.57\n1.00\n407.47\n215.18\n0.69\n0.59\n223.218\n0.25\n100.857783\n900.773236\n-336.044800\n-3241.529659\n-73.480014\n-73.663520\n339.541336\n29\n\n\n69912\nESP_012254_1065\nB011118\n37.20\nAPF000005g\n462.80\n26382.70\n54.0\n21.64\n15.34\n0.85\n462.80\n78.70\n0.72\n0.57\n223.218\n0.25\n100.857783\n900.738239\n-336.039608\n-3241.539736\n-73.480625\n-73.664125\n339.540897\n29\n\n\n69913\nESP_012254_1065\nB011119\n35.34\nAPF000005g\n542.32\n26364.61\n59.0\n19.22\n14.75\n1.00\n542.32\n60.61\n0.65\n0.54\n223.218\n0.25\n100.857783\n900.724423\n-336.054456\n-3241.542130\n-73.480763\n-73.664261\n339.539780\n29\n\n\n69914\nESP_012254_1065\nB01111a\n41.62\nAPF000005g\n134.61\n26914.31\n55.0\n22.07\n15.63\n1.00\n134.61\n610.31\n0.69\n0.62\n223.218\n0.25\n100.857783\n900.888886\n-336.035590\n-3241.498827\n-73.478158\n-73.661682\n339.544259\n29\n\n\n69915\nESP_012254_1065\nB01111b\n15.11\nAPF000005g\n424.85\n26942.25\n35.0\n14.20\n11.73\n1.00\n424.85\n638.25\n0.73\n0.31\n223.218\n0.25\n100.857783\n900.857708\n-336.101545\n-3241.501188\n-73.478269\n-73.661792\n339.539928\n29\n\n\n69916\nESP_012254_1065\nB01111c\n21.95\nAPF000005g\n755.74\n26755.94\n53.0\n15.90\n12.94\n1.00\n755.74\n451.94\n0.68\n0.39\n223.218\n0.25\n100.857783\n900.777473\n-336.149418\n-3241.518687\n-73.479303\n-73.662815\n339.535583\n29\n\n\n69917\nESP_012254_1065\nB01111d\n4.13\nAPF000005g\n313.37\n26945.62\n26.0\n14.23\n12.12\n1.00\n313.37\n641.62\n0.58\n0.23\n223.218\n0.25\n100.857783\n900.872572\n-336.077977\n-3241.499324\n-73.478168\n-73.661692\n339.541553\n29",
+    "crumbs": [
+      "Examples"
+    ]
+  },
+  {
+    "objectID": "production.io.html",
+    "href": "production.io.html",
+    "title": "Pipeline IO",
+    "section": "",
+    "text": "source\n\nget_ground_projection_root\ndef get_ground_projection_root()-&gt;Path | None:\nCall self as a function.\n\nsource\n\n\nget_data_root\ndef get_data_root()-&gt;Path | None:\nCall self as a function.\n\nsource\n\n\nset_database_path\ndef set_database_path(\n    dbfolder, # Path to where planet4 will store clustering results by default.\n)-&gt;None:\nUse to write the database path into the config.\n\nsource\n\n\nget_config\ndef get_config()-&gt;ConfigParser | None: # Dictionary with the content of the configpath file, or None if config\nfile does not exist.\nRead the configfile and return config dict.\n\nsource\n\n\nget_random_tile\ndef get_random_tile(\n    db:str | None=None, # Path to Parquet database. Resolved from config if *None*.\n    tolerance:float=0.5, # Fractional tolerance around the mean (default 0.5 = within 50%).\n)-&gt;dict: # Keys: ``image_id``, ``image_name``, ``markings``, ``avg``.\nPick a random tile with a near-average marking count.\n\nsource\n\n\nget_db_stats\ndef get_db_stats(\n    db:str | None=None, # Path to Parquet database. Resolved from config if *None*.\n    top:int=10, # Number of top tiles/obsids to include.\n)-&gt;dict: # Keys: ``n_markings``, ``n_tiles``, ``n_obsids``,\n``avg_per_tile``, ``avg_per_obsid``,\n``type_counts`` (dict), ``top_tiles`` (DataFrame),\n``top_obsids`` (DataFrame).\nCompute summary statistics for a raw Planet Four database.\n\nsource\n\n\nresolve_dbname\ndef resolve_dbname(\n    db:str | None=None, # Explicit path to the Parquet database.  If *None*, the path is read\n    # from ``[planet4_db] dbname`` in the config file.\n)-&gt;str: # Resolved database path.\nResolve the database path from an explicit argument or the config file.\n\nsource\n\n\ncheck_and_pad_id\ndef check_and_pad_id(\n    imgid, # The ID of the individual image.\n)-&gt;str | None: # The padded image ID if it was provided, otherwise None.\nChecks the Image ID and pads it if necessary.\n\nsource\n\n\nPathManager\ndef PathManager(\n    id_:str='', datapath:str='clustering', suffix:str='.csv', obsid:str='', cut:float=0.5, extra_path:str=''\n):\nManage file paths and folders related to the analysis pipeline.\nLevel definitions: * L0 : Raw output of Planet Four * L1A : Clustering of Blotches and Fans on their own * L1B : Clustered blotches and fans combined into final fans, final blotches, and fnotches that need to have a cut applied for the decision between fans or blotches. * L1C : Derived database where a cut has been applied for fnotches to become either fan or blotch.\n\nsource\n\n\nDBManager\ndef DBManager(\n    dbname:NoneType=None, # Filename of database file to use.\n    obsid:NoneType=None\n):\nAccess class for database activities.\nProvides easy access to often used data items.",
+    "crumbs": [
+      "Pipeline IO"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "p4tools",
+    "section": "",
+    "text": "PyPI version",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "p4tools",
+    "section": "Installation",
+    "text": "Installation\npip install p4tools",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "index.html#features",
+    "href": "index.html#features",
+    "title": "p4tools",
+    "section": "Features",
+    "text": "Features\n\nProvide easy access to the Planet Four catalog data.\n\nData will be automatically downloaded and cached by the pooch library.\nThe first time it will take a few seconds to download the data, the next time it will be using the cache.\n\nProvide automatic downloading of the png tiles of the catalog.\nProvide plotting tools\n\n\nNote: The original data for input to the Planet Four projects were these _COLOR products like this one: https://hirise-pds.lpl.arizona.edu/PDS/EXTRAS/RDR/ESP/ORB_011400_011499/ESP_011486_0980/ESP_011486_0980_IRB.NOMAP.browse.jpg (not the browse product though, but the full size of course)",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "index.html#paper",
+    "href": "index.html#paper",
+    "title": "p4tools",
+    "section": "Paper",
+    "text": "Paper\nThe underlying paper for this work is:\n\nAye, K.-M., Schwamb, M.E., Portyankina, G., Hansen, C.J., McMaster, A., Miller, G.R.M., Carstensen, B., Snyder, C., Parrish, M., Lynn, S., Mai, C., Miller, D., Simpson, R.J., Smith, A.M., 2019. Planet Four: Probing springtime winds on Mars by mapping the southern polar CO2 jet deposits. Icarus 319, 558–598. https://doi.org/10.1016/j.icarus.2018.08.018",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "index.html#raw-classification-catalog-pipeline-v4.0",
+    "href": "index.html#raw-classification-catalog-pipeline-v4.0",
+    "title": "p4tools",
+    "section": "Raw classification → catalog pipeline (v4.0+)",
+    "text": "Raw classification → catalog pipeline (v4.0+)\nThe full path from a raw Zooniverse / Panoptes data export to the final fan/blotch catalog passes through three modules in this order:\npanoptes_extract  →  production.cleaning  →  production.{dbscan,fnotching,catalog}\n   (raw CSV)         (canonicalisation)        (the actual reduction)\n\np4tools.panoptes_extract.extract_panoptes_classifications(csv) — parses the per-classification annotations JSON from a Panoptes planet-four-classifications.csv (workflow 12978), enriches with metadata + tile coords + image URLs, and writes a flat parquet (panoptes_workflow_12978.parquet).\np4tools.production.cleaning.clean_classifications(df, source=...) — automatically called by extract_panoptes_classifications for the Panoptes path, but also exposed as a standalone step for the legacy zooniverse_v1 interface. Drops dirt and out-of-frame markings, canonicalises blotch and fan angles, and adds the x_angle / y_angle features the clusterer reads.\np4tools.production.{dbscan, fnotching, catalog} — the catalog reduction proper: DBSCAN clustering (L0 → L1A), fan/blotch fnotching (L1A → L1B), and cut-threshold catalog production (L1B → L1C). These modules are unchanged from v3.x.\n\nOlder v3.x catalogs were produced from a queryable parquet that already had cleaning baked in by the legacy planet4.reduction CLI. v4.0 makes the cleaning step a first-class p4tools module so the full pipeline is reproducible from any raw source.\n\nfrom p4tools import io\n\n\n# get the catalogs\nfans = io.get_fan_catalog()\nblotches = io.get_blotch_catalog()\nfans.head()\n\n\n\n\n\n\n\n\nmarking_id\nangle\ndistance\ntile_id\nimage_x\nimage_y\nn_votes\nobsid\nspread\nversion\n...\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\n\n\n\n\n0\nF000000\n205.56\n179.71\nAPF0000ci9\n2270.76\n24336.16\n35\nESP_012079_0945\n88.03\n1\n...\n-0.43\n214.785\n0.25\n126.856883\n-65.804336\n261.407884\n-3370.504345\n-85.427383\n-85.480829\n104.129523\n\n\n1\nF000001\n185.39\n179.62\nAPF0000cia\n3391.21\n5640.60\n15\nESP_012079_0945\n21.35\n1\n...\n-0.09\n214.785\n0.25\n126.856883\n-67.219114\n257.011589\n-3370.631413\n-85.493546\n-85.546226\n104.656897\n\n\n2\nF000002\n184.98\n500.27\nAPF0000cia\n3509.96\n5876.70\n10\nESP_012079_0945\n18.91\n1\n...\n-0.09\n214.785\n0.25\n126.856883\n-67.170611\n257.055226\n-3370.630794\n-85.493039\n-85.545725\n104.644396\n\n\n3\nF000004\n184.29\n105.43\nAPF0000cia\n3716.27\n5824.50\n6\nESP_012079_0945\n26.41\n1\n...\n-0.07\n214.785\n0.25\n126.856883\n-67.127761\n257.024926\n-3370.635002\n-85.493723\n-85.546401\n104.637107\n\n\n4\nF000005\n189.42\n109.50\nAPF0000cia\n3452.17\n6033.00\n3\nESP_012079_0945\n22.58\n1\n...\n-0.16\n214.785\n0.25\n126.856883\n-67.169940\n257.096267\n-3370.628302\n-85.492368\n-85.545061\n104.642019\n\n\n\n\n5 rows × 24 columns\n\n\n\n\n# get fans for a given tile_id\nfans_for_tile = io.get_fans_for_tile(\"APF0000cro\")\nfans_for_tile.head()\n\n\n\n\n\n\n\n\nmarking_id\nangle\ndistance\ntile_id\nimage_x\nimage_y\nn_votes\nobsid\nspread\nversion\n...\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\n\n\n\n\n639\nF00028e\n176.82\n357.51\nAPF0000cro\n1904.17\n469.07\n30\nESP_012079_0945\n29.52\n1\n...\n0.06\n214.785\n0.25\n126.856883\n-68.025795\n255.956937\n-3370.658673\n-85.507336\n-85.559856\n104.883467\n\n\n640\nF00028f\n177.09\n122.21\nAPF0000cro\n1948.37\n602.24\n25\nESP_012079_0945\n22.86\n1\n...\n0.05\n214.785\n0.25\n126.856883\n-68.003644\n255.983513\n-3370.657733\n-85.506997\n-85.559521\n104.877359\n\n\n641\nF000290\n177.02\n137.73\nAPF0000cro\n1666.29\n290.83\n24\nESP_012079_0945\n19.18\n1\n...\n0.05\n214.785\n0.25\n126.856883\n-68.096623\n255.937481\n-3370.658914\n-85.507347\n-85.559867\n104.899357\n\n\n642\nF000291\n178.83\n97.55\nAPF0000cro\n1875.95\n400.38\n16\nESP_012079_0945\n35.51\n1\n...\n0.02\n214.785\n0.25\n126.856883\n-68.038458\n255.943748\n-3370.659367\n-85.507498\n-85.560016\n104.886848\n\n\n643\nF000292\n178.56\n108.57\nAPF0000cro\n2316.12\n491.00\n4\nESP_012079_0945\n52.76\n1\n...\n0.03\n214.785\n0.25\n126.856883\n-67.928961\n255.925385\n-3370.666710\n-85.508282\n-85.560791\n104.864970\n\n\n\n\n5 rows × 24 columns\n\n\n\n\nMetadata\nMetadata for the HiRISE observions that were used for the input data to the project:\n\n# get the metadata of the HiRISE images\nmetadata = io.get_meta_data()\n\n\nmetadata.head()\n\n\n\n\n\n\n\n\nOBSERVATION_ID\nIMAGE_CENTER_LATITUDE\nIMAGE_CENTER_LONGITUDE\nSOLAR_LONGITUDE\nSTART_TIME\nmap_scale\nnorth_azimuth\n# of tiles\n\n\n\n\n0\nESP_011296_0975\n-82.1965\n225.2530\n178.833\n2008-12-23 16:15:26\n1.0\n110.600107\n91\n\n\n1\nESP_011341_0980\n-81.7969\n76.1304\n180.809\n2008-12-27 04:25:02\n0.5\n110.208923\n126\n\n\n2\nESP_011348_0950\n-85.0427\n259.0940\n181.117\n2008-12-27 17:29:17\n1.0\n123.624057\n91\n\n\n3\nESP_011350_0945\n-85.2160\n181.4150\n181.205\n2008-12-27 21:14:01\n0.5\n99.672793\n126\n\n\n4\nESP_011351_0945\n-85.2157\n181.5480\n181.249\n2008-12-27 23:05:54\n1.0\n127.960688\n91\n\n\n\n\n\n\n\n\n# get the lat/lon or BodyFixedcoordinates of the tiles\ncoords = io.get_tile_coords()\ncoords.head()\n\n\n\n\n\n\n\n\nx_tile\ny_tile\nx_hirise\ny_hirise\nPlanetocentricLatitude\nPlanetographicLatitude\nPositiveEast360Longitude\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\ntile_id\nobsid\n\n\n\n\n0\n1\n1\n420.0\n324.0\n-85.504144\n-85.556701\n104.952104\n-68.380674\n256.056147\n-3370.636698\nAPF0000cwz\nESP_012079_0945\n\n\n1\n1\n2\n420.0\n872.0\n-85.502300\n-85.554878\n104.934805\n-68.331337\n256.181661\n-3370.628630\nAPF0000ck9\nESP_012079_0945\n\n\n2\n1\n3\n420.0\n1420.0\n-85.500454\n-85.553054\n104.917486\n-68.281853\n256.307249\n-3370.620295\nAPF0000cty\nESP_012079_0945\n\n\n3\n1\n4\n420.0\n1968.0\n-85.498607\n-85.551228\n104.900198\n-68.232522\n256.433112\n-3370.615690\nAPF0000ciy\nESP_012079_0945\n\n\n4\n1\n5\n420.0\n2516.0\n-85.496762\n-85.549404\n104.882968\n-68.183281\n256.558509\n-3370.606455\nAPF0000cwp\nESP_012079_0945\n\n\n\n\n\n\n\n\n\nImage tiles\nThe png tiles of the HiRISE images are automatically downloaded and cached by the pooch library.\n\n# get the urls of the tiles\ntile_urls = io.get_tile_urls()\ntile_urls.head()\n\n\n\n\n\n\n\n\ntile_id\ntile_url\n\n\n\n\n0\nAPF0000coq\nhttp://www.planetfour.org/subjects/standard/50...\n\n\n1\nAPF0000cro\nhttp://www.planetfour.org/subjects/standard/50...\n\n\n2\nAPF0000cs6\nhttp://www.planetfour.org/subjects/standard/50...\n\n\n3\nAPF0000co1\nhttp://www.planetfour.org/subjects/standard/50...\n\n\n4\nAPF0000cpd\nhttp://www.planetfour.org/subjects/standard/50...\n\n\n\n\n\n\n\n\n# or get the url for a tile id\nio.get_url_for_tile(\"APF0000cro\")\n\n'http://www.planetfour.org/subjects/standard/50e742bf5e2ed212400040a4.jpg'\n\n\n\n# get the png as numpy array:\nimg = io.get_subframe_for_tile(\"APF0000cro\")\nimg\n\narray([[[146,   1,   8],\n        [146,   1,   6],\n        [145,   0,   5],\n        ...,\n        [116,   3,   0],\n        [115,   1,   0],\n        [115,   3,   1]],\n\n       [[147,   2,   7],\n        [146,   1,   6],\n        [145,   0,   2],\n        ...,\n        [119,   1,   0],\n        [119,   1,   0],\n        [117,   2,   0]],\n\n       [[145,   3,   2],\n        [145,   1,   1],\n        [147,   0,   0],\n        ...,\n        [125,   0,   0],\n        [124,   0,   0],\n        [125,   0,   0]],\n\n       ...,\n\n       [[121,  96,  76],\n        [126,  99,  80],\n        [127,  99,  78],\n        ...,\n        [125,  93,  72],\n        [124,  92,  71],\n        [130,  98,  77]],\n\n       [[118,  91,  70],\n        [124,  97,  76],\n        [123,  95,  74],\n        ...,\n        [130,  98,  77],\n        [125,  93,  72],\n        [130,  98,  75]],\n\n       [[111,  84,  63],\n        [116,  89,  68],\n        [114,  83,  63],\n        ...,\n        [132, 100,  79],\n        [127,  95,  72],\n        [133, 101,  78]]], dtype=uint8)\n\n\n\nio.get_hirise_id_for_tile(\"APF0000cro\")\n\n'ESP_012079_0945'",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "index.html#license",
+    "href": "index.html#license",
+    "title": "p4tools",
+    "section": "License",
+    "text": "License\nMIT license",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "index.html#credits",
+    "href": "index.html#credits",
+    "title": "p4tools",
+    "section": "Credits",
+    "text": "Credits\n\nDeveloper and Maintainer\n\nK.-Michael Aye kmichael.aye@gmail.com\n\n\n\nContributors\n\nSome ideas and concepts came from Meg Schwamb",
+    "crumbs": [
+      "p4tools"
+    ]
+  },
+  {
+    "objectID": "coverage.html",
+    "href": "coverage.html",
+    "title": "Coverage analysis",
+    "section": "",
+    "text": "source\n\n\ndef compute_per_tile_coverage(\n    version:str='v3.1', fan:pandas.DataFrame | None=None, blotch:pandas.DataFrame | None=None, cache:bool=True,\n    cache_dir:pathlib.Path | None=None\n)-&gt;DataFrame:\nPer-tile fractional dark-deposit coverage.\nVerbatim port of Tom Ihro’s Calculate_Coverage_v2.ipynb cells 0–20. Result has columns [obsid, tile_id, Coverage]; for v3.1 it has ~64 494 rows. Cached as parquet so the (slow) Shapely union runs once per machine.",
+    "crumbs": [
+      "Coverage analysis"
+    ]
+  },
+  {
+    "objectID": "coverage.html#per-tile-coverage",
+    "href": "coverage.html#per-tile-coverage",
+    "title": "Coverage analysis",
+    "section": "",
+    "text": "source\n\n\ndef compute_per_tile_coverage(\n    version:str='v3.1', fan:pandas.DataFrame | None=None, blotch:pandas.DataFrame | None=None, cache:bool=True,\n    cache_dir:pathlib.Path | None=None\n)-&gt;DataFrame:\nPer-tile fractional dark-deposit coverage.\nVerbatim port of Tom Ihro’s Calculate_Coverage_v2.ipynb cells 0–20. Result has columns [obsid, tile_id, Coverage]; for v3.1 it has ~64 494 rows. Cached as parquet so the (slow) Shapely union runs once per machine.",
+    "crumbs": [
+      "Coverage analysis"
+    ]
+  },
+  {
+    "objectID": "coverage.html#per-obsid-summary",
+    "href": "coverage.html#per-obsid-summary",
+    "title": "Coverage analysis",
+    "section": "Per-obsid summary",
+    "text": "Per-obsid summary\n\nsource\n\ncompute_per_obsid_coverage\ndef compute_per_obsid_coverage(\n    per_tile:DataFrame, with_homogeneity:bool=True\n)-&gt;DataFrame:\nAggregate per-tile coverage to per-obsid summary statistics.\nVerbatim port of cells 26–28 of Calculate_Coverage_v2.ipynb: mean, median, std, skew, kurtosis (and optional Homogeneity = mean / median).",
+    "crumbs": [
+      "Coverage analysis"
+    ]
+  },
+  {
+    "objectID": "coverage.html#percentile-summary",
+    "href": "coverage.html#percentile-summary",
+    "title": "Coverage analysis",
+    "section": "Percentile summary",
+    "text": "Percentile summary\n\nsource\n\npct_summary\ndef pct_summary(\n    coverage, # Fractional (0-1) per-tile coverage, e.g. the ``Coverage`` column of\n    # :func:`compute_per_tile_coverage`. Non-finite values are ignored.\n    pcts:tuple=(10, 25, 50, 75, 90, 95, 99), # Percentiles to report; default matches the values quoted in the coverage paper.\n): # Indexed ``p10, p25, ..., p99, mean``, values in percent (fraction x 100).\nPercentile + mean summary of a fractional-coverage series, in percent.\n\npct_summary(pd.Series([0.01, 0.05, 0.12, 0.25, 0.40]))",
+    "crumbs": [
+      "Coverage analysis"
+    ]
+  },
+  {
+    "objectID": "coverage.html#attach-per-observation-metadata",
+    "href": "coverage.html#attach-per-observation-metadata",
+    "title": "Coverage analysis",
+    "section": "Attach per-observation metadata",
+    "text": "Attach per-observation metadata\n\nsource\n\nattach_tile_metadata\ndef attach_tile_metadata(\n    per_tile, version:str='v3.1'\n):\nAttach Ls, roi_name, and MY to a per-tile coverage table.\nMerges the authoritative per-observation metadata (io.get_metafull for solar longitude, io.get_region_names for ROI and Mars Year) onto the per-tile table from :func:compute_per_tile_coverage, keyed on obsid.\nNo de-duplication is applied on the merge: if an obsid maps to more than one ROI row, the resulting tile duplication is left visible rather than silently collapsed.\nReturns a copy of per_tile with added columns [Ls, roi_name, MY].\n\nper_tile = compute_per_tile_coverage(\"v3.1\")\nattach_tile_metadata(per_tile).head()",
+    "crumbs": [
+      "Coverage analysis"
+    ]
+  },
+  {
+    "objectID": "clis.html",
+    "href": "clis.html",
+    "title": "CLI Tools",
+    "section": "",
+    "text": "The p4 CLI is installed automatically when you install p4tools:\npip install -e .\nThis registers the p4 entry point (defined via console_scripts in pyproject.toml). The CLI depends on Typer and Rich.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#installation",
+    "href": "clis.html#installation",
+    "title": "CLI Tools",
+    "section": "",
+    "text": "The p4 CLI is installed automatically when you install p4tools:\npip install -e .\nThis registers the p4 entry point (defined via console_scripts in pyproject.toml). The CLI depends on Typer and Rich.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#commands-overview",
+    "href": "clis.html#commands-overview",
+    "title": "CLI Tools",
+    "section": "Commands Overview",
+    "text": "Commands Overview\n\n\n\n\n\n\n\nCommand\nDescription\n\n\n\n\np4 setup\nConfigure the Planet Four data root and database path\n\n\np4 info\nShow current configuration and database summary\n\n\np4 db-stats\nShow database statistics and top tiles/obsids by marking count\n\n\np4 cluster-tile\nCluster a single tile with optional inline plot\n\n\np4 cluster-obsid\nCluster all tiles for a HiRISE observation ID\n\n\np4 produce\nRun full catalog production with parallel processing",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#parallel-execution-helper",
+    "href": "clis.html#parallel-execution-helper",
+    "title": "CLI Tools",
+    "section": "Parallel Execution Helper",
+    "text": "Parallel Execution Helper\nrun_parallel_with_progress is a general-purpose utility that wraps ProcessPoolExecutor with a Rich progress bar. It is used by the produce command to parallelize clustering and fnotching across hundreds of observation IDs.\n\nsource\n\nrun_parallel_with_progress\ndef run_parallel_with_progress(\n    func, # A *picklable* top-level function.  Must accept a single positional\n    # argument (the item) plus any keyword arguments from *func_kwargs*.\n    items, # Items to map over.\n    max_workers:int=4, # Number of parallel processes.\n    description:str='Processing', # Label shown in the progress bar.\n    func_kwargs:dict | None=None, # Extra keyword arguments forwarded to *func*.\n): # Successful results in the original item order (skipping failures).\n*Execute func(item, **func_kwargs) in parallel with a Rich progress bar.*",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-setup",
+    "href": "clis.html#p4-setup",
+    "title": "CLI Tools",
+    "section": "p4 setup",
+    "text": "p4 setup\nConfigures the ~/.p4tools.ini file with the path to the data root directory where clustering results are stored. Optionally also stores the path to the raw Planet Four Parquet database.\np4 setup ~/planet4_data --db ~/planet4_data/p4_raw.parquet\nThis replaces the old interactive prompt that ran at import time when no config file existed.\n\nsource\n\nsetup\ndef setup(\n    data_root:str=&lt;typer.models.ArgumentInfo object at 0x7f17d2d056a0&gt;,\n    db:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17da2dba10&gt;\n):\nConfigure the Planet Four data root (and optionally the raw database path).",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-info",
+    "href": "clis.html#p4-info",
+    "title": "CLI Tools",
+    "section": "p4 info",
+    "text": "p4 info\nDisplays the current configuration in a Rich table: config file location, data root path, and all key/value pairs from the INI file.\np4 info\n\nsource\n\ninfo\ndef info():\nShow current configuration and database summary.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-db-stats",
+    "href": "clis.html#p4-db-stats",
+    "title": "CLI Tools",
+    "section": "p4 db-stats",
+    "text": "p4 db-stats\nShows summary statistics for a raw Planet Four database: total markings, unique tiles and obsids, breakdown by marking type, averages, and the top tiles/obsids ranked by number of markings. Useful for picking example tile IDs and obsids to test with cluster-tile / cluster-obsid.\np4 db-stats --db ~/planet4_data/p4_raw.parquet\np4 db-stats --db ~/planet4_data/p4_raw.parquet --top 20\n\nsource\n\ndb_stats\ndef db_stats(\n    db:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d04fe0&gt;,\n    top:int=&lt;typer.models.OptionInfo object at 0x7f17d2d058e0&gt;\n):\nShow database statistics and top tiles/obsids by marking count.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-random-tile",
+    "href": "clis.html#p4-random-tile",
+    "title": "CLI Tools",
+    "section": "p4 random-tile",
+    "text": "p4 random-tile\nPicks a random tile whose marking count is within 50% of the database average — i.e. a “typical” tile, useful for quick test runs.\np4 random-tile\np4 random-tile --db ~/planet4_data/p4_raw.parquet\n\nsource\n\nrandom_tile\ndef random_tile(\n    db:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d07770&gt;\n):\nPrint a random tile ID with a near-average marking count.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#terminal-image-display",
+    "href": "clis.html#terminal-image-display",
+    "title": "CLI Tools",
+    "section": "Terminal Image Display",
+    "text": "Terminal Image Display\n_display_inline_image renders a PNG/JPEG inline in the terminal using the iTerm2 inline image protocol (also supported by WezTerm). Falls back to printing the file path on unsupported terminals. Used by cluster-tile to show plots without leaving the CLI.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-cluster-tile",
+    "href": "clis.html#p4-cluster-tile",
+    "title": "CLI Tools",
+    "section": "p4 cluster-tile",
+    "text": "p4 cluster-tile\nClusters citizen science markings on a single Planet Four tile using DBSCAN, then displays a summary table with fan/blotch cluster counts. With --plot (the default), it also renders a 3-panel figure showing the tile image, clustered fans, and clustered blotches.\n# Cluster a single tile\np4 cluster-tile APF00003qk --db ~/planet4_data/p4_raw.parquet\n\n# Without the inline plot\np4 cluster-tile APF00003qk --db ~/planet4_data/p4_raw.parquet --no-plot\n\nsource\n\ncluster_tile\ndef cluster_tile(\n    tile_id:str=&lt;typer.models.ArgumentInfo object at 0x7f17d2d04c80&gt;,\n    db:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d05be0&gt;,\n    savedir:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d04da0&gt;,\n    plot:bool=&lt;typer.models.OptionInfo object at 0x7f17d2d05460&gt;\n):\nCluster a single Planet Four tile and display the results.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-cluster-obsid",
+    "href": "clis.html#p4-cluster-obsid",
+    "title": "CLI Tools",
+    "section": "p4 cluster-obsid",
+    "text": "p4 cluster-obsid\nClusters all tiles belonging to a HiRISE observation. This is the obsid-level equivalent of cluster-tile. Optionally runs fnotching (fan/blotch ambiguity resolution) after clustering.\n# Cluster only\np4 cluster-obsid ESP_011296_0975 --db ~/planet4_data/p4_raw.parquet\n\n# Cluster + fnotch\np4 cluster-obsid ESP_011296_0975 --db ~/planet4_data/p4_raw.parquet --fnotch\n\nsource\n\ncluster_obsid\ndef cluster_obsid(\n    obsid:str=&lt;typer.models.ArgumentInfo object at 0x7f17d2d07c80&gt;,\n    db:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d07da0&gt;,\n    savedir:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d05b50&gt;,\n    fnotch:bool=&lt;typer.models.OptionInfo object at 0x7f17d2d05520&gt;\n):\nCluster all tiles for a HiRISE observation ID.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-create-mosaic",
+    "href": "clis.html#p4-create-mosaic",
+    "title": "CLI Tools",
+    "section": "p4 create-mosaic",
+    "text": "p4 create-mosaic\nDownloads HiRISE RED4/RED5 CCD images and runs the ISIS pipeline to create a RED45 mosaic cube for a single observation. Useful for testing mosaic creation before running full production.\np4 create-mosaic ESP_011350_0945\np4 create-mosaic ESP_011350_0945 --overwrite\n\nsource\n\ncreate_mosaic\ndef create_mosaic(\n    obsid:str=&lt;typer.models.ArgumentInfo object at 0x7f17d2d05a90&gt;,\n    overwrite:bool=&lt;typer.models.OptionInfo object at 0x7f17d2d07d10&gt;\n):\nCreate a RED45 mosaic cube for a single observation ID.\n\n\nPicklable Wrappers\n_cluster_single and _fnotch_single are top-level wrapper functions that can be pickled by ProcessPoolExecutor. They perform lazy imports to avoid serialization issues with module-level state.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "clis.html#p4-produce",
+    "href": "clis.html#p4-produce",
+    "title": "CLI Tools",
+    "section": "p4 produce",
+    "text": "p4 produce\nThe main catalog production command. Runs the full pipeline in four phases:\n\nClustering — Parallel DBSCAN clustering of all observation IDs\nFnotching — Parallel fan/blotch ambiguity resolution\nPost-processing — L1C summaries, tile/marking coordinates, metadata\nMarking IDs — Assigns unique identifiers to all catalog entries\n\nUses run_parallel_with_progress for phases 1 and 2, with configurable worker count. Supports --dry-run to preview the work without executing.\n# Full production run\np4 produce v3.1 --db ~/planet4_data/p4_raw.parquet --workers 8\n\n# Preview what would be done\np4 produce v3.1 --db ~/planet4_data/p4_raw.parquet --dry-run\n\nsource\n\nproduce\ndef produce(\n    version:str=&lt;typer.models.ArgumentInfo object at 0x7f17d2d05790&gt;,\n    db:Optional[str]=&lt;typer.models.OptionInfo object at 0x7f17d2d064b0&gt;,\n    workers:int=&lt;typer.models.OptionInfo object at 0x7f17d2d07dd0&gt;,\n    dry_run:bool=&lt;typer.models.OptionInfo object at 0x7f17d2d067e0&gt;\n):\nRun full catalog production with parallel processing and Rich progress.",
+    "crumbs": [
+      "CLI Tools"
+    ]
+  },
+  {
+    "objectID": "io.html",
+    "href": "io.html",
+    "title": "IO & Data Access",
+    "section": "",
+    "text": "source",
+    "crumbs": [
+      "IO & Data Access"
+    ]
+  },
+  {
+    "objectID": "io.html#convenience-joiners",
+    "href": "io.html#convenience-joiners",
+    "title": "IO & Data Access",
+    "section": "Convenience joiners",
+    "text": "Convenience joiners\nTiny helpers that left-join an obsid-keyed dataframe with metafull (MY, L_s) or get_region_names (roi_name).\n\nsource\n\nattach_roi\ndef attach_roi(\n    df, obsid_col:str='obsid', version:str='v3.1'\n):\nLeft-join df with get_region_names(version=...)[obsid, roi_name].\n\nsource\n\n\nattach_my\ndef attach_my(\n    df, obsid_col:str='obsid', version:str='v3.1'\n):\nLeft-join df with metafull[OBSERVATION_ID, MY, SOLAR_LONGITUDE].\nThe metafull columns are renamed to obsid, MY, l_s.",
+    "crumbs": [
+      "IO & Data Access"
+    ]
+  },
+  {
+    "objectID": "production.projection.html",
+    "href": "production.projection.html",
+    "title": "Projection",
+    "section": "",
+    "text": "source\n\nstitch_cubenorm\ndef stitch_cubenorm(\n    spid1, spid2\n):\nStitch together the 2 CCD chip images and perform a cubenorm operation. Parameters ———- spid1 : object The first CCD chip image object. Must have attributes local_cube and stitched_cube_path. spid2 : object The second CCD chip image object. Must have attributes local_cube and stitched_cube_path. Returns ——- normed : pathlib.Path The path to the normalized stitched cube file. Raises —— ProcessError If there is an error during the stitching or cubenorm process.\n\nsource\n\n\nensure_spice\ndef ensure_spice(\n    cubepath\n):\nCheck cube for SPICE data and run spiceinit if missing.\nReturns True if SPICE data is present (or was successfully added), False on failure.\n\nsource\n\n\nhas_spice\ndef has_spice(\n    cubepath\n):\nCheck if an ISIS cube has SPICE data by looking for NaifKeywords in its label.\n\nsource\n\n\nnocal_hi\ndef nocal_hi(\n    source_product, # Class object managing the precise filenames and locations for HiRISE source products\n):\nImport HiRISE product into ISIS and spice-init it.\n\nsource\n\n\nP4Mosaic\ndef P4Mosaic(\n    obsid\n):\nA class to handle mosaic operations for a given observation ID. Parameters ———- obsid : str The observation ID used to locate the source product and mosaic path. Attributes ———- mosaic_path : pathlib.Path The path to the mosaic file. Methods ——- read() Reads the mosaic file and returns it as an xarray DataArray. show(xslice=None, yslice=None) Displays the mosaic image using hvplot with optional slicing.\n\nsource\n\n\ncreate_RED45_mosaic\ndef create_RED45_mosaic(\n    obsid, # The observation ID for which the RED45 mosaic is to be created.\n    overwrite:bool=False, # If True, existing mosaic files will be overwritten. Default is False.\n):\nCreate a RED45 mosaic from EDR data associated with a given observation ID.\nIf a single CCD channel fails to download (e.g. 404 from PDS), a NULL-filled dummy cube is created from the sibling channel so that histitch can proceed. The dummy contributes only NULL pixels — handmos treats these as transparent.\n\nsource\n\n\nget_RED45_mosaic_inputs\ndef get_RED45_mosaic_inputs(\n    obsid:str, # HiRISE observation id, e.g. ESP_011350_0945\n    saveroot:Path=None, # Path to where the data is stored\n)-&gt;list: # List of 4 hirise.RED_PRODUCTs: [RED4_0, RED4_1, RED5_0, RED5_1]\nCreate list with filenames for RED4 and RED5 CCD chips 0 and 1, respectively.\n\nsource\n\n\ndo_campt\ndef do_campt(\n    mosaicname, savepath, temppath\n):\nExecutes the campt command with the provided parameters from ISIS.  Campt computes the geometric information like longitude and lattitude at a given pixel location. Parameters ———- mosaicname : str The name of the mosaic file to process. savepath : str The path where the output should be saved. temppath : str The path to the temporary file containing coordinates. Returns ——- tuple A tuple containing the mosaicname and a boolean indicating success (False if an error occurred).\n\nsource\n\n\nXY2LATLON\ndef XY2LATLON(\n    df, inpath, overwrite:bool=False, obsid:NoneType=None\n):\nA class to convert XY coordinates to latitude and longitude using ground projection data. Attributes ———- edrpath : str Path to the ground projection root directory. df : pandas.DataFrame DataFrame containing the data to be processed. obsid : str Observation ID, derived from the DataFrame if not provided. inpath : pathlib.Path Input path where the files are located. overwrite : bool Flag to indicate whether to overwrite existing files. p4m : P4Mosaic Instance of the P4Mosaic class for handling mosaic paths. Properties ———- obsid : str Gets or sets the observation ID. mosaicpath : str Returns the path to the mosaic file. savepath : pathlib.Path Returns the path to save the campt output CSV file. savepath_blotch : pathlib.Path Returns the path to save the blotch campt output CSV file. savepath_fan : pathlib.Path Returns the path to save the fan campt output CSV file. temppath : pathlib.Path Returns the temporary path for intermediate files. Methods ——- process_inpath(): Processes the input path and generates the necessary campt output files.\n\nsource\n\n\nTileCalculator\ndef TileCalculator(\n    cubepath, read_data:bool=True, dbname:NoneType=None\n):\nA class to calculate tile coordinates for HiRISE images. Parameters ———- cubepath : str or Path The path to the HiRISE image cube. read_data : bool, optional If True, reads data from the database (default is True). dbname : str, optional The name of the database to read data from (default is None). Attributes ———- cubepath : Path The path to the HiRISE image cube. data : DataFrame The observation ID markings data from the database. img_name : str The image name derived from the cube path. x_tile_max : int The maximum x tile value. y_tile_max : int The maximum y tile value. campt_results_path : Path The path to save the campt results. temppath : Path The temporary path for campt input coordinates. final_path : Path The final path to save the tile coordinates. tile_coords_df : DataFrame The DataFrame containing tile coordinates. Methods ——- get_xy_tiles() Returns a grid of x and y tile values. get_campt_input_coords() Returns a DataFrame with campt input coordinates. calc_tile_coords() Calculates and saves the tile coordinates.\n\nsource\n\n\np4tile_center_to_hirise_pix\ndef p4tile_center_to_hirise_pix(\n    tile, x_or_y\n):\nCall self as a function.\n\nsource\n\n\np4pix_to_hirise_pix\ndef p4pix_to_hirise_pix(\n    p4pix, # Coordinate value for either x or y dimension of P4 pixel\n    tile, # x or y tile coordinate of PlanetFour\n    x_or_y, # Switch between different coordinate transformations\n):\nThis convert either x or y coordinate of a planet4 pixel to Hirise coordinate.",
+    "crumbs": [
+      "Projection"
+    ]
+  },
+  {
+    "objectID": "tile_quality.html",
+    "href": "tile_quality.html",
+    "title": "Per-Tile Quality (Uncertainty) API",
+    "section": "",
+    "text": "Every marking in the v3.1 catalog is a cluster of citizen-science markings averaged into one object. The catalog records, for each, the standard deviations of the markings that were averaged — x_std, y_std, angle_std, plus distance_std/spread_std (fans) or radius1_std/radius2_std (blotches) — together with the vote count n_votes. These are the raw material for a per-tile quality measure.\nA raw standard deviation conflates two different causes of unreliability: markers genuinely disagreeing (scattered votes) and weak support (few votes). This API keeps the two on separate, never-mixed axes. Vote counts never divide the scatter numbers. In particular, a standard error of the mean — SEM, the standard deviation divided by √n — shrinks as votes accumulate, so using it would quietly fold vote support back into the scatter axis and re-mix the two things we are trying to keep apart. Reporting raw scatter instead keeps contested tiles (many votes, real disagreement) visible rather than averaging them away.\nimport numpy as np, pandas as pd\nfrom p4tools import io, stats\npd.set_option('display.max_columns', None)",
+    "crumbs": [
+      "Per-Tile Quality (Uncertainty) API"
+    ]
+  },
+  {
+    "objectID": "tile_quality.html#layer-1-per-marking-enrichment",
+    "href": "tile_quality.html#layer-1-per-marking-enrichment",
+    "title": "Per-Tile Quality (Uncertainty) API",
+    "section": "Layer 1 — per-marking enrichment",
+    "text": "Layer 1 — per-marking enrichment\nadd_uncertainty_columns infers the kind (fan vs blotch) from the columns and adds four derived columns:\n\n\n\n\n\n\n\n\ncolumn\nunit\nmeaning\n\n\n\n\npos_std\npx\nhypot(x_std, y_std) — positional scatter of the cluster\n\n\nsize_cv\n—\nmean relative std (a coefficient of variation): fans use distance/spread, blotches radius_1/radius_2\n\n\nangle_usable\nbool\nalways True for fans; False for near-circular blotches (radius_2/radius_1 &gt; 0.8), where orientation is ill-defined\n\n\nscatter_ok\nbool\nn_votes &gt;= min_votes — a std from a handful of votes is itself noise\n\n\n\n\nfu = stats.add_uncertainty_columns(io.get_fan_catalog(\"v3.1\"))\nfu[[\"tile_id\",\"n_votes\",\"pos_std\",\"size_cv\",\"angle_usable\",\"scatter_ok\"]].head()\n\n\n\n\n\n\n\n\ntile_id\nn_votes\npos_std\nsize_cv\nangle_usable\nscatter_ok\n\n\n\n\n0\nAPF00006nk\n11.0\n5.519993\n0.249842\nTrue\nTrue\n\n\n1\nAPF00006nk\n10.0\n4.979427\n0.305487\nTrue\nTrue\n\n\n2\nAPF00006nk\n10.0\n3.649387\n0.337209\nTrue\nTrue\n\n\n3\nAPF00006nk\n8.0\n4.086334\n0.226463\nTrue\nTrue\n\n\n4\nAPF00006nk\n8.0\n5.117829\n0.247728\nTrue\nTrue\n\n\n\n\n\n\n\nFor blotches, angle_usable drops the near-circular ones whose fitted orientation is meaningless:\n\nbu = stats.add_uncertainty_columns(io.get_blotch_catalog(\"v3.1\"))\nbu.angle_usable.value_counts()\n\nangle_usable\nTrue     240905\nFalse    186499\nName: count, dtype: int64",
+    "crumbs": [
+      "Per-Tile Quality (Uncertainty) API"
+    ]
+  },
+  {
+    "objectID": "tile_quality.html#layer-2-per-tile-aggregation",
+    "href": "tile_quality.html#layer-2-per-tile-aggregation",
+    "title": "Per-Tile Quality (Uncertainty) API",
+    "section": "Layer 2 — per-tile aggregation",
+    "text": "Layer 2 — per-tile aggregation\ntile_quality returns one row per tile_id, with columns organised into named groups:\n\nsupport — how much evidence backs this tile: n_markings, n_fans, n_blotches, votes_median, votes_min, votes_total. Pure vote axis.\nscatter — how much the markers disagreed: angle_scatter, pos_scatter, size_scatter, computed only from markings that pass the vote gate (scatter_ok, i.e. n_votes &gt;= min_votes), so weak support can never leak in as apparent disagreement. n_scatter_markings reports how many survived; scatter is NaN if none did.\nranks — each raw metric as its cap-wide percentile position (0–100; 50 = median tile). scatter_rank is the median of the three scatter metrics’ individual ranks, and support_rank the same on the vote axis — so incommensurate units (deg, px, —) become comparable and combinable.\n\nWhy ranks, concretely. A tile with angle_scatter 15° (p80), pos_scatter 3 px (p40), size_scatter 0.10 (p55) gets scatter_rank = median(80, 40, 55) = 55 — slightly worse than the median tile. Another at (p20, p95, p92) gets median = 92 — very scattered, driven by position and size while its angles agree. Raw units could not be combined this way ((15 + 3 + 0.10)/3 is meaningless).\n\ntq = stats.tile_quality(\"both\", version=\"v3.1\")\ntq.head()\n\n\n\n\n\n\n\n\nn_markings\nn_fans\nn_blotches\nvotes_median\nvotes_min\nvotes_total\nangle_scatter\npos_scatter\nsize_scatter\nn_scatter_markings\nscatter_rank\nsupport_rank\n\n\ntile_id\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAPF0000001\n4\n3\n1\n17.0\n7.0\n60.0\n5.329304\n4.432020\n0.306949\n4\n30.809548\n57.756535\n\n\nAPF0000002\n2\n0\n2\n27.0\n11.0\n54.0\n23.466506\n9.144525\n0.406551\n2\n79.314403\n54.660899\n\n\nAPF0000004\n4\n0\n4\n10.5\n5.0\n42.0\n19.672716\n5.126946\n0.221274\n4\n22.280351\n47.259435\n\n\nAPF0000005\n5\n0\n5\n33.0\n7.0\n143.0\n26.156416\n6.272975\n0.551231\n5\n83.691334\n81.310665\n\n\nAPF0000006\n11\n4\n7\n21.0\n16.0\n246.0\n22.180734\n5.149757\n0.345502\n11\n60.195479\n91.661240\n\n\n\n\n\n\n\nTiles where no marking clears the vote gate have NaN scatter (and scatter_rank), reported honestly rather than imputed:\n\ntq[[\"n_markings\",\"n_scatter_markings\",\"scatter_rank\",\"support_rank\"]].describe().round(2)\n\n\n\n\n\n\n\n\nn_markings\nn_scatter_markings\nscatter_rank\nsupport_rank\n\n\n\n\ncount\n64494.00\n64494.00\n56579.00\n64494.00\n\n\nmean\n10.74\n7.27\n48.93\n50.35\n\n\nstd\n17.12\n12.76\n22.00\n27.61\n\n\nmin\n1.00\n0.00\n0.10\n6.17\n\n\n25%\n2.00\n1.00\n32.53\n26.25\n\n\n50%\n6.00\n3.00\n49.12\n50.02\n\n\n75%\n13.00\n9.00\n65.19\n74.31\n\n\nmax\n280.00\n211.00\n99.77\n99.98",
+    "crumbs": [
+      "Per-Tile Quality (Uncertainty) API"
+    ]
+  },
+  {
+    "objectID": "tile_quality.html#layer-3-opt-in-classification",
+    "href": "tile_quality.html#layer-3-opt-in-classification",
+    "title": "Per-Tile Quality (Uncertainty) API",
+    "section": "Layer 3 — opt-in classification",
+    "text": "Layer 3 — opt-in classification\nThis layer is opt-in: tile_quality already gives you the full, continuous picture (the support_rank/scatter_rank axes), and you only call classify_tile_quality if you additionally want discrete labels. It is a separate step because collapsing two continuous ranks into four buckets discards information and bakes in a threshold choice (where “high” starts, default the 50th percentile). Many analyses are better served by the raw ranks — e.g. weighting by scatter_rank — so the labels are offered, never imposed.\nclassify_tile_quality splits the two rank axes at a percentile threshold (default 50) into four classes:\n\n\n\n\n\n\n\n\n\nquality_class\nsupport\nscatter\nreading\n\n\n\n\nconsistent\nhigh\nlow\nreliable — best QC tier\n\n\ncontested\nhigh\nhigh\nmany votes, genuine disagreement — scientifically interesting; exactly the class a single conflated score would hide\n\n\nsparse\nlow\nlow\nfew votes, but they agree\n\n\nnoisy\nlow\nhigh\nleast reliable\n\n\n\nTiles with no scatter estimate (scatter_rank NaN) are left &lt;NA&gt; rather than guessed.\n\ncls = stats.classify_tile_quality(tq)\ncls.quality_class.value_counts(dropna=False)\n\nquality_class\nconsistent    17194\ncontested     15294\nnoisy         12192\nsparse        11899\n&lt;NA&gt;           7915\nName: count, dtype: int64\n\n\nThe contested tiles — high vote support and high disagreement — are the ones worth a human look:\n\ncls[cls.quality_class == \"contested\"].sort_values(\"support_rank\", ascending=False).head()\n\n\n\n\n\n\n\n\nn_markings\nn_fans\nn_blotches\nvotes_median\nvotes_min\nvotes_total\nangle_scatter\npos_scatter\nsize_scatter\nn_scatter_markings\nscatter_rank\nsupport_rank\nquality_class\n\n\ntile_id\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nAPF00007kk\n179\n0\n179\n9.0\n3.0\n1624.0\n24.614313\n5.460791\n0.325892\n150\n53.760229\n99.827116\ncontested\n\n\nAPF00007to\n160\n0\n160\n5.0\n3.0\n1119.0\n24.034693\n5.931912\n0.349409\n92\n61.369059\n99.627872\ncontested\n\n\nAPF00007t3\n148\n0\n148\n7.0\n3.0\n1090.0\n33.661004\n5.174341\n0.331405\n121\n55.626646\n99.568952\ncontested\n\n\nAPF00007mk\n150\n0\n150\n7.0\n3.0\n1058.0\n32.251943\n4.964730\n0.317002\n104\n50.826278\n99.567402\ncontested\n\n\nAPF00007tz\n135\n0\n135\n9.0\n4.0\n1347.0\n29.321577\n4.536079\n0.322249\n124\n52.574277\n99.495302\ncontested",
+    "crumbs": [
+      "Per-Tile Quality (Uncertainty) API"
+    ]
+  },
+  {
+    "objectID": "tile_quality.html#using-it-downstream",
+    "href": "tile_quality.html#using-it-downstream",
+    "title": "Per-Tile Quality (Uncertainty) API",
+    "section": "Using it downstream",
+    "text": "Using it downstream\nBecause the output is tile_id-indexed, it joins straight onto any tile-level analysis — e.g. to weight or filter coverage numbers by tile reliability:\n\nreliable = cls.index[cls.quality_class == \"consistent\"]\nprint(f\"{len(reliable):,} consistent tiles of {len(cls):,} \"\n      f\"({100*len(reliable)/len(cls):.1f}%)\")\n# cov = io.get_tile_coords().merge(cls, on=\"tile_id\")  # then subset / weight\n\n17,194 consistent tiles of 64,494 (26.7%)",
+    "crumbs": [
+      "Per-Tile Quality (Uncertainty) API"
+    ]
+  },
+  {
+    "objectID": "production.markings.html",
+    "href": "production.markings.html",
+    "title": "Pipeline Markings",
+    "section": "",
+    "text": "source\n\ncalc_blotchiness\ndef calc_blotchiness(\n    nfans, nblotches\n):\nCalculate the fnotch value (or fan-ness).\n\nsource\n\n\nTileID\ndef TileID(\n    imgid, scope:str='planet4', dbname:NoneType=None, data:NoneType=None, image_name:NoneType=None\n):\nManage Planet 4 Image ids, getting data, plot stuff etc.\nAt init this class will get the data for the given imgid using either the latest found database file or the optionally provided one.\n\nsource\n\n\nFnotch\ndef Fnotch(\n    fan, blotch, scope:str='planet4'\n):\nManage Fnotch by providing a cut during output.",
+    "crumbs": [
+      "Pipeline Markings"
+    ]
+  },
+  {
+    "objectID": "plotting.html",
+    "href": "plotting.html",
+    "title": "Plotting",
+    "section": "",
+    "text": "source",
+    "crumbs": [
+      "Plotting"
+    ]
+  },
+  {
+    "objectID": "plotting.html#raw-marking-plots",
+    "href": "plotting.html#raw-marking-plots",
+    "title": "Plotting",
+    "section": "Raw marking plots",
+    "text": "Raw marking plots\nThese functions plot the raw citizen science markings (before clustering) for a given tile. They require access to the Planet Four classifications database via DBManager (configured in ~/.p4tools.ini).\n\nsource\n\nplot_raw_blotches\ndef plot_raw_blotches(\n    tile_id, # Planet Four tile ID (full or short form).\n    ax:NoneType=None, # Axes to plot on. If None, a new figure is created.\n    dbname:NoneType=None, # Path to database file. If None, uses ``[planet4_db] dbname`` from config.\n    **kwargs\n):\nPlot all raw blotch markings from the classifications database for a tile.\n\nsource\n\n\nplot_raw_fans\ndef plot_raw_fans(\n    tile_id, # Planet Four tile ID (full or short form).\n    ax:NoneType=None, # Axes to plot on. If None, a new figure is created.\n    dbname:NoneType=None, # Path to database file. If None, uses ``[planet4_db] dbname`` from config.\n    **kwargs\n):\nPlot all raw fan markings from the classifications database for a tile.\n\nsource\n\n\nplot_fans_for_tile\ndef plot_fans_for_tile(\n    tile_id, ax:NoneType=None, **plot_kwargs\n):\nCall self as a function.\n\ntile_with_fans = \"APF000000c\"\n\n\nsource\n\n\nplot_original_tile\ndef plot_original_tile(\n    tileID, ax:NoneType=None\n):\nCall self as a function.\n\nplot_original_tile(tile_with_blotches)\n\n\n\n\n\n\n\n\n\nsource\n\n\nplot_original_and_fans\ndef plot_original_and_fans(\n    tileID\n):\nCall self as a function.\n\nplot_original_and_fans(tile_with_fans)\n\n\n\n\n\n\n\n\n\nsource\n\n\nplot_original_and_blotches\ndef plot_original_and_blotches(\n    tileID\n):\nCall self as a function.\n\nplot_original_and_blotches(tile_with_blotches)\n\n\n\n\n\n\n\n\n\nsource\n\n\nplot_original_fans_blotches\ndef plot_original_fans_blotches(\n    tileID, save:bool=False\n):\nCall self as a function.\n\ntile_with_both = \"APF0000006\"\n\n\nplot_original_fans_blotches(tile_with_both)\n\n\n\n\n\n\n\n\n\nsource\n\n\nplot_random_tiles_with_min_fans\ndef plot_random_tiles_with_min_fans(\n    x:int=3, # how many tiles (original + fan overlay plots) to show\n    n:int=15, # minimum number of fans a tile must contain\n    cached_only:bool=False, # if True, only sample tiles whose image is locally cached\n    exclude_blotches:bool=False, # if True, only sample tiles that have no blotches\n    save:bool=False, # if True, saves a PNG with the plot for each tile_id separately\n    random_state:int=None, # can be set to recreate the exact same set\n):\nPlot x random tiles containing at least n fans: original image next to fan overlay.\n\nsource\n\n\nplot_random_tiles_with_min_blotches\ndef plot_random_tiles_with_min_blotches(\n    x:int=3, # how many tiles (original + blotch overlay plots) to show\n    n:int=15, # minimum number of blotches a tile must contain\n    cached_only:bool=False, # if True, only sample tiles whose image is locally cached\n    exclude_fans:bool=False, # if True, only sample tiles that have no fans\n    save:bool=False, # if True, saves a PNG with the plot for each tile_id separately\n    random_state:int=None, # can be set to recreate the exact same set\n):\nPlot x random tiles containing at least n blotches: original image next to blotch overlay.\n\nplot_random_tiles_with_min_fans(2, cached_only=True, random_state=42)\nplot_random_tiles_with_min_blotches(2, cached_only=True, random_state=42)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nplot_random_tiles_with_min_blotches(x=10, n=10, cached_only=True, exclude_fans=True)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nblotch_ids = [\"ESP_012248_0965\"]\n\n\nsource\n\n\nplot_x_random_tiles_with_n_fans\ndef plot_x_random_tiles_with_n_fans(\n    x:int=3, # how many of 2 col original+p4 data plots to receive\n    n:int=15, # whats the minimum number of fans to contain\n    save:bool=False, # if True, saves a PNG with the plot for each tile_id separately\n    random_state:int=None, # can be set to recreate the exact same set\n):\nDeprecated: use plot_random_tiles_with_min_fans (or ..._min_blotches) instead.\nNote this old version only considered fan tiles that also contain blotches and overlays both marking kinds; the replacements treat fans and blotches separately.\n\nplot_x_random_tiles_with_n_fans(2)\n\n100%|████████████████████████████████████████| 170k/170k [00:00&lt;00:00, 345MB/s]\n100%|████████████████████████████████████████| 171k/171k [00:00&lt;00:00, 240MB/s]\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nsource\n\n\nhistogram_cartesian\ndef histogram_cartesian(\n    df, # The data to be plotted.\n    ls_bin:int=4, # The number of bins or an array-like object defining the bin edges. (default is 4).\n    segmentsize:float=3.6, # The size of the segments in the histogram (default is 3.6).\n    alpha:float=0.5, # The transparency level of the histogram bars (default is 0.5).\n    degrees:bool=True, # Whether to use degrees for the histogram (default is True).\n): # The axes object with the plotted histogram.\nPlots a histogram of the wind directions on Cartesian coordinates.\n\nsource\n\n\nhistogram_polar\ndef histogram_polar(\n    df, # The input data frame containing the data to be plotted.\n    ls_bin:int=4, # The number of bins or an array-like object defining the bin edges. Default is 4.\n    per_obsid:bool=False, # If True, the histogram is plotted per observation ID. Default is False.\n    segmentsize:float=3.6, # The size of each segment in degrees. Default is 3.6.\n    alpha:float=0.5, # The transparency level of the histogram bars. Default is 0.5.\n    cutoff:NoneType=None, # A cutoff value to filter the data. Default is None.\n): # The polar axes with the plotted histogram.\nPlots a histogram in polar coordinates. These are the inverse windrose plots.\n\nsource\n\n\nget_colorscale\ndef get_colorscale(\n    nr:int, # The number of colors to generate in the color scale.\n): # An array of colors corresponding to the specified number of colors.\nGenerate a color scale with a specified number of colors.\n\nsource\n\n\ninitialize_polar_axes\ndef initialize_polar_axes(\n    ax:PolarAxes, # An Matplotlib polar Axis\n):\nInitializes the Polar Axes to Wind Directions, counted in clockwise direction from N\n\nsource\n\n\ncompute_direction_histogram\ndef compute_direction_histogram(\n    df, # DataFrame containing 'angle' and 'north_azimuth' columns.\n    segmentsize, # Size of the segments (bins) for the histogram in degrees.\n    density:bool=True, # If True, the result is the value of the probability density function at the bin,\n    # normalized such that the integral over the range is 1. Default is True.\n    degrees:bool=False, # If True, the bin edges are returned in degrees. If False, they are returned in radians. Default is False.\n): # The bin edges in radians or degrees, depending on the `degrees` parameter.\nCompute a histogram of direction angles adjusted by north azimuth.\nWe can create an Inverse Windrose for a given region by filtering the dataframe for a number of obsids within the region. Here the example shows the lists of the obsids within the Potsdam region.\n\nobsid_potsdam = [\n    'ESP_011526_0980',\n    'ESP_012805_0980',\n    'ESP_021508_0980',\n    'ESP_021521_0980',\n    'ESP_012515_0980',\n    'ESP_012594_0980',\n    'ESP_020374_0980',\n    'ESP_020875_0980',\n    'ESP_011460_0980',\n    'ESP_021574_0980',\n    'ESP_020941_0980',\n    'ESP_011737_0980',\n    'ESP_012871_0980',\n    'ESP_021587_0980',\n    'ESP_022510_0980',\n    'ESP_020163_0980',\n    'PSP_004775_0980']\n\n## Point the read_csv to your file location.\nfpath = \"../../../../Data/P4_catalog_Full_Release_v3.0/P4_catalog_Full_Release_v3.0_L1C_cut_0.5_fan_meta_merged.csv\"\nData = pd.read_csv(fpath)\nData = Data[Data.obsid.isin(obsid_potsdam)]\n\nhistogram_polar(Data,ls_bin=5,cutoff=60)\n\n\nData.marking_id != False\n\n\nhistogram_cartesian(Data)\n\n\nsource\n\n\nshow_stamps\ndef show_stamps(\n    df_stamps:GeoDataFrame, # A GeoDataFrame containing the geospatial HiRISE stamps to be plotted.\n    mark_stamp:Union=None, # The ID(s) of the stamp(s) to be highlighted in red. If None, no stamps are highlighted.\n    ax:NoneType=None, # The axes on which to plot. If None, a new figure and axes are created.\n): # The axes with the plotted stamps.\nPlot the geospatial stamps of the HiRISE images on a map.\n\nStamps = gpd.read_file(\"../../../../Data/Obsid_stamps.gpkg\")\nithaca_full = Stamps[Stamps.Region == \"Ithaca\"]\n\nshow_stamps(ithaca_full)\n\n\nshow_stamps(ithaca_full,mark_stamp=\"ESP_012854_0945\")\n\n\nshow_stamps(ithaca_full,mark_stamp=[\"ESP_012854_0945\",\"ESP_012858_0855\"])",
+    "crumbs": [
+      "Plotting"
+    ]
+  },
+  {
+    "objectID": "plotting.html#slide-deck-and-distribution-plotting-helpers",
+    "href": "plotting.html#slide-deck-and-distribution-plotting-helpers",
+    "title": "Plotting",
+    "section": "Slide-deck and distribution plotting helpers",
+    "text": "Slide-deck and distribution plotting helpers\nGeneric helpers (talk-context rcParams, histogram+KDE, per-group KDE overlay, small-multiples grid) used by p4tools.egu26 and any other talk/paper module.\n\nsource\n\nsmallmult_highlight_grid\ndef smallmult_highlight_grid(\n    df, panel_col:str, x_col:str, y_col:str, yerr:NoneType=None, ncols:int=3, x_lim:NoneType=None,\n    palette:str='viridis', figsize:NoneType=None, title_fmt:str='{panel_col} {value}  (N={n})'\n):\nSmall-multiples grid; one panel per panel_col value highlights its own subset on a faint grey background of all other panels’ points.\nyerr may be a tuple of column names (low, high) for asymmetric IQR-style error bars, or None. Returns the matplotlib Figure.\n\nsource\n\n\nkde_per_group\ndef kde_per_group(\n    df, group_col:str, value_col:str, ax:NoneType=None, palette:str='viridis', upper_quantile:float=0.995,\n    show_background:bool=True, label_fn:NoneType=None\n):\nOne KDE per group_col value of df[value_col], optional shared faint hist background.\n\nsource\n\n\nhistogram_kde\ndef histogram_kde(\n    values, ax:NoneType=None, bins:int=60, upper_quantile:float=0.995, color:str='#1f77b4', kde:bool=True,\n    show_median:bool=True, show_mean:bool=True, label:str | None=None\n):\nHistogram + optional KDE overlay + optional median/mean reference lines.\nReturns the axes used. Caller is responsible for figure creation, titles, axis labels, and saving. Uses seaborn for the histogram so the KDE is rendered consistently with the binned data.\n\nsource\n\n\napply_talk_context\ndef apply_talk_context(\n    min_pt:int=24\n)-&gt;None:\nApply seaborn’s “talk” context, scaled so the smallest text element is at least min_pt (default 24 — the EGU26 slide-deck guideline).\nThin wrapper over :func:seaborn.set_context — we delegate all element proportions (titles vs axis labels vs ticks vs legend) to seaborn and only choose the overall scaling factor.\n\nsource\n\n\noverlay_obsid\ndef overlay_obsid(\n    obsid, image_path, ax:NoneType=None, version:NoneType=None, fan_kw:NoneType=None, blotch_kw:NoneType=None\n):\nShow a map-projected raster and overlay that obsid’s fans + blotches in its CRS.\nimage_path is any rasterio-readable map-projected image (ISIS cube / GeoTIFF); markings are reprojected into its CRS so the overlay is pixel-aligned.\n\nsource\n\n\nadd_blotches\ndef add_blotches(\n    ax, blotches, src_crs:NoneType=None, target_crs:NoneType=None, n_ell:int=48, facecolor:str='none',\n    edgecolor:str='deepskyblue', linewidth:float=0.6, **kw\n):\nOverlay blotches on a cartopy axis (src_crs) or a projected raster (target_crs).\n\nsource\n\n\nadd_fans\ndef add_fans(\n    ax, fans, src_crs:NoneType=None, target_crs:NoneType=None, n_arc:int=16, facecolor:str='none',\n    edgecolor:str='red', linewidth:float=0.6, **kw\n):\nOverlay fans on a cartopy axis (src_crs) or a projected raster (target_crs).",
+    "crumbs": [
+      "Plotting"
+    ]
+  },
+  {
+    "objectID": "production.metadata.html",
+    "href": "production.metadata.html",
+    "title": "Metadata",
+    "section": "",
+    "text": "source\n\nMetadataReader\ndef MetadataReader(\n    obsid\n):\nA class to read and manage metadata for a given observation ID (obsid). Parameters ———- obsid : str The observation ID for which metadata is to be read and managed. Attributes ———- obsid : str The observation ID. prodid : ProductPathfinder An instance of ProductPathfinder initialized with the observation ID and “_COLOR” suffix. labelpath : pathlib.Path The local path to the label file. label : labels.HiRISE_Label An instance of HiRISE_Label initialized with the label path. campt_out_path : pathlib.Path The path to the campt output CSV file. campt_out_df : pandas.DataFrame A DataFrame containing the contents of the campt output CSV file. Methods ——- read_edr_index() Reads the EDR index for the HiRISE instrument. download_label() Downloads the label file if it does not exist locally.\n\nsource\n\n\nget_north_azimuths_from_SPICE\ndef get_north_azimuths_from_SPICE(\n    obsids\n):\nCalculate the North Azimuth for a list of observation IDs using SPICE metadata. Parameters ———- obsids : list of str List of observation IDs for which to calculate the North Azimuth direction. Returns ——- pandas.DataFrame DataFrame containing the observation IDs and their corresponding North Azimuth values. The DataFrame has two columns: ‘OBSERVATION_ID’ and ‘north_azimuth’.",
+    "crumbs": [
+      "Metadata"
+    ]
+  },
+  {
+    "objectID": "production.catalog.html",
+    "href": "production.catalog.html",
+    "title": "Catalog Production",
+    "section": "",
+    "text": "source\n\nexecute_in_parallel\ndef execute_in_parallel(\n    func:Callable, # The function to be executed for each element\n    iterable:Iterable, # The iterable over which to execute the function\n    max_workers:int | None=None, # Number of parallel workers. Defaults to ProcessPoolExecutor default.\n    description:str='Processing', # Label for the tqdm progress bar.\n): # Successful results in submission order (skipping failures).\nExecute a function in parallel over an iterable with per-item error handling.\nUnlike pool.map, individual failures do not abort the entire batch.\n\nsource\n\n\nblotch_id_generator\ndef blotch_id_generator()-&gt;Generator:\nGenerator for blotch marking IDs (prefix ‘B’).\n\nsource\n\n\nfan_id_generator\ndef fan_id_generator()-&gt;Generator:\nGenerator for fan marking IDs (prefix ‘F’).\n\nsource\n\n\nmarking_id_generator\ndef marking_id_generator(\n    prefix:str, # Single-character prefix, e.g. \"F\" for fans or \"B\" for blotches.\n)-&gt;Generator:\nGenerator for unique marking IDs with the given prefix.\n\nsource\n\n\ncluster_obsid\ndef cluster_obsid(\n    obsid:NoneType=None, # HiRISE obsid (= Planet four image_name)\n    savedir:NoneType=None, # Top directory path where the catalog will be stored. Will create folder if it\n    # does not exist yet.\n    imgid:NoneType=None, # Convenience parameter: If `obsid` is not given and therefore is None, this `image_id` can\n    # be used to receive the respective `obsid` from the TileID class.\n    dbname:NoneType=None, # Path to the database file.\n):\nCluster all image_ids for given obsid (=image_name).\n\nsource\n\n\ncluster_obsid_parallel\ndef cluster_obsid_parallel(\n    obsids:list, # List of the obsids to cluster\n    savedir:str, # path to the save directory which will save the clustering results\n    dbname:str, # The database name\n): # Successful results.\nApply the Clustering Algorithm for multiple obsids in parallel.\nIndividual failures are logged and skipped instead of aborting the batch.\n\nsource\n\n\nfnotch_obsid_parallel\ndef fnotch_obsid_parallel(\n    obsids:list, # List of the Obsids to fnotch\n    savedir:str, # the directory path where to save\n): # Successful results.\nApplies the fnotching for multiple obsid’s in parallel.\nIndividual failures are logged and skipped instead of aborting the batch.\n\nsource\n\n\nfnotch_obsid\ndef fnotch_obsid(\n    obsid:NoneType=None, # The observation ID to be processed.\n    savedir:NoneType=None, # The directory where the results will be saved.\n    fnotch_via_obsid:bool=False, # Switch to control if fnotching happens per observation ID (obsid) or per image ID.\n    # If True, fnotching is done per observation ID. If False, fnotching is done per image ID.\n    imgid:NoneType=None, # The image ID to be processed. This parameter is currently not used in the function.\n): # The observation ID that was processed.\nPerform fnotching on HiRISE images based on observation ID or image ID.\n\nsource\n\n\nadd_marking_ids\ndef add_marking_ids(\n    path, # Path to L1A image_id clustering result directory\n    fan_id, blotch_id\n):\nAdd marking_ids for catalog to cluster results.\n\nsource\n\n\nget_L1A_paths\ndef get_L1A_paths(\n    obsid, # HiRISE observation ID\n    datapath, # Top-level catalog/clustering directory\n): # L1A directories for each tile within the obsid\nReturn all L1A result directories for an obsid.\n\nsource\n\n\ncreate_roi_file\ndef create_roi_file(\n    obsids, # List of HiRISE obsids\n    roi_name, # Name for ROI\n    datapath, # Path to the top folder with the clustering output data.\n):\nCreate a Region of Interest file, based on list of obsids.\nFor more structured analysis processes, we can create a summary file for a list of obsids belonging to a ROI. The alternative is to define to what ROI any final object belongs to and add that as a column in the final catalog.\n\nsource\n\n\nReleaseManager\ndef ReleaseManager(\n    version, obsids:NoneType=None, overwrite:bool=False, dbname:NoneType=None\n):\nClass to manage releases and find relevant files. TODO better description Parameters ———- version : str Version string for this catalog. Same as datapath in other P4 code. obsids : iterable, optional Iterable of obsids that should be used for catalog file. Default is to use the full list of the default database, which is Seasons 2 and 3 at this point. overwrite : bool, optional Switch to control if already existing result folders for an obsid should be overwritten. Default: False\n\nsource\n\n\nread_csvfiles_into_lists_of_frames\ndef read_csvfiles_into_lists_of_frames(\n    folders\n):\nReads CSV files from given folders into lists of DataFrames. This function iterates over a list of folders, reads CSV files within those folders, and categorizes them into two lists: ‘fan’ and ‘blotch’. The categorization is based on the filename ending with ‘fans.csv’ or blotch.csv. Args: folders (list of pathlib.Path): A list of folder paths to search for CSV files. Returns: dict: A dictionary with two keys, ‘fan’ and ‘blotch’, each containing a list of pandas DataFrames read from the CSV files.\nTo create the Catalog from the Planet4 raw dataset we will use the pipeline in the following simple way.\n\nfrom pathlib import Path\n\nnewpath = Path(\"../../../../Data/Downselected.parq\")#This should point to the Dataset you wish to Catalogize\ndb = io.DBManager(newpath)\n\n#Setting the Logger to Level 10 so we get all the INFO printed out\nLOGGER.setLevel(10)\n\n\n##The Relaese Manager is our main object that stores the important data like the path to the database\n##aswell as the name of the Folder to store the data\nrm = ReleaseManager(\"p4tools_test\", dbname=db.dbname, overwrite=False)\n\n#Check for which Images need to be finished and were not analysed yet.\nrm.check_for_todo()\nrm.todo\n\n\n#Finally Launch the production pipeline\nrm.launch_catalog_production()",
+    "crumbs": [
+      "Catalog Production"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html",
+    "href": "plotting_examples.html",
+    "title": "Plotting examples",
+    "section": "",
+    "text": "from p4tools import io\nfrom p4tools import markings as m\nfrom p4tools import plotting\nDefining three tile_ids for later use:\ntid1, tid2, tid3 = \"APF00006tp APF0000tld APF000018t\".split()",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#plot-original-tile",
+    "href": "plotting_examples.html#plot-original-tile",
+    "title": "Plotting examples",
+    "section": "Plot original tile",
+    "text": "Plot original tile\nPlot the HiRISE tile used as input for the Citizen scientist:\n\nplotting.plot_original_tile(tid1)",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#plot-original-and-fans",
+    "href": "plotting_examples.html#plot-original-and-fans",
+    "title": "Plotting examples",
+    "section": "Plot original and fans",
+    "text": "Plot original and fans\nPlot the HiRISE tile without and with the fans for a given tile_id:\n\nplotting.plot_original_and_fans(tid2)",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#plot-blotches-for-tile",
+    "href": "plotting_examples.html#plot-blotches-for-tile",
+    "title": "Plotting examples",
+    "section": "Plot blotches for tile",
+    "text": "Plot blotches for tile\nSimply plot all blotches for a given tile_id on top of the HiRISE tile:\n\nplotting.plot_blotches_for_tile(tid3)",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#get-fans-for-tile",
+    "href": "plotting_examples.html#get-fans-for-tile",
+    "title": "Plotting examples",
+    "section": "Get fans for tile",
+    "text": "Get fans for tile\nget a dataframe with all fans for a given tile_id:\n\nfans = io.get_fans_for_tile(tid2)\n\n\nfans.head()\n\n\n\n\n\n\n\n\nmarking_id\nangle\ndistance\ntile_id\nimage_x\nimage_y\nn_votes\nobsid\nspread\nversion\n...\ny_angle\nl_s\nmap_scale\nnorth_azimuth\nBodyFixedCoordinateX\nBodyFixedCoordinateY\nBodyFixedCoordinateZ\nPlanetocentricLatitude\nPlanetographicLatitude\nLongitude\n\n\n\n\n92197\nF019802\n198.90\n150.30\nAPF0000tld\n1136.65\n19247.23\n15\nESP_020780_0930\n18.54\n1\n...\n-0.32\n209.289\n0.5\n147.656314\n-188.190090\n9.138895\n-3375.683769\n-86.805383\n-86.842804\n177.219784\n\n\n92198\nF019803\n200.62\n57.30\nAPF0000tld\n1002.62\n19342.12\n18\nESP_020780_0930\n27.78\n1\n...\n-0.35\n209.289\n0.5\n147.656314\n-188.271026\n9.144102\n-3375.677338\n-86.804005\n-86.841441\n177.219397\n\n\n92199\nF019804\n200.83\n144.01\nAPF0000tld\n1353.63\n19439.44\n24\nESP_020780_0930\n15.73\n1\n...\n-0.35\n209.289\n0.5\n147.656314\n-188.148590\n9.276155\n-3375.698357\n-86.805985\n-86.843398\n177.177473\n\n\n92200\nF019805\n196.52\n40.93\nAPF0000tld\n1407.57\n19522.45\n8\nESP_020780_0930\n18.18\n1\n...\n-0.28\n209.289\n0.5\n147.656314\n-188.147319\n9.325112\n-3375.700971\n-86.805968\n-86.843381\n177.162581\n\n\n92201\nF019806\n199.04\n94.72\nAPF0000tld\n1422.20\n19558.77\n14\nESP_020780_0930\n24.17\n1\n...\n-0.33\n209.289\n0.5\n147.656314\n-188.150649\n9.344215\n-3375.703740\n-86.805898\n-86.843312\n177.156828\n\n\n\n\n5 rows × 24 columns",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#plot-longest-fan-of-a-tile",
+    "href": "plotting_examples.html#plot-longest-fan-of-a-tile",
+    "title": "Plotting examples",
+    "section": "Plot longest fan of a tile",
+    "text": "Plot longest fan of a tile\nuse distance to find the longest fan in this dataframe:\n\nfans.columns\n\nIndex(['marking_id', 'angle', 'distance', 'tile_id', 'image_x', 'image_y',\n       'n_votes', 'obsid', 'spread', 'version', 'vote_ratio', 'x', 'y',\n       'x_angle', 'y_angle', 'l_s', 'map_scale', 'north_azimuth',\n       'BodyFixedCoordinateX', 'BodyFixedCoordinateY', 'BodyFixedCoordinateZ',\n       'PlanetocentricLatitude', 'PlanetographicLatitude', 'Longitude'],\n      dtype='object')\n\n\n\nmaxrow = fans.loc[fans.distance.idxmax()]\n\n\nmaxrow\n\nmarking_id                        F019808\nangle                              200.42\ndistance                            192.6\ntile_id                        APF0000tld\nimage_x                           1134.45\nimage_y                          19579.06\nn_votes                                14\nobsid                     ESP_020780_0930\nspread                              13.76\nversion                                 1\nvote_ratio                            1.0\nx                                  394.45\ny                                  399.06\nx_angle                             -0.94\ny_angle                             -0.35\nl_s                               209.289\nmap_scale                             0.5\nnorth_azimuth                  147.656314\nBodyFixedCoordinateX          -188.276868\nBodyFixedCoordinateY             9.278102\nBodyFixedCoordinateZ         -3375.687042\nPlanetocentricLatitude         -86.803805\nPlanetographicLatitude         -86.841243\nLongitude                      177.178801\nName: 92203, dtype: object\n\n\nuse the Fans (or Blotch) objects of the marking module (here abbreviated to m during import above):\n\nfan = m.Fan(fans.iloc[0])\nfan\n\nmarkings.Fan object. Input data:\nbase: [396.65  67.23]\narmlength: 130.9202339705439\narm1: [267.57461777  45.32900995]\narm2: [281.23716847   5.42396484]\n\n\nand then let the fan object plot itself:\n\nfan.plot()\n\n\n\n\n\n\n\n\nor, as above, use the plotting module function to plot all of the tile:\n\nplotting.plot_fans_for_tile(tid2)",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#find-good-combo-images",
+    "href": "plotting_examples.html#find-good-combo-images",
+    "title": "Plotting examples",
+    "section": "find good combo images",
+    "text": "find good combo images\nbelow call saves the plot under the tile_id name in the current working directory:\n\nplotting.plot_original_fans_blotches(\"APF000018t\", save=True)",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#plot-x-random-tiles-with-at-least-n-fans",
+    "href": "plotting_examples.html#plot-x-random-tiles-with-at-least-n-fans",
+    "title": "Plotting examples",
+    "section": "Plot x random tiles with at least n fans",
+    "text": "Plot x random tiles with at least n fans\nBelow functions is fancy: Find x random tiles with at least n fans and plot them:\n\nplotting.plot_x_random_tiles_with_n_fans?\n\nSignature:\nplotting.plot_x_random_tiles_with_n_fans(\n    x: int = 3,\n    n: int = 15,\n    save: bool = False,\n    random_state: int = None,\n)\nDocstring: &lt;no docstring&gt;\nFile:      ~/Dropbox/src/p4tools/p4tools/plotting.py\nType:      function\n\n\n\nplotting.plot_x_random_tiles_with_n_fans(3, 15, save=False, random_state=42)",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#get-some-meta-data",
+    "href": "plotting_examples.html#get-some-meta-data",
+    "title": "Plotting examples",
+    "section": "get some meta data",
+    "text": "get some meta data\nget the HiRISE obsid for a given tile_id:\n\nio.get_hirise_id_for_tile(\"APF0000wfo\")\n\n'ESP_020953_0925'",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "plotting_examples.html#once-more-plotting-blotches-and-fans-beside-the-original-tile",
+    "href": "plotting_examples.html#once-more-plotting-blotches-and-fans-beside-the-original-tile",
+    "title": "Plotting examples",
+    "section": "Once more: plotting blotches and fans beside the original tile",
+    "text": "Once more: plotting blotches and fans beside the original tile\nnote that there’s often both kinds of markings existing in the same tile, so you can plot them both alone or together:\n\nplotting.plot_original_and_fans(\"APF000003x\")\n\n\nplotting.plot_original_and_blotches(\"APF000003x\")\n\n\nplotting.plot_original_fans_blotches(\"APF000003x\")",
+    "crumbs": [
+      "Plotting examples"
+    ]
+  },
+  {
+    "objectID": "production.fnotching.html",
+    "href": "production.fnotching.html",
+    "title": "Fnotching",
+    "section": "",
+    "text": "source\n\ncalc_indices_from_index\ndef calc_indices_from_index(\n    n, # Length of condensed matrix\n    c, # Index of the distance value of interest\n): # Coordinate pair of the 2 indices that were used to calculate distance\nat index c of the condensed distance matrix.\ncalculate source indices from condensed distance matrix.\nThe pdist function returns its measurements in a (01, 02, 03, 12, 13…) fashion and this function can be used to get out the original coordinates of the 2 inputs.\n\nsource\n\n\nremove_opposing_fans\ndef remove_opposing_fans(\n    fans, # Fan marking data\n    eps:int=20\n): # Data with opposing fans removed.\nFind fans that have opposite orientation and remove lower voted one.\nFirst check if any fans are close enough to be fnotched (same criteria as blotch-fan fnotching), then check if any of those have opposite orientation. Delete the one with lower votes. If number of votes is equal, take a random choice.\n\nsource\n\n\nget_clusters_in_path\ndef get_clusters_in_path(\n    path, # Path in where to search for L1A csv files.\n): # List with 2 pd.DataFrames\nFind csv files in path and combine into DataFrame.\n\nsource\n\n\nget_id_from_path\ndef get_id_from_path(\n    path\n):\nCall self as a function.\n\nsource\n\n\ndata_to_centers\ndef data_to_centers(\n    df, # Dataframe with either fan or blotch marking data. It probes itself\n    # which one it is by looking at if distances and radii are defined.\n    kind, scope:str='hirise'\n):\nConvert a dataframe with marking data to an array of center coords.\n\nsource\n\n\nfnotch_image_ids\ndef fnotch_image_ids(\n    obsid, # Observation ID for which the clustering and fnotching is performed.\n    eps:int=20, # The maximum distance in pixels to consider for fnotching, by default 20.\n    savedir:NoneType=None, # Directory where the results will be saved, by default None.\n    scope:str='hirise', # Coordinate scope of the calculation, by default \"hirise\".\n):\nCluster each image_id for an obsid separately and perform fnotching.\n\nsource\n\n\nwrite_l1c\ndef write_l1c(\n    kind, # P4 marking kind\n    slashed, # The remaining fnotch data after applying the cut\n    pm, # The PathManager for the current image_id\n):\nWrite the L1C for marking kind.\n\nsource\n\n\napply_cut_obsid\ndef apply_cut_obsid(\n    obsid, cut:float=0.5, savedir:NoneType=None\n):\nCall self as a function.\n\nsource\n\n\napply_cut\ndef apply_cut(\n    obsid, # HiRISE obsid, i.e. P4 `image_name`\n    cut:float=0.5, # Value where to cut the vote_ratio of the fnotches.\n    savedir:NoneType=None\n):\nLoop over all image_id paths for an obsid and apply cut to fnotches.",
+    "crumbs": [
+      "Fnotching"
+    ]
+  },
+  {
+    "objectID": "stats.html",
+    "href": "stats.html",
+    "title": "Statistics",
+    "section": "",
+    "text": "Three layers that separate support (vote counts) from scatter (marker disagreement). See the Per-Tile Quality tutorial for the rationale.\n\nsource\n\n\ndef add_uncertainty_columns(\n    df, # A fan or blotch catalog frame carrying the per-marking cluster standard\n    # deviations (``x_std``, ``y_std``, ``angle_std`` and, by kind,\n    # ``distance_std``/``spread_std`` for fans or ``radius1_std``/``radius2_std``\n    # for blotches) plus ``n_votes``.\n    min_votes:int=5, # A std estimated from fewer votes is treated as too noisy to use for\n    # scatter (drives the ``scatter_ok`` gate).\n    circular_ratio_limit:float=0.8, # Blotches with ``radius_2 / radius_1`` above this are near-circular, so\n    # their orientation is physically ill-defined and ``angle_usable`` is False.\n): # Copy of ``df`` with added columns ``pos_std``, ``size_cv``,\n``angle_usable`` and ``scatter_ok``.\nAdd derived per-marking uncertainty columns; returns a copy.\nThe catalog kind (fan vs blotch) is inferred from the columns present.\n\nsource\n\n\n\ndef tile_quality(\n    kind:str='both', # Which catalog(s) to include.\n    version:str | None=None, # Catalog version; defaults to the p4tools session version (v3.1).\n    min_votes:int=5, # Vote gate for the scatter group (passed to `add_uncertainty_columns`).\n    agg:str='median', # Tile-level aggregator for the scatter metrics. \"median\" is robust.\n    ranks:bool=True, # Append cap-wide percentile-rank columns ``support_rank``/``scatter_rank``\n    # (0-100; 50 = median tile). ``scatter_rank`` is the median of the three\n    # scatter metrics' individual ranks so incommensurate units (deg, px, --)\n    # combine; ``support_rank`` is the same construction on the vote axis.\n): # Indexed by ``tile_id`` with support columns (``n_markings``, ``n_fans``,\n``n_blotches``, ``votes_median``, ``votes_min``, ``votes_total``), scatter\ncolumns (``angle_scatter``, ``pos_scatter``, ``size_scatter``,\n``n_scatter_markings``) and, when ``ranks``, ``support_rank`` /\n``scatter_rank``. Scatter values are NaN for tiles with no gated marking.\nOne row per tile_id with separate support and scatter column groups.\nThe central design rule (see the Per-Tile Quality tutorial) is that support — how many votes back a tile — and scatter — how much the citizen markers disagreed — are kept on separate axes and never mixed. Scatter is computed only from markings that pass the vote gate (n_votes &gt;= min_votes), so weak support cannot masquerade as disagreement. Vote counts never divide the scatter numbers (no SEM).\n\nsource\n\n\n\ndef classify_tile_quality(\n    tq, # Output of `tile_quality` with rank columns.\n    support_thresh:float=50.0, scatter_thresh:float=50.0\n): # Copy of ``tq`` with an added ``quality_class`` column.\nAdd a quality_class label from the two rank axes.\nRequires support_rank and scatter_rank (i.e. tile_quality(..., ranks=True)). A tile is “high support” when support_rank &gt;= support_thresh and “high scatter” when scatter_rank &gt;= scatter_thresh.\n============== ======= ======= ========================================== quality_class support scatter reading ============== ======= ======= ========================================== consistent high low reliable – best QC tier contested high high many votes, genuine disagreement sparse low low few votes, but they agree noisy low high least reliable ============== ======= ======= ==========================================\nTiles whose scatter_rank (or support_rank) is NaN – e.g. no marking passed the vote gate, so no scatter estimate exists – get quality_class = &lt;NA&gt; rather than a guess.",
+    "crumbs": [
+      "Statistics"
+    ]
+  },
+  {
+    "objectID": "stats.html#per-tile-quality-uncertainty-api",
+    "href": "stats.html#per-tile-quality-uncertainty-api",
+    "title": "Statistics",
+    "section": "",
+    "text": "Three layers that separate support (vote counts) from scatter (marker disagreement). See the Per-Tile Quality tutorial for the rationale.\n\nsource\n\n\ndef add_uncertainty_columns(\n    df, # A fan or blotch catalog frame carrying the per-marking cluster standard\n    # deviations (``x_std``, ``y_std``, ``angle_std`` and, by kind,\n    # ``distance_std``/``spread_std`` for fans or ``radius1_std``/``radius2_std``\n    # for blotches) plus ``n_votes``.\n    min_votes:int=5, # A std estimated from fewer votes is treated as too noisy to use for\n    # scatter (drives the ``scatter_ok`` gate).\n    circular_ratio_limit:float=0.8, # Blotches with ``radius_2 / radius_1`` above this are near-circular, so\n    # their orientation is physically ill-defined and ``angle_usable`` is False.\n): # Copy of ``df`` with added columns ``pos_std``, ``size_cv``,\n``angle_usable`` and ``scatter_ok``.\nAdd derived per-marking uncertainty columns; returns a copy.\nThe catalog kind (fan vs blotch) is inferred from the columns present.\n\nsource\n\n\n\ndef tile_quality(\n    kind:str='both', # Which catalog(s) to include.\n    version:str | None=None, # Catalog version; defaults to the p4tools session version (v3.1).\n    min_votes:int=5, # Vote gate for the scatter group (passed to `add_uncertainty_columns`).\n    agg:str='median', # Tile-level aggregator for the scatter metrics. \"median\" is robust.\n    ranks:bool=True, # Append cap-wide percentile-rank columns ``support_rank``/``scatter_rank``\n    # (0-100; 50 = median tile). ``scatter_rank`` is the median of the three\n    # scatter metrics' individual ranks so incommensurate units (deg, px, --)\n    # combine; ``support_rank`` is the same construction on the vote axis.\n): # Indexed by ``tile_id`` with support columns (``n_markings``, ``n_fans``,\n``n_blotches``, ``votes_median``, ``votes_min``, ``votes_total``), scatter\ncolumns (``angle_scatter``, ``pos_scatter``, ``size_scatter``,\n``n_scatter_markings``) and, when ``ranks``, ``support_rank`` /\n``scatter_rank``. Scatter values are NaN for tiles with no gated marking.\nOne row per tile_id with separate support and scatter column groups.\nThe central design rule (see the Per-Tile Quality tutorial) is that support — how many votes back a tile — and scatter — how much the citizen markers disagreed — are kept on separate axes and never mixed. Scatter is computed only from markings that pass the vote gate (n_votes &gt;= min_votes), so weak support cannot masquerade as disagreement. Vote counts never divide the scatter numbers (no SEM).\n\nsource\n\n\n\ndef classify_tile_quality(\n    tq, # Output of `tile_quality` with rank columns.\n    support_thresh:float=50.0, scatter_thresh:float=50.0\n): # Copy of ``tq`` with an added ``quality_class`` column.\nAdd a quality_class label from the two rank axes.\nRequires support_rank and scatter_rank (i.e. tile_quality(..., ranks=True)). A tile is “high support” when support_rank &gt;= support_thresh and “high scatter” when scatter_rank &gt;= scatter_thresh.\n============== ======= ======= ========================================== quality_class support scatter reading ============== ======= ======= ========================================== consistent high low reliable – best QC tier contested high high many votes, genuine disagreement sparse low low few votes, but they agree noisy low high least reliable ============== ======= ======= ==========================================\nTiles whose scatter_rank (or support_rank) is NaN – e.g. no marking passed the vote gate, so no scatter estimate exists – get quality_class = &lt;NA&gt; rather than a guess.",
+    "crumbs": [
+      "Statistics"
+    ]
+  },
+  {
+    "objectID": "egu26.html",
+    "href": "egu26.html",
+    "title": "EGU26 talk plots",
+    "section": "",
+    "text": "source\n\n\ndef plot_slide_5(\n    coverage:pandas.DataFrame | None=None, version:str='v3.1', out:str | pathlib.Path | None=None\n)-&gt;Path:\nSlide 5: cap-wide per-tile coverage histogram + KDE (talk context).",
+    "crumbs": [
+      "EGU26 talk plots"
+    ]
+  },
+  {
+    "objectID": "egu26.html#slide-5-overall-coverage-statistics",
+    "href": "egu26.html#slide-5-overall-coverage-statistics",
+    "title": "EGU26 talk plots",
+    "section": "",
+    "text": "source\n\n\ndef plot_slide_5(\n    coverage:pandas.DataFrame | None=None, version:str='v3.1', out:str | pathlib.Path | None=None\n)-&gt;Path:\nSlide 5: cap-wide per-tile coverage histogram + KDE (talk context).",
+    "crumbs": [
+      "EGU26 talk plots"
+    ]
+  },
+  {
+    "objectID": "egu26.html#slide-6-inter-annual",
+    "href": "egu26.html#slide-6-inter-annual",
+    "title": "EGU26 talk plots",
+    "section": "Slide 6 — Inter-annual",
+    "text": "Slide 6 — Inter-annual\n\nsource\n\nplot_slide_6\ndef plot_slide_6(\n    coverage:pandas.DataFrame | None=None, version:str='v3.1', out:str | pathlib.Path | None=None\n)-&gt;Path:\nSlide 6: inter-annual KDE overlay per Mars Year (talk context).",
+    "crumbs": [
+      "EGU26 talk plots"
+    ]
+  },
+  {
+    "objectID": "egu26.html#slide-7-inter-regional-one-roi-per-call",
+    "href": "egu26.html#slide-7-inter-regional-one-roi-per-call",
+    "title": "EGU26 talk plots",
+    "section": "Slide 7 — Inter-regional (one ROI per call)",
+    "text": "Slide 7 — Inter-regional (one ROI per call)\n\nsource\n\nplot_slide_7\ndef plot_slide_7(\n    roi:str, coverage:pandas.DataFrame | None=None, version:str='v3.1', out:str | pathlib.Path | None=None\n)-&gt;Path:\nSlide 7: per-MY small-multiples of coverage vs L_s for one ROI (talk context).",
+    "crumbs": [
+      "EGU26 talk plots"
+    ]
+  }
+]
