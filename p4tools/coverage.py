@@ -4,7 +4,7 @@
 
 # %% auto #0
 __all__ = ['TILE_WIDTH_PX', 'TILE_HEIGHT_PX', 'TILE_AREA_PX', 'DEFAULT_CACHE_DIR', 'compute_per_tile_coverage',
-           'compute_per_obsid_coverage']
+           'compute_per_obsid_coverage', 'pct_summary', 'attach_tile_metadata']
 
 # %% ../notebooks/04a_coverage.ipynb #ad60a613
 """coverage — per-tile and per-obsid fractional coverage of dark deposits.
@@ -114,6 +114,49 @@ def compute_per_obsid_coverage(
         agg["Homogeneity"] = agg["Coverage_mean"] / agg["Coverage_median"]
     return agg.reset_index()
 
+
+# %% ../notebooks/04a_coverage.ipynb #6390a115
+def pct_summary(coverage, pcts=(10, 25, 50, 75, 90, 95, 99)):
+    """Percentile + mean summary of a fractional-coverage series, in **percent**.
+
+    Parameters
+    ----------
+    coverage : array-like
+        Fractional (0-1) per-tile coverage, e.g. the ``Coverage`` column of
+        :func:`compute_per_tile_coverage`. Non-finite values are ignored.
+    pcts : tuple of int
+        Percentiles to report; default matches the values quoted in the coverage paper.
+
+    Returns
+    -------
+    pandas.Series
+        Indexed ``p10, p25, ..., p99, mean``, values in percent (fraction x 100).
+    """
+    a = np.asarray(coverage, dtype=float)
+    a = a[np.isfinite(a)]
+    idx = [f"p{p}" for p in pcts] + ["mean"]
+    vals = [np.percentile(a, p) for p in pcts] + [a.mean()]
+    return pd.Series(np.array(vals) * 100.0, index=idx, name="coverage_%")
+
+# %% ../notebooks/04a_coverage.ipynb #42088c66
+def attach_tile_metadata(per_tile, *, version="v3.1"):
+    """Attach ``Ls``, ``roi_name``, and ``MY`` to a per-tile coverage table.
+
+    Merges the authoritative per-observation metadata (``io.get_metafull`` for solar
+    longitude, ``io.get_region_names`` for ROI and Mars Year) onto the per-tile table
+    from :func:`compute_per_tile_coverage`, keyed on ``obsid``.
+
+    No de-duplication is applied on the merge: if an obsid maps to more than one ROI
+    row, the resulting tile duplication is left visible rather than silently collapsed.
+
+    Returns a copy of ``per_tile`` with added columns ``[Ls, roi_name, MY]``.
+    """
+    ls = (_io.get_metafull()[["OBSERVATION_ID", "SOLAR_LONGITUDE"]]
+          .drop_duplicates()
+          .rename(columns={"OBSERVATION_ID": "obsid", "SOLAR_LONGITUDE": "Ls"}))
+    ls["Ls"] = pd.to_numeric(ls["Ls"], errors="coerce")
+    reg = _io.get_region_names()[["obsid", "roi_name", "MY"]].drop_duplicates()
+    return per_tile.merge(ls, on="obsid", how="left").merge(reg, on="obsid", how="left")
 
 # %% ../notebooks/04a_coverage.ipynb #55ee8afb
 # | eval: false

@@ -5,9 +5,10 @@
 # %% auto #0
 __all__ = ['TALK_MIN_FONT_PT', 'plot_blotches_for_tile', 'plot_raw_fans', 'plot_raw_blotches', 'plot_fans_for_tile',
            'plot_original_tile', 'plot_original_and_fans', 'plot_original_and_blotches', 'plot_original_fans_blotches',
-           'plot_x_random_tiles_with_n_fans', 'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale',
-           'histogram_polar', 'histogram_cartesian', 'show_stamps', 'apply_talk_context', 'histogram_kde',
-           'kde_per_group', 'smallmult_highlight_grid', 'add_fans', 'add_blotches', 'overlay_obsid']
+           'plot_random_tiles_with_min_fans', 'plot_random_tiles_with_min_blotches', 'plot_x_random_tiles_with_n_fans',
+           'compute_direction_histogram', 'initialize_polar_axes', 'get_colorscale', 'histogram_polar',
+           'histogram_cartesian', 'show_stamps', 'apply_talk_context', 'histogram_kde', 'kde_per_group',
+           'smallmult_highlight_grid', 'add_fans', 'add_blotches', 'overlay_obsid']
 
 # %% ../notebooks/02_plotting.ipynb #afa123a5
 from matplotlib import pyplot as plt
@@ -115,13 +116,107 @@ def plot_original_fans_blotches(tileID, save=False):
     if save:
         fig.savefig(f"{tileID}.png", dpi=150)
 
-# %% ../notebooks/02_plotting.ipynb #088ffce2
+# %% ../notebooks/02_plotting.ipynb #d0c18bcc
+def _sample_tile_ids_with_min_markings(
+    kind, x, n, cached_only=False, random_state=None, exclude_other=False
+):
+    """Sample `x` tile_ids having at least `n` markings of `kind` ("fan" or "blotch").
+
+    With `exclude_other=True`, tiles that also have markings of the other kind
+    are excluded (e.g. fans-only tiles for kind="fan").
+    """
+    import warnings
+
+    catalog = io.get_fan_catalog() if kind == "fan" else io.get_blotch_catalog()
+    counts = catalog.groupby("tile_id").size()
+    candidates = counts[counts >= n]
+    if exclude_other:
+        other = io.get_blotch_catalog() if kind == "fan" else io.get_fan_catalog()
+        candidates = candidates[~candidates.index.isin(other.tile_id.unique())]
+    if cached_only:
+        candidates = candidates[candidates.index.isin(io.get_cached_tile_ids())]
+    if len(candidates) == 0:
+        raise ValueError(
+            f"No tiles with at least {n} {kind}s"
+            + (f" and no {'blotches' if kind == 'fan' else 'fans'}" if exclude_other else "")
+            + (" among the locally cached tiles." if cached_only else " in the catalog.")
+        )
+    if x > len(candidates):
+        warnings.warn(
+            f"Only {len(candidates)} tiles have at least {n} {kind}s"
+            + (" in the local cache" if cached_only else "")
+            + f"; showing all of them instead of {x}.",
+            stacklevel=3,
+        )
+        x = len(candidates)
+    return candidates.sample(x, random_state=random_state).index
+
+
+def plot_random_tiles_with_min_fans(
+    x: int = 3,  # how many tiles (original + fan overlay plots) to show
+    n: int = 15,  # minimum number of fans a tile must contain
+    cached_only: bool = False,  # if True, only sample tiles whose image is locally cached
+    exclude_blotches: bool = False,  # if True, only sample tiles that have no blotches
+    save: bool = False,  # if True, saves a PNG with the plot for each tile_id separately
+    random_state: int = None,  # can be set to recreate the exact same set
+):
+    "Plot `x` random tiles containing at least `n` fans: original image next to fan overlay."
+    tile_ids = _sample_tile_ids_with_min_markings(
+        "fan", x, n, cached_only, random_state, exclude_other=exclude_blotches
+    )
+    for tile_id in tile_ids:
+        fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
+        plot_original_tile(tile_id, ax=axes[0])
+        plot_fans_for_tile(tile_id, ax=axes[1])
+        obsid = io.get_hirise_id_for_tile(tile_id)
+        fig.suptitle(f"Planet Four tile {tile_id} \u2014 {obsid}")
+        if save:
+            fig.savefig(f"{tile_id}.png", dpi=150)
+
+
+# %% ../notebooks/02_plotting.ipynb #86ff8d03
+def plot_random_tiles_with_min_blotches(
+    x: int = 3,  # how many tiles (original + blotch overlay plots) to show
+    n: int = 15,  # minimum number of blotches a tile must contain
+    cached_only: bool = False,  # if True, only sample tiles whose image is locally cached
+    exclude_fans: bool = False,  # if True, only sample tiles that have no fans
+    save: bool = False,  # if True, saves a PNG with the plot for each tile_id separately
+    random_state: int = None,  # can be set to recreate the exact same set
+):
+    "Plot `x` random tiles containing at least `n` blotches: original image next to blotch overlay."
+    tile_ids = _sample_tile_ids_with_min_markings(
+        "blotch", x, n, cached_only, random_state, exclude_other=exclude_fans
+    )
+    for tile_id in tile_ids:
+        fig, axes = plt.subplots(ncols=2, figsize=(9, 3))
+        plot_original_tile(tile_id, ax=axes[0])
+        plot_blotches_for_tile(tile_id, ax=axes[1], color="magenta")
+        obsid = io.get_hirise_id_for_tile(tile_id)
+        fig.suptitle(f"Planet Four tile {tile_id} \u2014 {obsid}")
+        if save:
+            fig.savefig(f"{tile_id}.png", dpi=150)
+
+
+# %% ../notebooks/02_plotting.ipynb #9c784910
 def plot_x_random_tiles_with_n_fans(
     x: int = 3,  # how many of 2 col original+p4 data plots to receive
     n: int = 15,  # whats the minimum number of fans to contain
     save: bool = False,  # if True, saves a PNG with the plot for each tile_id separately
     random_state: int = None,  # can be set to recreate the exact same set
 ):
+    """Deprecated: use `plot_random_tiles_with_min_fans` (or `..._min_blotches`) instead.
+
+    Note this old version only considered fan tiles that also contain blotches and
+    overlays both marking kinds; the replacements treat fans and blotches separately.
+    """
+    import warnings
+
+    warnings.warn(
+        "plot_x_random_tiles_with_n_fans is deprecated; use "
+        "plot_random_tiles_with_min_fans or plot_random_tiles_with_min_blotches.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     fans = io.get_fan_catalog()
     blotches = io.get_blotch_catalog()
     # for the fan tiles that have blotches, how many fans are in:
@@ -129,6 +224,7 @@ def plot_x_random_tiles_with_n_fans(
     tile_ids = n_fans[n_fans >= n].sample(x, random_state=random_state).index
     for tile_id in tile_ids:
         plot_original_fans_blotches(tile_id, save=save)
+
 
 # %% ../notebooks/02_plotting.ipynb #6eff11cf
 def compute_direction_histogram(df, segmentsize, density=True, degrees=False):
